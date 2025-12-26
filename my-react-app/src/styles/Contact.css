@@ -1,0 +1,126 @@
+.page-container {
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  padding-top: 6rem; /* espace pour le navbar fixe */
+}
+
+@media (min-width: 768px) {
+  .page-container {
+    padding-top: 7rem;
+  }
+}
+
+
+.contact-section {
+  padding: 4rem 0 6rem;
+}
+
+@media (min-width: 768px) {
+  .contact-section {
+    padding: 6rem 0 8rem;
+  }
+}
+
+.contact-grid {
+  display: grid;
+  gap: 3rem;
+  margin-top: 4rem;
+  max-width: 64rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .contact-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+  }
+}
+
+/* Formulaire */
+.contact-form-card {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid #334155;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.contact-form .form-group {
+  margin-bottom: 1.75rem;
+}
+
+.contact-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  color: var(--text-light);
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: #64748b;
+}
+
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-sky);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+.contact-form select {
+  cursor: pointer;
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-submit {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+/* Informations de contact */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  color: #cbd5e1;
+}
+
+.contact-info h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.contact-info p {
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+.contact-info strong {
+  color: var(--text-light);
+}

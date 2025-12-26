@@ -1,0 +1,118 @@
+/* ========================
+   PAGE CONTAINER (commun à toutes les pages secondaires)
+   ======================== */
+.page-container {
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  padding-top: 6rem; /* espace pour le navbar fixe */
+}
+
+@media (min-width: 768px) {
+  .page-container {
+    padding-top: 7rem;
+  }
+}
+
+/* Utilitaires texte centré */
+.text-center {
+  text-align: center;
+}
+
+/* ========================
+   FAQ PAGE
+   ======================== */
+.faq-section {
+  padding: 4rem 0 6rem;
+}
+
+@media (min-width: 768px) {
+  .faq-section {
+    padding: 6rem 0 8rem;
+  }
+}
+
+.page-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 1.5rem 0 1rem;
+}
+
+.page-intro {
+  font-size: 1.125rem;
+  color: #cbd5e1;
+  max-width: 48rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.faq-list {
+  max-width: 48rem;
+  margin: 4rem auto 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.faq-item {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+  border-color: var(--accent-sky);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.faq-question {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.faq-question h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--text-light);
+  margin: 0;
+  flex: 1;
+  padding-right: 1rem;
+}
+
+.faq-toggle {
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: var(--accent-sky);
+  width: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.faq-item.open .faq-toggle {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease;
+  background: #0f172a;
+}
+
+.faq-item.open .faq-answer {
+  max-height: 300px; /* valeur suffisante pour la plupart des réponses */
+  padding: 0 1.5rem 1.5rem;
+}
+
+.faq-answer p {
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0;
+}
