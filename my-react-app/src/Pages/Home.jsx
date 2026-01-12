@@ -82,7 +82,7 @@ export default function Home() {
                     <span>08 tâches</span>
                   </div>
                   <div className="tasks-list">
-                    <div className="task-item"><span>Rappeler Martin Dupont</span><span className="task-time success">09:30</span></div>
+                    <div className="task-item"><span>Rappeler Martin AHOUANSOU</span><span className="task-time success">09:30</span></div>
                     <div className="task-item"><span>Envoyer devis agence Nova</span><span className="task-time warning">11:00</span></div>
                     <div className="task-item"><span>Relance facture - Studio Pixel</span><span className="task-time muted">15:00</span></div>
                   </div>
