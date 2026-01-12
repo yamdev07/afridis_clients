@@ -6,9 +6,9 @@ export default function Contact() {
   return (
     <div className="page-container">
         <Navbar />
-      <section className="contact-section">
+      <section className="contact-section" id="contact">
         <div className="container">
-          <div className="section-header text-center">
+          <div className="section-header text-center" style={{ marginLeft: "75vh" }}>
             <p className="section-subtitle">Contact</p>
             <h1 className="page-title">Nous sommes là pour vous aider</h1>
             <p className="page-intro">
