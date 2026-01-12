@@ -39,9 +39,9 @@ export default function FAQ() {
   return (
     <div className="page-container">
         <Navbar />
-      <section className="faq-section">
+      <section className="faq-section" id="faq">
         <div className="container">
-          <div className="section-header text-center">
+          <div className="section-header text-center" style={{ marginLeft: "75vh" }}>
             <p className="section-subtitle">FAQ</p>
             <h1 className="page-title">Questions fréquentes</h1>
             <p className="page-intro">
