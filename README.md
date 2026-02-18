@@ -1,59 +1,401 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+📡 ClientFlow
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Plateforme de gestion commerciale pour fournisseurs de fibre internet
 
-## About Laravel
+ClientFlow est une application web destinée aux entreprises spécialisées dans la fourniture de fibre internet (vente, installation, maintenance et suivi client).
+Elle permet de centraliser la gestion des clients, des services fibre, des installations et du travail des agents terrain via une interface moderne et sécurisée.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+🧱 Architecture générale
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Frontend : React.js + Bootstrap
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Backend : Laravel (API REST)
 
-## Learning Laravel
+Base de données : PostgreSQL
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Authentification : JWT
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Type d’application : Dashboard web (desktop-first, responsive)
 
-## Laravel Sponsors
+👥 Gestion des utilisateurs
+Rôles
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Administrateur
 
-### Premium Partners
+Agent
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Fonctionnalités
 
-## Contributing
+Création et gestion des comptes utilisateurs
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Authentification sécurisée via JWT
 
-## Code of Conduct
+Gestion des rôles et des permissions
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Accès restreint aux fonctionnalités selon le rôle
 
-## Security Vulnerabilities
+Possibilité de désactiver un compte utilisateur
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+👤 Gestion des clients
+Données client
 
-## License
+Nom du client
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Numéro de téléphone
+
+Date de souscription
+
+Date d’installation
+
+Statut d’installation (installé / non installé)
+
+Services souscrits
+
+Observations / commentaires
+
+Historique des actions
+
+Fonctionnalités
+
+Création, modification et suppression de clients
+
+Consultation de la fiche client détaillée
+
+Recherche par nom ou numéro de téléphone
+
+Filtrage par statut (installé / non installé)
+
+Tri par date de souscription ou d’installation
+
+Historisation des modifications importantes
+
+🌐 Gestion des services fibres
+Données service
+
+Nom du service (ex : Fibre 20 Mbps, Fibre Pro, etc.)
+
+Description (optionnelle)
+
+Fonctionnalités
+
+Création et gestion des services proposés
+
+Association de plusieurs services à un client
+
+Visualisation des services actifs par client
+
+Préparation à une facturation future (extensible)
+
+🛠️ Suivi des installations
+Données installation
+
+Client concerné
+
+Date prévue d’installation
+
+Date réelle d’installation
+
+Statut de l’installation
+
+Agent en charge
+
+Observations terrain
+
+Fonctionnalités
+
+Suivi du processus d’installation
+
+Mise à jour du statut après intervention
+
+Attribution d’un agent à une installation
+
+Historique des interventions
+
+Liste des installations en attente
+
+🧑‍🔧 Gestion des agents
+Fonctionnalités
+
+Liste des agents actifs
+
+Attribution des clients ou installations aux agents
+
+Suivi des interventions par agent
+
+Visualisation de la charge de travail
+
+Historique des actions effectuées par agent
+
+📊 Dashboard & statistiques
+Indicateurs clés
+
+Nombre total de clients
+
+Clients installés / non installés
+
+Nouvelles souscriptions par période
+
+Installations en attente
+
+Services les plus souscrits
+
+Fonctionnalités
+
+Dashboard synthétique dès la connexion
+
+Graphiques simples (barres, courbes)
+
+Filtres par période
+
+Mise à jour en temps réel via API
+
+🔐 Sécurité & API
+Backend
+
+API REST Laravel
+
+Authentification JWT
+
+Middleware de contrôle d’accès
+
+Validation stricte des données
+
+Gestion des erreurs et réponses normalisées
+
+Base de données
+
+PostgreSQL normalisé
+
+Contraintes d’intégrité (FK, uniques)
+
+Index pour performances
+
+Séparation logique des entités
+
+🧩 Extensibilité prévue
+
+ClientFlow est conçu pour évoluer vers :
+
+Gestion de la maintenance réseau
+
+Suivi des incidents
+
+Facturation et paiements
+
+Notifications (SMS / email)
+
+Version mobile (React Native)
+
+Multi-entreprises
+
+🚀 Objectif du projet
+
+Créer une solution robuste, professionnelle et évolutive permettant aux entreprises de fourniture de fibre internet de :
+
+mieux gérer leurs clients
+
+suivre efficacement les installations
+
+optimiser le travail des agents
+
+disposer d’une vision claire de leur activité📡 ClientFlow
+
+Plateforme de gestion commerciale pour fournisseurs de fibre internet
+
+ClientFlow est une application web destinée aux entreprises spécialisées dans la fourniture de fibre internet (vente, installation, maintenance et suivi client).
+Elle permet de centraliser la gestion des clients, des services fibre, des installations et du travail des agents terrain via une interface moderne et sécurisée.
+
+🧱 Architecture générale
+
+Frontend : React.js + Bootstrap
+
+Backend : Laravel (API REST)
+
+Base de données : PostgreSQL
+
+Authentification : JWT
+
+Type d’application : Dashboard web (desktop-first, responsive)
+
+👥 Gestion des utilisateurs
+Rôles
+
+Administrateur
+
+Agent
+
+Fonctionnalités
+
+Création et gestion des comptes utilisateurs
+
+Authentification sécurisée via JWT
+
+Gestion des rôles et des permissions
+
+Accès restreint aux fonctionnalités selon le rôle
+
+Possibilité de désactiver un compte utilisateur
+
+👤 Gestion des clients
+Données client
+
+Nom du client
+
+Numéro de téléphone
+
+Date de souscription
+
+Date d’installation
+
+Statut d’installation (installé / non installé)
+
+Services souscrits
+
+Observations / commentaires
+
+Historique des actions
+
+Fonctionnalités
+
+Création, modification et suppression de clients
+
+Consultation de la fiche client détaillée
+
+Recherche par nom ou numéro de téléphone
+
+Filtrage par statut (installé / non installé)
+
+Tri par date de souscription ou d’installation
+
+Historisation des modifications importantes
+
+🌐 Gestion des services fibre
+Données service
+
+Nom du service (ex : Fibre 20 Mbps, Fibre Pro, etc.)
+
+Description (optionnelle)
+
+Fonctionnalités
+
+Création et gestion des services proposés
+
+Association de plusieurs services à un client
+
+Visualisation des services actifs par client
+
+Préparation à une facturation future (extensible)
+
+🛠️ Suivi des installations
+Données installation
+
+Client concerné
+
+Date prévue d’installation
+
+Date réelle d’installation
+
+Statut de l’installation
+
+Agent en charge
+
+Observations terrain
+
+Fonctionnalités
+
+Suivi du processus d’installation
+
+Mise à jour du statut après intervention
+
+Attribution d’un agent à une installation
+
+Historique des interventions
+
+Liste des installations en attente
+
+🧑‍🔧 Gestion des agents
+Fonctionnalités
+
+Liste des agents actifs
+
+Attribution des clients ou installations aux agents
+
+Suivi des interventions par agent
+
+Visualisation de la charge de travail
+
+Historique des actions effectuées par agent
+
+📊 Dashboard & statistiques
+Indicateurs clés
+
+Nombre total de clients
+
+Clients installés / non installés
+
+Nouvelles souscriptions par période
+
+Installations en attente
+
+Services les plus souscrits
+
+Fonctionnalités
+
+Dashboard synthétique dès la connexion
+
+Graphiques simples (barres, courbes)
+
+Filtres par période
+
+Mise à jour en temps réel via API
+
+🔐 Sécurité & API
+Backend
+
+API REST Laravel
+
+Authentification JWT
+
+Middleware de contrôle d’accès
+
+Validation stricte des données
+
+Gestion des erreurs et réponses normalisées
+
+Base de données
+
+PostgreSQL normalisé
+
+Contraintes d’intégrité (FK, uniques)
+
+Index pour performances
+
+Séparation logique des entités
+
+🧩 Extensibilité prévue
+
+ClientFlow est conçu pour évoluer vers :
+
+Gestion de la maintenance réseau
+
+Suivi des incidents
+
+Facturation et paiements
+
+Notifications (SMS / email)
+
+Version mobile (React Native)
+
+Multi-entreprises
+
+🚀 Objectif du projet
+
+Créer une solution robuste, professionnelle et évolutive permettant aux entreprises de fourniture de fibre internet de :
+
+mieux gérer leurs clients
+
+suivre efficacement les installations
+
+optimiser le travail des agents
+
+disposer d’une vision claire de leur activité
