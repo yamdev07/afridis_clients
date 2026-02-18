@@ -1,81 +1,41 @@
 <?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-
-public function register(Request $request)
-{
-    
-        $data = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'password_confirmation' => 'required|string|min:8|confirmed',
+  public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8',
         ]);
-
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => bcrypt($data['password']),
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
         ]);
-
-        return response()->json([
-            'message' => 'User registered successfully',
-            'user' => $user,
-        ], 201);
-}
-
+        return response()->json($user);
+    }
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
-        if (! $token = Auth::guard('api')->attempt($credentials)) {
-            throw ValidationException::withMessages([
-                'email' => ['Identifiants incorrects.'],
-            ]);
+        $user = User::where('email', $request->email)->first();
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Identifiants incorrects'], 401);
         }
-
-        return $this->respondWithToken($token);
+        return response()->json($user);
     }
 
-    public function me()
+    public function me(Request $request)
     {
-        return response()->json(Auth::guard('api')->user());
+        return response()->json($request->user());
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        Auth::guard('api')->logout();
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Déconnexion réussie']);
     }
-
-    public function refresh()
-    {
-        return $this->respondWithToken(Auth::guard('api')->refresh());
-    }
-
-    protected function respondWithToken(string $token)
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => Auth::guard('api')->factory()->getTTL() * 60,
-            'user' => Auth::guard('api')->user(),
-        ]);
-    }
 }
-

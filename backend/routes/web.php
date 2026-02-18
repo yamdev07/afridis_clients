@@ -21,3 +21,7 @@ Route::get('/services', function () {
 Route::get('/reports', function () {
     return view('reports');
 });
+
+// Route::post('/auth/register', function () {
+//     return view('AuthController');
+// });
