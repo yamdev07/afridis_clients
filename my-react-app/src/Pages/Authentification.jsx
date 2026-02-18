@@ -1,9 +1,41 @@
 import React, { useState } from "react";
 import "../styles/Authentification.css";
 import Navbar from "./Navbar";
+import { useNavigate } from "react-router-dom";
+import { api } from "../api/clientflow";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    // password_confirmation: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      if (!isLogin) {
+        await api.register(form.name, form.email, form.password);
+      }
+      await api.login(form.email, form.password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message || "Erreur de connexion");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="page-container auth-page">
@@ -37,24 +69,55 @@ export default function Auth() {
               </button>
             </div>
 
-            <form className="auth-form">
+            <form className="auth-form" onSubmit={handleSubmit}>
               {!isLogin && (
                 <div className="form-group">
                   <label>Nom complet</label>
-                  <input type="text" placeholder="Jean Dupont" required />
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Jean Dupont"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               )}
 
               <div className="form-group">
                 <label>E-mail</label>
-                <input type="email" placeholder="jean@exemple.fr" required />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="jean@exemple.fr"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
               <div className="form-group">
                 <label>Mot de passe</label>
-                <input type="password" required />
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
+              {/* <div className="form-group">
+                <label>Confirmation du mot de passe</label>
+                <input
+                  type="password"
+                  name="password_confirmation"
+                  value={form.password_confirmation}
+                  onChange={handleChange}
+                  required
+                />
+              </div> */}
+              
               {isLogin && (
                 <div className="form-checkbox">
                   <input type="checkbox" id="remember" />
@@ -62,8 +125,18 @@ export default function Auth() {
                 </div>
               )}
 
-              <button type="submit" className="btn btn--primary auth-submit">
-                {isLogin ? "Se connecter" : "Créer mon compte"}
+              {error && <p className="text-danger mb-2">{error}</p>}
+
+              <button
+                type="submit"
+                className="btn btn--primary auth-submit"
+                disabled={loading}
+              >
+                {loading
+                  ? "Traitement..."
+                  : isLogin
+                  ? "Se connecter"
+                  : "Créer mon compte"}
               </button>
 
               {isLogin && (

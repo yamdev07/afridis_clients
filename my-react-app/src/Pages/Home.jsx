@@ -212,7 +212,7 @@ export default function Home() {
             <div className="pricing-card">
               <p className="pricing-label">Offre lancement</p>
               <div className="pricing-amount">
-                <p>19FCFA</p>
+                <p>19&nbsp;000&nbsp;FCFA</p>
                 <span>/mois HT</span>
               </div>
               <p className="pricing-details">
