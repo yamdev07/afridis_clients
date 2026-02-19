@@ -38,10 +38,10 @@ export default function FAQ() {
 
   return (
     <div className="page-container">
-        <Navbar />
+      <Navbar />
       <section className="faq-section" id="faq">
         <div className="container">
-          <div className="section-header text-center" style={{ marginLeft: "75vh" }}>
+          <div className="section-header text-center">
             <p className="section-subtitle">FAQ</p>
             <h1 className="page-title">Questions fréquentes</h1>
             <p className="page-intro">
@@ -68,6 +68,10 @@ export default function FAQ() {
           </div>
         </div>
       </section>
+      <footer className="footer">
+        <p>© 2025 ClientFlow. Tous droits réservés.</p>
+        <p className="footer-links">Politique de confidentialité · Mentions légales</p>
+      </footer>
     </div>
   );
 }
