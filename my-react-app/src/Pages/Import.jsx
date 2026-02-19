@@ -58,32 +58,39 @@ export default function Import ()  {
   };
 
   return (
-    <div className="container mt-4">
+    <div className="d-flex" style={{ minHeight: "100vh" }}>
       <Sidebar/>
-      <h2>Import PDF File</h2>
-      <input type="file" accept="application/pdf" onChange={handleFileChange} className="form-control mb-3" />
-      {error && <div className="alert alert-danger">{error}</div>}
-      <div className="card">
-        <div className="card-body">
-          <h5 className="card-title">Extracted Data</h5>
-          <ul className="list-group list-group-flush">
-            <li className="list-group-item">Report Date: {extractedData.report_date}</li>
-            <li className="list-group-item">Commercial Login: {extractedData.commercial_login}</li>
-            <li className="list-group-item">Full Name: {extractedData.full_name}</li>
-            <li className="list-group-item">Line Number: {extractedData.line_number}</li>
-            <li className="list-group-item">Phone: {extractedData.phone}</li>
-            <li className="list-group-item">Email: {extractedData.email}</li>
-            <li className="list-group-item">Location: {extractedData.location}</li>
-            <li className="list-group-item">Offer: {extractedData.offer}</li>
-            <li className="list-group-item">Payer Number: {extractedData.payer_number}</li>
-            <li className="list-group-item">Subscription Date: {extractedData.subscription_date}</li>
-            <li className="list-group-item">Installation Date: {extractedData.installation_date}</li>
-            <li className="list-group-item">Payment Reference: {extractedData.payment_reference}</li>
-            <li className="list-group-item">Notes: {extractedData.notes}</li>
-            <li className="list-group-item">Client Type: {extractedData.client_type}</li>
-          </ul>
+      <main className="flex-grow-1 p-4 bg-light">
+        <h2 className="mb-3">Import PDF File</h2>
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={handleFileChange}
+          className="form-control mb-3"
+        />
+        {error && <div className="alert alert-danger">{error}</div>}
+        <div className="card">
+          <div className="card-body">
+            <h5 className="card-title">Extracted Data</h5>
+            <ul className="list-group list-group-flush">
+              <li className="list-group-item">Report Date: {extractedData.report_date}</li>
+              <li className="list-group-item">Commercial Login: {extractedData.commercial_login}</li>
+              <li className="list-group-item">Full Name: {extractedData.full_name}</li>
+              <li className="list-group-item">Line Number: {extractedData.line_number}</li>
+              <li className="list-group-item">Phone: {extractedData.phone}</li>
+              <li className="list-group-item">Email: {extractedData.email}</li>
+              <li className="list-group-item">Location: {extractedData.location}</li>
+              <li className="list-group-item">Offer: {extractedData.offer}</li>
+              <li className="list-group-item">Payer Number: {extractedData.payer_number}</li>
+              <li className="list-group-item">Subscription Date: {extractedData.subscription_date}</li>
+              <li className="list-group-item">Installation Date: {extractedData.installation_date}</li>
+              <li className="list-group-item">Payment Reference: {extractedData.payment_reference}</li>
+              <li className="list-group-item">Notes: {extractedData.notes}</li>
+              <li className="list-group-item">Client Type: {extractedData.client_type}</li>
+            </ul>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
