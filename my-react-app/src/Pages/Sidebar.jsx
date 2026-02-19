@@ -15,53 +15,97 @@ function Sidebar() {
 
   return (
     <aside
-      className="bg-dark text-white p-3"
-      style={{ height: "100vh", width: "240px", position: "sticky", top: 0 }}
+      className="bg-dark text-white d-flex flex-column p-3"
+      style={{ height: "100vh", width: "260px", position: "sticky", top: 0 }}
     >
       <h2 className="text-center mb-4">ClientFlow CRM</h2>
 
-      <ul className="list-unstyled">
-
-        <li className={`p-3 mb-2 rounded ${isActive("/dashboard") ? "bg-secondary" : ""}`}
-            onClick={() => navigate("/dashboard")} style={{ cursor: "pointer" }}>
-          Dashboard
-        </li>
-
-        <li className={`p-3 mb-2 rounded ${isActive("/clients") ? "bg-secondary" : ""}`}
-            onClick={() => navigate("/clients")} style={{ cursor: "pointer" }}>
-          Clients
-        </li>
-
-        <li className={`p-3 mb-2 rounded ${isActive("/services") ? "bg-secondary" : ""}`}
-            onClick={() => navigate("/services")} style={{ cursor: "pointer" }}>
-          Services
-        </li>
-
-        <li className={`p-3 mb-2 rounded ${isActive("/reports") ? "bg-secondary" : ""}`}
-            onClick={() => navigate("/reports")} style={{ cursor: "pointer" }}>
-          Rapports
-        </li>
-
-        <hr />
-
-        <li className="p-3 mb-2 rounded"
-            onClick={() => navigate("/import")} style={{ cursor: "pointer" }}>
-          Importer PDF
-        </li>
-
-        <li className="p-3 mb-2 rounded"
-            onClick={() => navigate("/export")} style={{ cursor: "pointer" }}>
-          Exporter PDF
-        </li>
-
-        <li className="p-3 mt-4 rounded bg-danger text-center"
+      <nav className="flex-grow-1">
+        <ul className="nav nav-pills flex-column gap-1">
+          <li
+            className={`nav-link text-start ${
+              isActive("/dashboard") ? "bg-secondary" : ""
+            }`}
+            onClick={() => navigate("/dashboard")}
             style={{ cursor: "pointer" }}
-            onClick={handleLogout}>
-          Déconnexion
-        </li>
-      </ul>
+          >
+            Dashboard
+          </li>
+
+          <li
+            className={`nav-link text-start ${
+              isActive("/clients") ? "bg-secondary" : ""
+            }`}
+            onClick={() => navigate("/clients")}
+            style={{ cursor: "pointer" }}
+          >
+            Clients
+          </li>
+
+          <li
+            className={`nav-link text-start ${
+              isActive("/services") ? "bg-secondary" : ""
+            }`}
+            onClick={() => navigate("/services")}
+            style={{ cursor: "pointer" }}
+          >
+            Services
+          </li>
+
+          <li
+            className={`nav-link text-start ${
+              isActive("/reports") ? "bg-secondary" : ""
+            }`}
+            onClick={() => navigate("/reports")}
+            style={{ cursor: "pointer" }}
+          >
+            Rapports
+          </li>
+
+          <li
+            className={`nav-link text-start ${
+              isActive("/import") ? "bg-secondary" : ""
+            }`}
+            onClick={() => navigate("/import")}
+            style={{ cursor: "pointer" }}
+          >
+            Import PDF / CSV
+          </li>
+
+          <li
+            className={`nav-link text-start ${
+              isActive("/export") ? "bg-secondary" : ""
+            }`}
+            onClick={() => navigate("/export")}
+            style={{ cursor: "pointer" }}
+          >
+            Export PDF / CSV
+          </li>
+
+          <hr />
+
+          <li
+            className={`nav-link text-start ${
+              isActive("/profile") ? "bg-secondary" : ""
+            }`}
+            onClick={() => navigate("/profile")}
+            style={{ cursor: "pointer" }}
+          >
+            Profil
+          </li>
+        </ul>
+      </nav>
+
+      <button
+        className="btn btn-danger mt-3 w-100"
+        style={{ cursor: "pointer" }}
+        onClick={handleLogout}
+      >
+        Déconnexion
+      </button>
     </aside>
   );
 }
 
 export default Sidebar;
+
