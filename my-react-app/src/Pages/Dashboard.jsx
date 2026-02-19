@@ -47,12 +47,37 @@ export default function Dashboard() {
           <span className="role-badge">{user?.role || "Admin"}</span>
         </header>
 
-        <div className="row">
+        <div className="row mb-4">
           <Stat title="Total Clients" value={summary?.clients} />
           <Stat title="Installés" value={summary?.installed} />
           <Stat title="En attente" value={summary?.pending} />
           <Stat title="TV Actives" value={summary?.tv} />
         </div>
+
+        <section className="row g-4">
+          <div className="col-md-8">
+            <div className="card h-100">
+              <div className="card-body">
+                <h5 className="card-title">Évolution des installations</h5>
+                <p className="text-muted">
+                  Zone réservée pour un futur graphe (courbe ou barres) montrant l'évolution
+                  des installations et des clients actifs sur la période choisie.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card h-100">
+              <div className="card-body">
+                <h5 className="card-title">Répartition des offres</h5>
+                <p className="text-muted">
+                  Zone réservée pour un graphe circulaire (pie chart) affichant la part de
+                  chaque offre ou service dans le portefeuille clients.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
