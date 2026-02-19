@@ -5,10 +5,10 @@ import Navbar from "./Navbar";
 export default function Contact() {
   return (
     <div className="page-container">
-        <Navbar />
+      <Navbar />
       <section className="contact-section" id="contact">
         <div className="container">
-          <div className="section-header text-center" style={{ marginLeft: "75vh" }}>
+          <div className="section-header text-center">
             <p className="section-subtitle">Contact</p>
             <h1 className="page-title">Nous sommes là pour vous aider</h1>
             <p className="page-intro">
@@ -56,6 +56,10 @@ export default function Contact() {
           </div>
         </div>
       </section>
+      <footer className="footer">
+        <p>© 2025 ClientFlow. Tous droits réservés.</p>
+        <p className="footer-links">Politique de confidentialité · Mentions légales</p>
+      </footer>
     </div>
   );
 }
