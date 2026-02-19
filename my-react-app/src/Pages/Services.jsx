@@ -52,6 +52,31 @@ function Services() {
   ]);
 
   const [search, setSearch] = useState("");
+  const [selectedService, setSelectedService] = useState(null);
+
+  const mockSubscribers = [
+    {
+      id: 1,
+      name: "Entreprise Alpha",
+      subscriptionDate: "2024-01-10",
+      amount: 150000,
+      contact: "alpha@clientflow.test",
+    },
+    {
+      id: 2,
+      name: "Client Bêta",
+      subscriptionDate: "2024-02-05",
+      amount: 50000,
+      contact: "beta@clientflow.test",
+    },
+    {
+      id: 3,
+      name: "Société Gamma",
+      subscriptionDate: "2024-03-21",
+      amount: 250000,
+      contact: "gamma@clientflow.test",
+    },
+  ];
 
   const deleteService = (id) => {
     setServices(services.filter((s) => s.id !== id));
@@ -102,7 +127,11 @@ function Services() {
         <div className="row">
           {filteredServices.map((service) => (
             <div key={service.id} className="col-md-6 mb-4">
-              <div className="card service-card">
+              <div
+                className="card service-card"
+                onClick={() => setSelectedService(service)}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="card-body">
                   <h5>{service.name}</h5>
                   <p>{service.description}</p>
@@ -141,6 +170,52 @@ function Services() {
             </div>
           ))}
         </div>
+
+        {selectedService && (
+          <div className="card mt-4">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h5 className="mb-1">
+                    Clients abonnés à {selectedService.name}
+                  </h5>
+                  <small className="text-muted">
+                    Détail des souscriptions (exemple de données)
+                  </small>
+                </div>
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={() => setSelectedService(null)}
+                >
+                  Fermer
+                </button>
+              </div>
+
+              <div className="table-responsive">
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Client</th>
+                      <th>Date d'abonnement</th>
+                      <th>Montant</th>
+                      <th>Contact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockSubscribers.map((sub) => (
+                      <tr key={sub.id}>
+                        <td>{sub.name}</td>
+                        <td>{sub.subscriptionDate}</td>
+                        <td>{sub.amount.toLocaleString()} FCFA</td>
+                        <td>{sub.contact}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

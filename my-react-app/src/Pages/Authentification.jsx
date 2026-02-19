@@ -6,6 +6,7 @@ import { api } from "../api/clientflow";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -98,13 +99,29 @@ export default function Auth() {
 
               <div className="form-group">
                 <label>Mot de passe</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="input-group">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    className="form-control"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={
+                      showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"
+                    }
+                    title={
+                      showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"
+                    }
+                  >
+                    {showPassword ? "🙈" : "👁"}
+                  </button>
+                </div>
               </div>
 
               {/* <div className="form-group">
