@@ -1,0 +1,129 @@
+import pool from '../config/database.js';
+
+export const getAllServices = async (req, res, next) => {
+  try {
+    const { is_active } = req.query;
+    let query = 'SELECT * FROM services';
+    const params = [];
+
+    if (is_active !== undefined) {
+      query += ' WHERE is_active = $1';
+      params.push(is_active === 'true');
+    }
+
+    query += ' ORDER BY label';
+
+    const result = await pool.query(query, params);
+    res.json({ data: result.rows });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getServiceById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT s.*,
+              json_agg(
+                json_build_object(
+                  'id', sub.id,
+                  'client', json_build_object(
+                    'id', c.id,
+                    'full_name', c.full_name,
+                    'email', c.email,
+                    'phone', c.phone
+                  ),
+                  'subscription_date', sub.subscription_date,
+                  'installation_date', sub.installation_date,
+                  'contract_cost', sub.contract_cost,
+                  'status', json_build_object('id', st.id, 'code', st.code, 'label', st.label),
+                  'line_number', sub.line_number
+                )
+              ) FILTER (WHERE sub.id IS NOT NULL) as subscribers
+       FROM services s
+       LEFT JOIN subscriptions sub ON sub.service_id = s.id
+       LEFT JOIN clients c ON sub.client_id = c.id
+       LEFT JOIN statuses st ON sub.status_id = st.id
+       WHERE s.id = $1
+       GROUP BY s.id`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Service non trouvé' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createService = async (req, res, next) => {
+  try {
+    const { code, label, description, monthly_price = 0, is_active = true } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO services (code, label, description, monthly_price, is_active)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [code, label, description || null, monthly_price, is_active]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    if (error.code === '23505') { // Unique violation
+      return res.status(400).json({ message: 'Un service avec ce code existe déjà' });
+    }
+    next(error);
+  }
+};
+
+export const updateService = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { code, label, description, monthly_price, is_active } = req.body;
+
+    const result = await pool.query(
+      `UPDATE services
+       SET code = COALESCE($1, code),
+           label = COALESCE($2, label),
+           description = COALESCE($3, description),
+           monthly_price = COALESCE($4, monthly_price),
+           is_active = COALESCE($5, is_active),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6
+       RETURNING *`,
+      [code, label, description, monthly_price, is_active, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Service non trouvé' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(400).json({ message: 'Un service avec ce code existe déjà' });
+    }
+    next(error);
+  }
+};
+
+export const deleteService = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query('DELETE FROM services WHERE id = $1 RETURNING id', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Service non trouvé' });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
