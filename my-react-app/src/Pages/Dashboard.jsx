@@ -1,41 +1,40 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
+import { api } from "../api/clientflow";
 import "../styles/Dashboard.css";
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [error, setError] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
-    // Simulation d'appel API
-    setTimeout(() => {
-      setSummary({
-        clients: 124,
-        installed: 98,
-        pending: 26,
-        tv: 87,
-      });
-      setLoading(false);
-    }, 1200);
+    const fetchSummary = async () => {
+      try {
+        const data = await api.getDashboardSummary();
+        setSummary(data);
+      } catch (err) {
+        console.error("Erreur lors du chargement du dashboard:", err);
+        setError(err.message || "Erreur de chargement");
+        // Fallback avec des données par défaut
+        setSummary({
+          clients: 0,
+          installed: 0,
+          pending: 0,
+          tv: 0,
+          totalRevenue: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSummary();
   }, []);
 
-  // Simulation légère variation automatique
-  useEffect(() => {
-    if (!summary) return;
-
-    const interval = setInterval(() => {
-      setSummary(prev => ({
-        ...prev,
-        clients: prev.clients + Math.floor(Math.random() * 2),
-        installed: prev.installed + Math.floor(Math.random() * 2),
-      }));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [summary]);
-
   if (loading) return <p style={{ padding: "20px" }}>Chargement des données...</p>;
+  if (error) return <p style={{ padding: "20px", color: "red" }}>Erreur: {error}</p>;
 
   return (
     <div className="dashboard-container">
@@ -44,7 +43,13 @@ export default function Dashboard() {
       <main className="dashboard-main">
         <header className="dashboard-header">
           <h1>Dashboard</h1>
-          <span className="role-badge">{user?.role || "Admin"}</span>
+          <span className="role-badge">
+            {user?.role === "super_admin"
+              ? "Admin suprême"
+              : user?.role === "admin"
+              ? "Admin"
+              : "Commercial"}
+          </span>
         </header>
 
         <div className="row mb-4">
