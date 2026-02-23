@@ -7,10 +7,17 @@ function Sidebar() {
 
   const isActive = (path) => location.pathname.startsWith(path);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      const { api } = await import("../api/clientflow");
+      await api.logout();
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/");
+    }
   };
 
   return (
