@@ -69,7 +69,7 @@ export default function FAQ() {
         </div>
       </section>
       <footer className="footer">
-        <p>© 2025 ClientFlow. Tous droits réservés.</p>
+        <p>© 2026 ClientFlow. Tous droits réservés.</p>
         <p className="footer-links">Politique de confidentialité · Mentions légales</p>
       </footer>
     </div>

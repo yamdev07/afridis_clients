@@ -7,7 +7,10 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "null")
+      : null;
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -17,7 +20,6 @@ export default function Dashboard() {
       } catch (err) {
         console.error("Erreur lors du chargement du dashboard:", err);
         setError(err.message || "Erreur de chargement");
-        // Fallback avec des données par défaut
         setSummary({
           clients: 0,
           installed: 0,
@@ -33,8 +35,19 @@ export default function Dashboard() {
     fetchSummary();
   }, []);
 
-  if (loading) return <p style={{ padding: "20px" }}>Chargement des données...</p>;
-  if (error) return <p style={{ padding: "20px", color: "red" }}>Erreur: {error}</p>;
+  if (loading)
+    return <p style={{ padding: "20px" }}>Chargement des données...</p>;
+  if (error)
+    return (
+      <p style={{ padding: "20px", color: "red" }}>Erreur: {error}</p>
+    );
+
+  const roleLabel =
+    user?.role === "super_admin"
+      ? "Admin suprême"
+      : user?.role === "admin"
+      ? "Admin"
+      : "Commercial";
 
   return (
     <div className="dashboard-container">
@@ -42,14 +55,18 @@ export default function Dashboard() {
 
       <main className="dashboard-main">
         <header className="dashboard-header">
-          <h1>Dashboard</h1>
-          <span className="role-badge">
-            {user?.role === "super_admin"
-              ? "Admin suprême"
-              : user?.role === "admin"
-              ? "Admin"
-              : "Commercial"}
-          </span>
+          <div>
+            <h1>Dashboard</h1>
+            <p className="dashboard-subtitle">
+              {user?.role === "super_admin" &&
+                "Vue globale de l’activité et accès aux outils d’administration."}
+              {user?.role === "admin" &&
+                "Vue globale de l’activité pour la gestion opérationnelle."}
+              {user?.role === "commercial" &&
+                "Suivez vos performances commerciales et vos clients."}
+            </p>
+          </div>
+          <span className="role-badge">{roleLabel}</span>
         </header>
 
         <div className="row mb-4">
@@ -57,6 +74,12 @@ export default function Dashboard() {
           <Stat title="Installés" value={summary?.installed} />
           <Stat title="En attente" value={summary?.pending} />
           <Stat title="TV Actives" value={summary?.tv} />
+          {user?.role !== "commercial" && (
+            <Stat
+              title="Revenus totaux (FCFA)"
+              value={summary?.totalRevenue?.toLocaleString("fr-FR")}
+            />
+          )}
         </div>
 
         <section className="row g-4">
@@ -65,8 +88,9 @@ export default function Dashboard() {
               <div className="card-body">
                 <h5 className="card-title">Évolution des installations</h5>
                 <p className="text-muted">
-                  Zone réservée pour un futur graphe (courbe ou barres) montrant l'évolution
-                  des installations et des clients actifs sur la période choisie.
+                  Zone réservée pour un futur graphe (courbe ou barres)
+                  montrant l&apos;évolution des installations et des clients
+                  actifs sur la période choisie.
                 </p>
               </div>
             </div>
@@ -76,13 +100,33 @@ export default function Dashboard() {
               <div className="card-body">
                 <h5 className="card-title">Répartition des offres</h5>
                 <p className="text-muted">
-                  Zone réservée pour un graphe circulaire (pie chart) affichant la part de
-                  chaque offre ou service dans le portefeuille clients.
+                  Zone réservée pour un graphe circulaire (pie chart) affichant
+                  la part de chaque offre ou service dans le portefeuille
+                  clients.
                 </p>
               </div>
             </div>
           </div>
         </section>
+
+        {user?.role === "super_admin" && (
+          <section className="row g-4 mt-3">
+            <div className="col-md-6">
+              <div className="card h-100 border-primary">
+                <div className="card-body">
+                  <h5 className="card-title">Administration</h5>
+                  <p className="text-muted mb-2">
+                    Gérez les comptes administrateurs et commerciaux depuis le
+                    module d’administration.
+                  </p>
+                  <p className="mb-0">
+                    Accès rapide via le menu latéral &quot;Administration&quot;.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

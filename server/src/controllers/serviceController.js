@@ -61,6 +61,39 @@ export const getServiceById = async (req, res, next) => {
   }
 };
 
+export const getServiceClients = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT 
+         c.id as client_id,
+         c.full_name,
+         c.email,
+         c.phone,
+         s.id as subscription_id,
+         s.subscription_date,
+         s.installation_date,
+         s.contract_cost,
+         s.line_number,
+         st.code as status_code,
+         st.label as status_label,
+         a.login as agent_login
+       FROM subscriptions s
+       JOIN clients c ON s.client_id = c.id
+       JOIN statuses st ON s.status_id = st.id
+       LEFT JOIN agents a ON s.agent_id = a.id
+       WHERE s.service_id = $1
+       ORDER BY s.subscription_date DESC NULLS LAST, s.created_at DESC`,
+      [id]
+    );
+
+    res.json({ data: result.rows });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createService = async (req, res, next) => {
   try {
     const { code, label, description, monthly_price = 0, is_active = true } = req.body;

@@ -1,9 +1,19 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import NotificationBell from "../components/NotificationBell";
 
 function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  let currentUser = null;
+  try {
+    if (typeof window !== "undefined") {
+      currentUser = JSON.parse(localStorage.getItem("user") || "null");
+    }
+  } catch {
+    currentUser = null;
+  }
 
   const isActive = (path) => location.pathname.startsWith(path);
 
@@ -15,90 +25,132 @@ function Sidebar() {
 
   return (
     <aside
-      className="bg-dark text-white d-flex flex-column p-3"
-      style={{ height: "100vh", width: "260px", position: "sticky", top: 0 }}
+      className="flex flex-col bg-slate-900 text-slate-50 p-4 w-64 h-screen sticky top-0 shadow-xl"
     >
-      <h2 className="text-center mb-4">ClientFlow CRM</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => navigate("/dashboard")}
+        >
+          <div className="h-8 w-8 rounded-xl bg-indigo-500 flex items-center justify-center text-xs font-bold">
+            CF
+          </div>
+          <div>
+            <p className="text-sm font-semibold leading-tight">ClientFlow</p>
+            <p className="text-[11px] text-slate-400 leading-tight">
+              Espace {currentUser?.role || "utilisateur"}
+            </p>
+          </div>
+        </div>
+        <NotificationBell />
+      </div>
 
-      <nav className="flex-grow-1">
-        <ul className="nav nav-pills flex-column gap-1">
-          <li
-            className={`nav-link text-start ${
-              isActive("/dashboard") ? "bg-secondary" : ""
-            }`}
-            onClick={() => navigate("/dashboard")}
-            style={{ cursor: "pointer" }}
-          >
-            Dashboard
+      <nav className="flex-grow overflow-y-auto">
+        <ul className="space-y-1 text-sm">
+          <li>
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                isActive("/dashboard") ? "bg-slate-800 text-white" : "text-slate-200"
+              }`}
+              onClick={() => navigate("/dashboard")}
+            >
+              Dashboard
+            </button>
           </li>
 
-          <li
-            className={`nav-link text-start ${
-              isActive("/clients") ? "bg-secondary" : ""
-            }`}
-            onClick={() => navigate("/clients")}
-            style={{ cursor: "pointer" }}
-          >
-            Clients
+          <li>
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                isActive("/clients") ? "bg-slate-800 text-white" : "text-slate-200"
+              }`}
+              onClick={() => navigate("/clients")}
+            >
+              Clients
+            </button>
           </li>
 
-          <li
-            className={`nav-link text-start ${
-              isActive("/services") ? "bg-secondary" : ""
-            }`}
-            onClick={() => navigate("/services")}
-            style={{ cursor: "pointer" }}
-          >
-            Services
+          <li>
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                isActive("/services") ? "bg-slate-800 text-white" : "text-slate-200"
+              }`}
+              onClick={() => navigate("/services")}
+            >
+              Services
+            </button>
           </li>
 
-          <li
-            className={`nav-link text-start ${
-              isActive("/reports") ? "bg-secondary" : ""
-            }`}
-            onClick={() => navigate("/reports")}
-            style={{ cursor: "pointer" }}
-          >
-            Rapports
+          <li>
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                isActive("/reports") ? "bg-slate-800 text-white" : "text-slate-200"
+              }`}
+              onClick={() => navigate("/reports")}
+            >
+              Rapports
+            </button>
           </li>
 
-          <li
-            className={`nav-link text-start ${
-              isActive("/import") ? "bg-secondary" : ""
-            }`}
-            onClick={() => navigate("/import")}
-            style={{ cursor: "pointer" }}
-          >
-            Import PDF / CSV
+          {currentUser?.role === "super_admin" && (
+            <>
+              <li className="pt-2 border-t border-slate-800 mt-2">
+                <button
+                  type="button"
+                  className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                    isActive("/admin/users") ? "bg-slate-800 text-white" : "text-slate-200"
+                  }`}
+                  onClick={() => navigate("/admin/users")}
+                >
+                  Administration
+                </button>
+              </li>
+            </>
+          )}
+
+          <li>
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                isActive("/import") ? "bg-slate-800 text-white" : "text-slate-200"
+              }`}
+              onClick={() => navigate("/import")}
+            >
+              Import PDF / CSV
+            </button>
           </li>
 
-          <li
-            className={`nav-link text-start ${
-              isActive("/export") ? "bg-secondary" : ""
-            }`}
-            onClick={() => navigate("/export")}
-            style={{ cursor: "pointer" }}
-          >
-            Export PDF / CSV
+          <li>
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                isActive("/export") ? "bg-slate-800 text-white" : "text-slate-200"
+              }`}
+              onClick={() => navigate("/export")}
+            >
+              Export PDF / CSV
+            </button>
           </li>
 
-          <hr />
-
-          <li
-            className={`nav-link text-start ${
-              isActive("/profile") ? "bg-secondary" : ""
-            }`}
-            onClick={() => navigate("/profile")}
-            style={{ cursor: "pointer" }}
-          >
-            Profil
+          <li className="pt-2 border-t border-slate-800 mt-2">
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
+                isActive("/profile") ? "bg-slate-800 text-white" : "text-slate-200"
+              }`}
+              onClick={() => navigate("/profile")}
+            >
+              Profil
+            </button>
           </li>
         </ul>
       </nav>
 
       <button
-        className="btn btn-danger mt-3 w-100"
-        style={{ cursor: "pointer" }}
+        className="mt-4 inline-flex items-center justify-center rounded-lg border border-red-500/70 bg-red-500/90 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-600 transition"
         onClick={handleLogout}
       >
         Déconnexion

@@ -24,12 +24,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      if (api.login) {
-        await api.login(form.email, form.password);
-      }
+      await api.login(form.email, form.password);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Erreur de connexion");
+      const message =
+        err?.response?.data?.message || err.message || "Erreur de connexion";
+      setError(message);
     } finally {
       setLoading(false);
     }

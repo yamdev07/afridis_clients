@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import "../styles/Dashboard.css";
+import { api } from "../api/clientflow";
 
 export default function Profile() {
   const [user, setUser] = useState(() => {
@@ -20,6 +21,38 @@ export default function Profile() {
     email: user?.email || "",
     phone: user?.phone || "",
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await api.me();
+        const merged = { ...user, ...data };
+        setUser(merged);
+        localStorage.setItem("user", JSON.stringify(merged));
+        setForm({
+          name: merged?.name || "",
+          email: merged?.email || "",
+          phone: merged?.phone || "",
+        });
+      } catch (err) {
+        const message =
+          err?.response?.data?.message ||
+          err.message ||
+          "Erreur lors du chargement du profil";
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setForm({
@@ -56,6 +89,11 @@ export default function Profile() {
           <h1>Profil</h1>
           <span className="role-badge">{roleLabel}</span>
         </header>
+
+        {error && <p className="text-danger mb-2">{error}</p>}
+        {loading && (
+          <p style={{ padding: "4px 0" }}>Chargement des informations...</p>
+        )}
 
         <section className="profile-section row g-4">
           <div className="col-md-6">
@@ -97,7 +135,7 @@ export default function Profile() {
                     />
                   </div>
                   <button type="submit" className="btn btn-primary">
-                    Mettre à jour
+                    Mettre à jour localement
                   </button>
                 </form>
               </div>
@@ -105,13 +143,38 @@ export default function Profile() {
           </div>
 
           <div className="col-md-6">
-            <div className="card">
+            <div className="card mb-3">
               <div className="card-body">
                 <h5 className="card-title mb-3">Résumé du compte</h5>
-                <p><strong>Nom :</strong> {user?.name || "Non renseigné"}</p>
-                <p><strong>E‑mail :</strong> {user?.email || "Non renseigné"}</p>
-                <p><strong>Téléphone :</strong> {user?.phone || "Non renseigné"}</p>
-                <p><strong>Rôle :</strong> {roleLabel}</p>
+                <p>
+                  <strong>Nom :</strong> {user?.name || "Non renseigné"}
+                </p>
+                <p>
+                  <strong>E‑mail :</strong> {user?.email || "Non renseigné"}
+                </p>
+                <p>
+                  <strong>Téléphone :</strong>{" "}
+                  {user?.phone || "Non renseigné"}
+                </p>
+                <p>
+                  <strong>Rôle :</strong> {roleLabel}
+                </p>
+                {user?.agent_login && (
+                  <p>
+                    <strong>Login commercial :</strong> {user.agent_login}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Placeholder pour futures notifications */}
+            <div className="card">
+              <div className="card-body">
+                <h5 className="card-title mb-3">Notifications</h5>
+                <p className="text-muted mb-0">
+                  Le module de notifications sera connecté ici (par exemple :
+                  nouvelles ventes, installations planifiées, etc.).
+                </p>
               </div>
             </div>
           </div>

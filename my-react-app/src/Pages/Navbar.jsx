@@ -46,16 +46,10 @@ export default function Navbar() {
 
         <div className="navbar-actions">
           <button
-            className="btn btn-outline-light btn-sm"
+            className="navbar-cta btn btn-primary btn-sm"
             onClick={() => handleNavClick("/login")}
           >
             Connexion
-          </button>
-          <button
-            className="navbar-cta btn btn-primary btn-sm"
-            onClick={() => handleNavClick("/register")}
-          >
-            Inscription
           </button>
         </div>
       </div>

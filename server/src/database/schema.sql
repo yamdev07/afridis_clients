@@ -108,6 +108,18 @@ CREATE TABLE IF NOT EXISTS token_blacklist (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table des notifications utilisateurs
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body TEXT,
+    is_read BOOLEAN DEFAULT false,
+    meta JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_agent_id ON users(agent_id);
@@ -116,6 +128,8 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_service_id ON subscriptions(service
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status_id ON subscriptions(status_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_line_number ON subscriptions(line_number);
 CREATE INDEX IF NOT EXISTS idx_token_blacklist_expires_at ON token_blacklist(expires_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created_at
+  ON notifications(user_id, is_read, created_at DESC);
 
 -- Données initiales pour les statuts
 INSERT INTO statuses (code, label) VALUES

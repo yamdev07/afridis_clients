@@ -10,8 +10,8 @@ import Rapports from './Pages/Rapports'
 import Import from './Pages/Import'
 import Export from './Pages/Export'
 import Login from './Pages/Login'
-import Register from './Pages/Register'
 import Profile from './Pages/Profile'
+import AdminUsers from './Pages/AdminUsers'
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 
 function App() {
@@ -23,10 +23,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />
-          {/* Ancienne page combinée (connexion / inscription) conservée pour compatibilité éventuelle */}
+          {/* Ancienne page combinée (connexion / inscription) redirigée vers la connexion */}
           <Route path="/auth" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/clients' element={<Clients/>}/>
           <Route path='/services' element={<Services/>}/>
@@ -34,6 +33,7 @@ function App() {
           <Route path='/import' element={<Import/>}/>
           <Route path='/export' element={<Export/>}/>
           <Route path='/profile' element={<Profile/>}/>
+          <Route path='/admin/users' element={<AdminUsers/>}/>
         </Routes>
       </BrowserRouter>
     </div>

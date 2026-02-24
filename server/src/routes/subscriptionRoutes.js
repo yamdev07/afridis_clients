@@ -5,8 +5,9 @@ import {
   createSubscription,
   updateSubscription,
   deleteSubscription,
+  bulkImportSubscriptions,
 } from '../controllers/subscriptionController.js';
-import { authenticateToken } from '../middlewares/auth.js';
+import { authenticateToken, requireRole } from '../middlewares/auth.js';
 import { validateSubscription } from '../middlewares/validation.js';
 
 const router = express.Router();
@@ -18,5 +19,12 @@ router.get('/:id', getSubscriptionById);
 router.post('/', validateSubscription, createSubscription);
 router.put('/:id', validateSubscription, updateSubscription);
 router.delete('/:id', deleteSubscription);
+
+// Import en masse via Excel (réservé aux admins)
+router.post(
+  '/bulk-import',
+  requireRole('admin', 'super_admin'),
+  bulkImportSubscriptions,
+);
 
 export default router;
