@@ -350,8 +350,16 @@ export const bulkImportSubscriptions = async (req, res, next) => {
   try {
     const { rows } = req.body;
 
+    console.log('NOMBRE DE LIGNES REÇUES:', rows?.length);
+
     if (!Array.isArray(rows) || rows.length === 0) {
       return res.status(400).json({ message: 'Aucune ligne à importer' });
+    }
+
+    // Afficher la structure des 5 premières lignes pour comprendre le mapping
+    for (let i = 0; i < Math.min(5, rows.length); i++) {
+      console.log(`Ligne ${i}:`, JSON.stringify(rows[i], null, 2));
+      console.log(`Clés ligne ${i}:`, Object.keys(rows[i]));
     }
 
     const resultSummary = {
@@ -360,137 +368,223 @@ export const bulkImportSubscriptions = async (req, res, next) => {
       errors: [],
     };
 
-    for (let index = 0; index < rows.length; index += 1) {
-      const row = rows[index] || {};
-      try {
-        const clientName = (row.Client || '').trim();
-        if (!clientName) {
-          resultSummary.skipped += 1;
-          continue;
-        }
+    // Commencer à l'index 3 pour ignorer les 3 premières lignes d'en-tête
+    for (let index = 3; index < rows.length; index++) {
+      const row = rows[index];
+      if (!row) continue;
 
-        const clientPhone = row['Téléphone'] || null;
-        const clientEmail = row.Email || null;
-        const serviceLabelOrCode = row.Service;
-        const statusLabelOrCode = row.Statut;
-        const lineNumber = row['Numéro de ligne'] || null;
-        const amountRaw = row['Montant contrat'];
-        const notes = row.Notes || null;
-        const commercialLogin = row.Commercial;
-        const dateRaw = row.Date;
+      // Afficher les valeurs brutes pour cette ligne
+      console.log(`\n--- LIGNE ${index + 1} (brute) ---`);
+      console.log('__EMPTY_1:', row.__EMPTY_1);
+      console.log('__EMPTY_2:', row.__EMPTY_2);
+      console.log('__EMPTY_3:', row.__EMPTY_3);
+      console.log('__EMPTY_4:', row.__EMPTY_4);
+      console.log('__EMPTY_5:', row.__EMPTY_5);
+      console.log('__EMPTY_6:', row.__EMPTY_6);
+      console.log('__EMPTY_7:', row.__EMPTY_7);
+      console.log('__EMPTY_8:', row.__EMPTY_8);
+      console.log('__EMPTY_9:', row.__EMPTY_9);
+      console.log('__EMPTY_10 à __EMPTY_16:', row.__EMPTY_10, row.__EMPTY_11, row.__EMPTY_12, row.__EMPTY_13, row.__EMPTY_14, row.__EMPTY_15, row.__EMPTY_16);
+      console.log('__EMPTY_17:', row.__EMPTY_17);
 
-        // Trouver ou créer le client
-        let clientId;
-        const clientResult = await pool.query(
-          `SELECT id FROM clients WHERE phone = $1 OR email = $2 LIMIT 1`,
-          [clientPhone || null, clientEmail || null],
-        );
-        if (clientResult.rows.length > 0) {
-          clientId = clientResult.rows[0].id;
-        } else {
-          const createdClient = await pool.query(
-            `INSERT INTO clients (full_name, phone, email, address)
-             VALUES ($1, $2, $3, $4)
-             RETURNING id`,
-            [clientName, clientPhone || null, clientEmail || null, null],
-          );
-          clientId = createdClient.rows[0].id;
-        }
+      // Extraction
+      const commercialLogin = row.__EMPTY_1 ? String(row.__EMPTY_1).trim() : '';
+      const clientName = row.__EMPTY_2 ? String(row.__EMPTY_2).trim() : '';
+      const lineNumber = row.__EMPTY_3 ? String(row.__EMPTY_3).trim() : '';
+      const subscriptionDateRaw = row.__EMPTY_4;
+      const installationDateRaw = row.__EMPTY_5;
+      const email = row.__EMPTY_6 ? String(row.__EMPTY_6).trim() : '';
+      const clientPhone = row.__EMPTY_7 ? String(row.__EMPTY_7).trim() : '';
+      const paymentReference = row.__EMPTY_9 ? String(row.__EMPTY_9).trim() : '';
+      const notes = row.__EMPTY_17 ? String(row.__EMPTY_17).trim() : '';
 
-        // Trouver le service
-        let serviceId = null;
-        if (serviceLabelOrCode) {
-          const serviceResult = await pool.query(
-            `SELECT id FROM services WHERE code = $1 OR label = $2 LIMIT 1`,
-            [serviceLabelOrCode, serviceLabelOrCode],
-          );
-          if (serviceResult.rows.length > 0) {
-            serviceId = serviceResult.rows[0].id;
-          }
-        }
+      // Offre (chercher le 1 dans les colonnes __EMPTY_10 à __EMPTY_16)
+      let offer = '';
+      if (row.__EMPTY_10 === 1 || row.__EMPTY_10 === '1') offer = 'Pro 25Mbps';
+      else if (row.__EMPTY_11 === 1 || row.__EMPTY_11 === '1') offer = 'Pro 50Mbps';
+      else if (row.__EMPTY_12 === 1 || row.__EMPTY_12 === '1') offer = 'Pro 80Mbps';
+      else if (row.__EMPTY_13 === 1 || row.__EMPTY_13 === '1') offer = 'Office 150Mbps';
+      else if (row.__EMPTY_14 === 1 || row.__EMPTY_14 === '1') offer = 'Office 200Mbps';
+      else if (row.__EMPTY_15 === 1 || row.__EMPTY_15 === '1') offer = 'HOME 20MBPS';
+      else if (row.__EMPTY_16 === 1 || row.__EMPTY_16 === '1') offer = 'HOME 50MBPS';
+      // Note: __EMPTY_17 est utilisé pour les notes, pas pour une offre
 
-        // Trouver le statut
-        let statusId = null;
-        if (statusLabelOrCode) {
-          const statusResult = await pool.query(
-            `SELECT id FROM statuses WHERE code = $1 OR label = $2 LIMIT 1`,
-            [statusLabelOrCode, statusLabelOrCode],
-          );
-          if (statusResult.rows.length > 0) {
-            statusId = statusResult.rows[0].id;
-          }
-        }
+      console.log('Commercial:', commercialLogin);
+      console.log('Client:', clientName);
+      console.log('Téléphone:', clientPhone);
+      console.log('Email:', email);
+      console.log('Numéro ligne:', lineNumber);
+      console.log('Offre:', offer);
+      console.log('Notes:', notes);
 
-        // Trouver l'agent via son login
-        let agentId = null;
-        if (commercialLogin) {
-          const agentResult = await pool.query(
-            `SELECT id FROM agents WHERE login = $1 LIMIT 1`,
-            [commercialLogin],
-          );
-          if (agentResult.rows.length > 0) {
-            agentId = agentResult.rows[0].id;
-          }
-        }
-
-        // Parse de la date et du montant
-        let subscriptionDate = null;
-        if (dateRaw) {
-          const parsed = new Date(dateRaw);
-          if (!Number.isNaN(parsed.getTime())) {
-            subscriptionDate = parsed.toISOString().slice(0, 10);
-          }
-        }
-
-        let contractCost = null;
-        if (amountRaw !== undefined && amountRaw !== null && amountRaw !== '') {
-          const normalized = String(amountRaw).replace(/\s/g, '').replace(',', '.');
-          const parsedAmount = parseFloat(normalized);
-          if (!Number.isNaN(parsedAmount)) {
-            contractCost = parsedAmount;
-          }
-        }
-
-        // Tous les champs critiques doivent être présents
-        if (!serviceId || !statusId) {
-          resultSummary.skipped += 1;
-          continue;
-        }
-
-        await pool.query(
-          `INSERT INTO subscriptions (
-            client_id,
-            service_id,
-            status_id,
-            agent_id,
-            line_number,
-            subscription_date,
-            contract_cost,
-            notes
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [
-            clientId,
-            serviceId,
-            statusId,
-            agentId,
-            lineNumber,
-            subscriptionDate,
-            contractCost,
-            notes,
-          ],
-        );
-
-        resultSummary.created += 1;
-      } catch (error) {
-        resultSummary.errors.push({
-          index,
-          message: error.message,
-        });
+      if (!clientName) {
+        console.log('❌ Client name manquant, ligne ignorée');
+        resultSummary.skipped++;
+        continue;
       }
+
+      // Conversion des dates
+      let subscriptionDate = null;
+      if (subscriptionDateRaw && typeof subscriptionDateRaw === 'number') {
+        const excelEpoch = new Date(1899, 11, 30);
+        const jsDate = new Date(excelEpoch.getTime() + subscriptionDateRaw * 24 * 60 * 60 * 1000);
+        subscriptionDate = jsDate.toISOString().split('T')[0];
+      } else if (subscriptionDateRaw && typeof subscriptionDateRaw === 'string') {
+        subscriptionDate = subscriptionDateRaw.split(' ')[0];
+      }
+
+      let installationDate = null;
+      if (installationDateRaw && typeof installationDateRaw === 'number') {
+        const excelEpoch = new Date(1899, 11, 30);
+        const jsDate = new Date(excelEpoch.getTime() + installationDateRaw * 24 * 60 * 60 * 1000);
+        installationDate = jsDate.toISOString().split('T')[0];
+      } else if (installationDateRaw && typeof installationDateRaw === 'string') {
+        installationDate = installationDateRaw.split(' ')[0];
+      }
+
+      // --- Client ---
+      let clientId = null;
+
+      if (clientPhone) {
+        const clientRes = await pool.query(
+          `SELECT id FROM clients WHERE phone = $1 LIMIT 1`,
+          [clientPhone]
+        );
+        if (clientRes.rows.length > 0) {
+          clientId = clientRes.rows[0].id;
+          const addressData = {
+            commercial_login: commercialLogin,
+            offer,
+            payment_reference: paymentReference,
+            notes,
+          };
+          await pool.query(
+            `UPDATE clients SET address = $1::jsonb WHERE id = $2`,
+            [JSON.stringify(addressData), clientId]
+          );
+          console.log('✅ Client existant mis à jour, ID:', clientId);
+        }
+      }
+
+      if (!clientId) {
+        const addressData = {
+          commercial_login: commercialLogin,
+          offer,
+          payment_reference: paymentReference,
+          notes,
+        };
+        const insertRes = await pool.query(
+          `INSERT INTO clients (full_name, phone, email, address)
+           VALUES ($1, $2, $3, $4::jsonb)
+           RETURNING id`,
+          [clientName, clientPhone || null, email || null, JSON.stringify(addressData)]
+        );
+        clientId = insertRes.rows[0].id;
+        console.log('✅ Client créé, ID:', clientId);
+      }
+
+      // --- Service ---
+      let serviceId = null;
+      if (offer) {
+        const serviceRes = await pool.query(
+          `SELECT id FROM services WHERE label ILIKE $1 LIMIT 1`,
+          [`%${offer}%`]
+        );
+        if (serviceRes.rows.length > 0) {
+          serviceId = serviceRes.rows[0].id;
+        } else {
+          const codeSlug = offer.toLowerCase().replace(/\s+/g, '_');
+          const newService = await pool.query(
+            `INSERT INTO services (code, label, is_active)
+             VALUES ($1, $2, true)
+             RETURNING id`,
+            [codeSlug, offer]
+          );
+          serviceId = newService.rows[0].id;
+          console.log('✅ Service créé:', serviceId);
+        }
+      } else {
+        const defaultService = await pool.query(
+          `SELECT id FROM services WHERE code = 'default' LIMIT 1`
+        );
+        if (defaultService.rows.length === 0) {
+          const newDefault = await pool.query(
+            `INSERT INTO services (code, label, is_active)
+             VALUES ('default', 'Service standard', true)
+             RETURNING id`
+          );
+          serviceId = newDefault.rows[0].id;
+        } else {
+          serviceId = defaultService.rows[0].id;
+        }
+      }
+
+      // --- Statut ---
+      let statusId = null;
+      const statusRes = await pool.query(
+        `SELECT id FROM statuses WHERE code = 'pending' LIMIT 1`
+      );
+      if (statusRes.rows.length > 0) {
+        statusId = statusRes.rows[0].id;
+      } else {
+        const newStatus = await pool.query(
+          `INSERT INTO statuses (code, label) VALUES ('pending', 'En attente') RETURNING id`
+        );
+        statusId = newStatus.rows[0].id;
+      }
+
+      // --- Agent ---
+      let agentId = null;
+      if (commercialLogin) {
+        const agentRes = await pool.query(
+          `SELECT id FROM agents WHERE login ILIKE $1 LIMIT 1`,
+          [commercialLogin]
+        );
+        if (agentRes.rows.length > 0) {
+          agentId = agentRes.rows[0].id;
+        } else {
+          const newAgent = await pool.query(
+            `INSERT INTO agents (login, first_name, last_name, active)
+             VALUES ($1, $2, '', true)
+             RETURNING id`,
+            [commercialLogin, commercialLogin]
+          );
+          agentId = newAgent.rows[0].id;
+          console.log('✅ Agent créé:', agentId);
+        }
+      }
+
+      // --- Abonnement ---
+      const subRes = await pool.query(
+        `INSERT INTO subscriptions (
+          client_id, service_id, status_id, agent_id,
+          line_number, subscription_date, planned_installation_date, notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id`,
+        [
+          clientId,
+          serviceId,
+          statusId,
+          agentId,
+          lineNumber || null,
+          subscriptionDate,
+          installationDate,
+          notes || null,
+        ]
+      );
+
+      console.log('✅ Abonnement créé, ID:', subRes.rows[0].id);
+      resultSummary.created++;
     }
+
+    console.log('\n--- RÉSUMÉ FINAL ---');
+    console.log('Créés:', resultSummary.created);
+    console.log('Ignorés:', resultSummary.skipped);
+    console.log('Erreurs:', resultSummary.errors.length);
 
     res.status(201).json(resultSummary);
   } catch (error) {
+    console.error('💥 ERREUR GLOBALE:', error);
     next(error);
   }
 };
