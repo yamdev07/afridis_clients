@@ -110,6 +110,11 @@ export default function Import() {
     setExcelError("");
     setExcelResult(null);
     try {
+       // LOG dans la console du navigateur
+    console.log('Lignes Excel envoyées:', excelRows);
+    console.log('Première ligne:', excelRows[0]);
+    console.log('Clés disponibles:', Object.keys(excelRows[0] || {}));
+    console.log('Premier élément:', excelRows[0] ? JSON.stringify(excelRows[0]) : 'Aucune ligne');
       const result = await api.bulkImportSubscriptions(excelRows);
       setExcelResult(result);
     } catch (err) {
