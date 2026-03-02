@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: "http://localhost:3000/api",
 });
 
 instance.interceptors.request.use((config) => {
@@ -11,6 +11,34 @@ instance.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Déconnexion globale en cas de token expiré / non autorisé
+instance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const status = error?.response?.status;
+
+    if (status === 401) {
+      try {
+        // Nettoyer le stockage local
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      } catch {
+        // ignore
+      }
+
+      // Rediriger vers la page de connexion
+      if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname;
+        if (currentPath !== "/") {
+          window.location.href = "/";
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export const api = {
   // Auth
@@ -39,11 +67,25 @@ export const api = {
 
   me: () => instance.get("/auth/me").then((r) => r.data),
 
+  updateProfile: (payload) =>
+    instance.put("/auth/me", payload).then((r) => r.data),
+
+  forgotPassword: (email, newPassword) =>
+    instance
+      .post("/auth/forgot-password", { email, newPassword })
+      .then((r) => r.data),
+
   // Dashboard & données métier
   getDashboardSummary: () => instance.get("/dashboard").then((r) => r.data),
 
   listClients: (params) =>
     instance.get("/clients", { params }).then((r) => r.data),
+
+  createClient: (payload) =>
+    instance.post("/clients", payload).then((r) => r.data),
+
+  updateClient: (id, payload) =>
+    instance.put(`/clients/${id}`, payload).then((r) => r.data),
 
   listServices: (params) =>
     instance.get("/services", { params }).then((r) => r.data),
@@ -66,6 +108,13 @@ export const api = {
   // Gestion des utilisateurs (admin suprême)
   listUsers: () => instance.get("/users").then((r) => r.data),
   createUser: (payload) => instance.post("/users", payload).then((r) => r.data),
+  updateUser: (id, payload) =>
+    instance.put(`/users/${id}`, payload).then((r) => r.data),
+  deleteUser: (id) => instance.delete(`/users/${id}`).then((r) => r.data),
+  changeUserPassword: (id, newPassword) =>
+    instance
+      .patch(`/users/${id}/password`, { newPassword })
+      .then((r) => r.data),
 
   // Notifications
   listNotifications: (params) =>
