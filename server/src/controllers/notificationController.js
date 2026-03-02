@@ -5,7 +5,11 @@ export const listNotifications = async (req, res, next) => {
     const { unreadOnly } = req.query;
 
     let query = `
-      SELECT id, type, title, body, is_read, meta, created_at
+      SELECT id,
+             title,
+             NULL::text as body,
+             is_read,
+             created_at
       FROM notifications
       WHERE user_id = $1
     `;
