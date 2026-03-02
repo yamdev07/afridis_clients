@@ -20,10 +20,10 @@ router.post('/', validateSubscription, createSubscription);
 router.put('/:id', validateSubscription, updateSubscription);
 router.delete('/:id', deleteSubscription);
 
-// Import en masse via Excel (réservé aux admins)
+// Import en masse via Excel (réservé aux rôles internes)
 router.post(
   '/bulk-import',
-  requireRole('admin', 'super_admin'),
+  requireRole('admin', 'super_admin', 'commercial'),
   bulkImportSubscriptions,
 );
 
