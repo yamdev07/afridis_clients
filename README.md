@@ -1,6 +1,6 @@
 📡 ClientFlow
 
-Plateforme de gestion commerciale pour fournisseurs de fibre internet
+Plateforme de gestion commerciale pour fournisseurs de fibre internet.
 ClientFlow est une application web destinée aux entreprises spécialisées dans la fourniture de fibre internet (vente, installation, maintenance et suivi client).
 Elle permet de centraliser la gestion des clients, des services fibre, des installations et du travail des agents terrain via une interface moderne et sécurisée.
 
@@ -14,16 +14,19 @@ Créer une solution robuste, professionnelle et évolutive permettant aux entrep
 
 🧱 Architecture générale
 
-Frontend : React.js + Bootstrap
-Backend : Laravel (API REST)
-Base de données : PostgreSQL
-Authentification : JWT
-Type d’application : Dashboard web (desktop-first, responsive)
+- Frontend : React.js + Bootstrap
+- Backend : Node Js Express.js (API REST)
+- Base de données : PostgreSQL
+- Authentification : JWT
+- Type d’application : Dashboard web (desktop-first, responsive)
+
 
 👥 Gestion des utilisateurs
+
 Rôles
 - Administrateur
 - Agent
+
 Fonctionnalités
 - Création et gestion des comptes utilisateurs
 - Authentification sécurisée via JWT
@@ -31,7 +34,9 @@ Fonctionnalités
 - Accès restreint aux fonctionnalités selon le rôle
 - Possibilité de désactiver un compte utilisateur
 
+
 👤 Gestion des clients
+
 Données client
 - Nom du client
 - Numéro de téléphone
@@ -41,6 +46,7 @@ Données client
 - Services souscrits
 - Observations / commentaires
 - Historique des actions
+
 Fonctionnalités
 - Création, modification et suppression de clients
 - Consultation de la fiche client détaillée
@@ -49,17 +55,22 @@ Fonctionnalités
 - Tri par date de souscription ou d’installation
 - Historisation des modifications importantes
 
+
 🌐 Gestion des services fibres
+
 Données service
 - Nom du service (ex : Fibre 20 Mbps, Fibre Pro, etc.)
 - Description (optionnelle)
+
 Fonctionnalités
 - Création et gestion des services proposés
 - Association de plusieurs services à un client
 - Visualisation des services actifs par client
 - Préparation à une facturation future (extensible)
 
+
 🛠️ Suivi des installations
+
 Données installation
 - Client concerné
 - Date prévue d’installation
@@ -67,14 +78,17 @@ Données installation
 - Statut de l’installation
 - Agent en charge
 - Observations terrain
-- Fonctionnalités
+
+Fonctionnalités
 - Suivi du processus d’installation
 - Mise à jour du statut après intervention
 - Attribution d’un agent à une installation
 - Historique des interventions
 - Liste des installations en attente
 
+
 🧑‍🔧 Gestion des agents
+
 Fonctionnalités
 - Liste des agents actifs
 - Attribution des clients ou installations aux agents
@@ -82,33 +96,41 @@ Fonctionnalités
 - Visualisation de la charge de travail
 - Historique des actions effectuées par agent
 
+
 📊 Dashboard & statistiques
+
 Indicateurs clés
 - Nombre total de clients
 - Clients installés / non installés
 - Nouvelles souscriptions par période
 - Installations en attente
 - Services les plus souscrits
+
 Fonctionnalités
 - Dashboard synthétique dès la connexion
 - Graphiques simples (barres, courbes)
 - Filtres par période
 - Mise à jour en temps réel via API
 
+
 🔐 Sécurité & API
+
 Backend
 - API REST Node Js
 - Authentification JWT
 - Middleware de contrôle d’accès
 - Validation stricte des données
 - Gestion des erreurs et réponses normalisées
+
 Base de données
 - PostgreSQL normalisé
 - Contraintes d’intégrité (FK, uniques)
 - Index pour performances
 - Séparation logique des entités
 
+
 🧩 Extensibilité prévue
+
 ClientFlow est conçu pour évoluer vers :
 - Gestion de la maintenance réseau
 - Suivi des incidents
