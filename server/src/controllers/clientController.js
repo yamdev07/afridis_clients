@@ -7,7 +7,8 @@ export const getAllClients = async (req, res, next) => {
 
     let query = `
       SELECT c.*,
-             COUNT(DISTINCT s.id) as subscriptions_count
+             COUNT(DISTINCT s.id) as subscriptions_count,
+             MIN(s.line_number) as main_line_number
       FROM clients c
       LEFT JOIN subscriptions s ON s.client_id = c.id
     `;
