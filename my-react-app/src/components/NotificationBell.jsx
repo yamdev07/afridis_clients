@@ -6,6 +6,7 @@ export default function NotificationBell() {
   const [opened, setOpened] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [markAllError, setMarkAllError] = useState(null);
 
   const fetchUnreadCount = async () => {
     try {
@@ -58,6 +59,11 @@ export default function NotificationBell() {
 
       {opened && (
         <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-xl ring-1 ring-black/5 z-20">
+          {markAllError && (
+            <p className="px-3 py-1.5 text-[10px] text-amber-700 bg-amber-50 border-b border-amber-100">
+              {markAllError}
+            </p>
+          )}
           <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
             <p className="text-xs font-semibold text-slate-700">
               Notifications récentes
@@ -66,9 +72,16 @@ export default function NotificationBell() {
               type="button"
               className="text-[10px] text-indigo-600 hover:underline"
               onClick={async () => {
-                await api.markAllNotificationsRead();
-                setCount(0);
-                fetchLastNotifications();
+                setMarkAllError(null);
+                try {
+                  await api.markAllNotificationsRead();
+                  setCount(0);
+                  await fetchLastNotifications();
+                } catch (e) {
+                  setMarkAllError(
+                    e?.response?.data?.message || "Action impossible. Réessayez."
+                  );
+                }
               }}
             >
               Tout marquer comme lu
