@@ -389,7 +389,7 @@ export const bulkImportSubscriptions = async (req, res, next) => {
 
       // Extraction
       const commercialLogin = row.__EMPTY_1 ? String(row.__EMPTY_1).trim() : '';
-      const clientName = row.__EMPTY_2 ? String(row.__EMPTY_2).trim() : '';
+      let clientName = row.__EMPTY_2 ? String(row.__EMPTY_2).trim() : '';
       const lineNumber = row.__EMPTY_3 ? String(row.__EMPTY_3).trim() : '';
       const subscriptionDateRaw = row.__EMPTY_4;
       const installationDateRaw = row.__EMPTY_5;
@@ -417,10 +417,38 @@ export const bulkImportSubscriptions = async (req, res, next) => {
       console.log('Offre:', offer);
       console.log('Notes:', notes);
 
-      if (!clientName) {
-        console.log('❌ Client name manquant, ligne ignorée');
+      // Déterminer si la ligne est totalement vide (aucune information exploitable)
+      const hasAnyValue =
+        commercialLogin ||
+        clientName ||
+        lineNumber ||
+        subscriptionDateRaw ||
+        installationDateRaw ||
+        email ||
+        clientPhone ||
+        paymentReference ||
+        offer ||
+        notes;
+
+      if (!hasAnyValue) {
+        console.log('❌ Ligne complètement vide, ignorée');
         resultSummary.skipped++;
         continue;
+      }
+
+      // Si le nom du client est manquant mais qu'on a d'autres infos,
+      // on génère un nom technique pour NE PAS ignorer la ligne.
+      if (!clientName) {
+        const base =
+          lineNumber ||
+          clientPhone ||
+          commercialLogin ||
+          (subscriptionDateRaw ? String(subscriptionDateRaw) : '') ||
+          'inconnu';
+
+        const generated = `Client ${String(base).trim()}`;
+        console.log('⚠️ Client name manquant, nom généré:', generated);
+        clientName = generated;
       }
 
       // Conversion des dates
