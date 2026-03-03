@@ -50,10 +50,19 @@ export const createUser = async (req, res, next) => {
         'SELECT id FROM agents WHERE login = $1 LIMIT 1',
         [agent_login],
       );
+
       if (agentResult.rows.length === 0) {
-        return res.status(400).json({ message: 'Agent inexistant pour ce login' });
+        // Si aucun agent n'existe encore pour ce login, on le crée automatiquement
+        const newAgent = await pool.query(
+          `INSERT INTO agents (login, first_name, last_name, active)
+           VALUES ($1, $2, '', true)
+           RETURNING id`,
+          [agent_login, name],
+        );
+        agentId = newAgent.rows[0].id;
+      } else {
+        agentId = agentResult.rows[0].id;
       }
-      agentId = agentResult.rows[0].id;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
