@@ -37,10 +37,10 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate limiting - assoupli pour développement (éviter les 429 côté frontend)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limite chaque IP à 100 requêtes par windowMs
+  max: 1000, // limite chaque IP à 1000 requêtes par fenêtre
   message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
 });
 
