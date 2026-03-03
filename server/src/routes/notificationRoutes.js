@@ -11,8 +11,9 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/', listNotifications);
-router.patch('/:id/read', markNotificationRead);
+// Route littérale avant paramétrée pour éviter que "mark-all-read" soit pris pour :id
 router.patch('/mark-all-read', markAllNotificationsRead);
+router.patch('/:id/read', markNotificationRead);
 
 export default router;
 
