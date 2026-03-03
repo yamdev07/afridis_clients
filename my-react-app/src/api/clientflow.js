@@ -13,25 +13,30 @@ instance.interceptors.request.use((config) => {
 });
 
 // Déconnexion globale en cas de token expiré / non autorisé
+// Ne pas déconnecter sur 401 pour certaines actions secondaires (ex: marquer notifications lues)
 instance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const status = error?.response?.status;
+    const url = error?.config?.url ?? "";
 
     if (status === 401) {
-      try {
-        // Nettoyer le stockage local
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-      } catch {
-        // ignore
-      }
+      const isSecondaryAction =
+        /\/notifications\/mark-all-read/.test(url) ||
+        /\/notifications\/[^/]+\/read/.test(url);
 
-      // Rediriger vers la page de connexion
-      if (typeof window !== "undefined") {
-        const currentPath = window.location.pathname;
-        if (currentPath !== "/") {
-          window.location.href = "/";
+      if (!isSecondaryAction) {
+        try {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        } catch {
+          // ignore
+        }
+        if (typeof window !== "undefined") {
+          const currentPath = window.location.pathname;
+          if (currentPath !== "/") {
+            window.location.href = "/";
+          }
         }
       }
     }
