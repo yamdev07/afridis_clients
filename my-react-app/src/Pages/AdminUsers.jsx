@@ -1,11 +1,38 @@
 import React, { useEffect, useState } from "react";
+import RoleBadge from "../components/RoleBadge";
 import Sidebar from "./Sidebar";
+import {
+  Users,
+  UserPlus,
+  ShieldAlert,
+  Mail,
+  Key,
+  ShieldCheck,
+  UserCircle,
+  Hash,
+  Calendar,
+  Search,
+  CheckCircle2,
+  XCircle,
+  MoreVertical,
+  ChevronRight,
+  ShieldHalf,
+  ArrowRight,
+  Filter,
+  RefreshCw,
+  Plus
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/clientflow";
+import Button from "../components/ui/Button";
+import GlassCard from "../components/ui/GlassCard";
+import NotificationBell from "../components/NotificationBell";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -14,30 +41,26 @@ export default function AdminUsers() {
     agent_login: "",
   });
   const [creating, setCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const currentUser =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "null")
-      : null;
+  const currentUser = typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("user") || "null")
+    : null;
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await api.listUsers();
+      setUsers(data || []);
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Erreur de chargement");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const data = await api.listUsers();
-        setUsers(data || []);
-      } catch (err) {
-        const message =
-          err?.response?.data?.message ||
-          err.message ||
-          "Erreur lors du chargement des utilisateurs";
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
 
@@ -60,154 +83,265 @@ export default function AdminUsers() {
         role: "admin",
         agent_login: "",
       });
+      setShowCreateModal(false);
     } catch (err) {
-      const message =
-        err?.response?.data?.message ||
-        err.message ||
-        "Erreur lors de la création de l’utilisateur";
-      setError(message);
+      setError(err?.response?.data?.message || err.message || "Erreur de création");
     } finally {
       setCreating(false);
     }
   };
 
+  const filteredUsers = users.filter(u =>
+    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (!currentUser || currentUser.role !== "super_admin") {
     return (
-      <div className="d-flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
         <Sidebar />
-        <main className="flex-grow-1 p-4 md:p-6">
-          <p className="text-danger">
-            Accès refusé. Cette section est réservée à l’administrateur suprême.
-          </p>
+        <main className="flex-grow p-4 lg:p-10 flex items-center justify-center">
+          <GlassCard className="p-12 text-center max-w-md border-accent-red/20 shadow-premium rounded-radius-card" hover={true}>
+            <div className="w-24 h-24 bg-accent-red/10 text-accent-red rounded-[32px] flex items-center justify-center mx-auto mb-8 border border-accent-red/20 shadow-lg shadow-accent-red/10">
+              <ShieldAlert size={48} strokeWidth={2.5} />
+            </div>
+            <h2 className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark mb-4 tracking-[0.2em] uppercase opacity-50">Accès Non Autorisé</h2>
+            <h3 className="text-2xl font-black text-text-main-light dark:text-text-main-dark mb-4 tracking-tight">Espace Restreint</h3>
+            <p className="text-text-muted-light dark:text-text-muted-dark mb-10 leading-relaxed font-bold">
+              Désolé, cette zone de haute sécurité est réservée exclusivement à l'administrateur système (Super Admin).
+            </p>
+            <Button onClick={() => window.history.back()} variant="primary" className="w-full !py-5 shadow-primary/30">
+              Quitter la zone
+            </Button>
+          </GlassCard>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="d-flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
       <Sidebar />
-      <main className="flex-grow-1 p-4 md:p-6 space-y-4">
-        <header className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-semibold">Administration des comptes</h1>
-          <span className="badge bg-primary">Admin suprême</span>
+      <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+          <div className="space-y-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Administration</h1>
+              <div className="px-5 py-2 bg-primary/10 border border-primary/20 text-primary rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-premium">
+                Niveau Super-Admin
+              </div>
+            </div>
+            <p className="text-text-muted-light dark:text-text-muted-dark font-medium tracking-tight">Contrôle granulaire des accès et de la hiérarchie système.</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <Button icon={Plus} onClick={() => setShowCreateModal(true)} className="shadow-primary/30 font-black tracking-widest text-[10px]">
+              CRÉER UN UTILISATEUR
+            </Button>
+          </div>
         </header>
 
-        <section className="bg-white rounded-xl shadow-sm p-4 md:p-5">
-          <h2 className="text-lg font-medium mb-3">Créer un compte</h2>
-          <form
-            className="row g-3 text-sm"
-            onSubmit={handleSubmit}
-            autoComplete="off"
-          >
-            <div className="col-md-4">
-              <label className="form-label">Nom complet</label>
-              <input
-                type="text"
-                name="name"
-                className="form-control"
-                value={form.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">E‑mail</label>
-              <input
-                type="email"
-                name="email"
-                className="form-control"
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Mot de passe</label>
-              <input
-                type="password"
-                name="password"
-                className="form-control"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="col-md-3">
-              <label className="form-label">Rôle</label>
-              <select
-                name="role"
-                className="form-select"
-                value={form.role}
-                onChange={handleChange}
-              >
-                <option value="admin">Administrateur simple</option>
-                <option value="commercial">Commercial</option>
-                <option value="super_admin">Admin suprême</option>
-              </select>
-            </div>
-            <div className="col-md-3">
-              <label className="form-label">Login commercial (agent)</label>
-              <input
-                type="text"
-                name="agent_login"
-                className="form-control"
-                value={form.agent_login}
-                onChange={handleChange}
-                placeholder="Optionnel, ex: ag123"
-              />
-            </div>
-            <div className="col-12 d-flex justify-content-end">
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={creating}
-              >
-                {creating ? "Création..." : "Créer le compte"}
-              </button>
-            </div>
-          </form>
-          {error && <div className="alert alert-danger mt-3">{error}</div>}
-        </section>
+        {/* Search & Actions */}
+        <div className="flex flex-col md:flex-row gap-6 mb-10">
+          <div className="relative flex-grow group">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted-light transition-colors group-focus-within:text-primary" size={20} strokeWidth={2.5} />
+            <input
+              type="text"
+              placeholder="Rechercher par identité ou canal mail..."
+              className="w-full pl-16 pr-6 py-5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-white/10 transition-all shadow-premium font-bold text-sm text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-4">
+            <button onClick={fetchUsers} className="p-5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button text-text-muted-light hover:text-primary transition-all hover:rotate-180 transform duration-500 shadow-premium">
+              <RefreshCw size={22} strokeWidth={2.5} />
+            </button>
+            <button className="p-5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button text-text-muted-light hover:text-primary transition-all shadow-premium">
+              <Filter size={22} strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
 
-        <section className="bg-white rounded-xl shadow-sm p-4 md:p-5">
-          <h2 className="text-lg font-medium mb-3">Utilisateurs existants</h2>
-          {loading ? (
-            <p>Chargement des utilisateurs...</p>
-          ) : users.length === 0 ? (
-            <p className="text-sm text-gray-600">Aucun utilisateur trouvé.</p>
-          ) : (
-            <div className="table-responsive text-sm">
-              <table className="table table-striped align-middle mb-0">
-                <thead>
+        {error && (
+          <GlassCard className="mb-10 p-5 bg-accent-red/10 border border-accent-red/20 rounded-radius-button flex items-center gap-4 shadow-premium">
+            <XCircle className="text-accent-red" size={20} strokeWidth={3} />
+            <p className="text-[11px] font-black text-accent-red uppercase tracking-widest">{error}</p>
+          </GlassCard>
+        )}
+
+        <section className="bg-bg-light/50 dark:bg-bg-card-dark rounded-radius-card border border-border-light dark:border-white/5 shadow-premium overflow-hidden font-bold">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-bg-light dark:bg-white/5 border-b border-border-light dark:border-white/10">
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Identité Système</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Rôle & Privilèges</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Matricule Agent</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Enregistrement</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-light dark:divide-white/5">
+                {loading ? (
                   <tr>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Rôle</th>
-                    <th>Agent lié</th>
-                    <th>Créé le</th>
+                    <td colSpan={5} className="py-32 text-center">
+                      <RefreshCw className="w-12 h-12 text-primary animate-spin mx-auto mb-6 opacity-40 shadow-premium rounded-full" strokeWidth={3} />
+                      <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.3em]">Synchronisation de la base...</p>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => (
-                    <tr key={u.id}>
-                      <td>{u.name}</td>
-                      <td>{u.email}</td>
-                      <td>{u.role}</td>
-                      <td>{u.agent_id ? u.agent_id : "-"}</td>
-                      <td>
-                        {u.created_at
-                          ? new Date(u.created_at).toLocaleDateString()
-                          : "-"}
+                ) : filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-32 text-center text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest text-[10px] opacity-40">
+                      Zéro résultat pour cette signature.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-primary/[0.02] dark:hover:bg-primary/[0.05] transition-colors group">
+                      <td className="px-10 py-6 text-text-main-light border-none">
+                        <div className="flex items-center gap-5">
+                          <div className="h-14 w-14 rounded-radius-button bg-primary/10 text-primary flex items-center justify-center text-xl font-black border border-primary/20 shadow-premium transition-transform group-hover:scale-110">
+                            {u.name?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-base font-black text-text-main-light dark:text-text-main-dark tracking-tight leading-none mb-1.5">{u.name}</p>
+                            <p className="text-[11px] text-text-muted-light dark:text-text-muted-dark font-bold tracking-tight">{u.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-10 py-6 border-none">
+                        <RoleBadge role={u.role} />
+                      </td>
+                      <td className="px-10 py-6 text-sm font-black text-text-muted-light dark:text-text-muted-dark border-none">
+                        {u.agent_id || u.agent_login ? (
+                          <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-bg-light dark:bg-white/5 text-text-main-light dark:text-text-main-dark rounded-radius-button text-[11px] font-black uppercase tracking-widest border border-border-light dark:border-white/10 shadow-premium">
+                            <Hash size={14} strokeWidth={3} /> {u.agent_id || u.agent_login}
+                          </div>
+                        ) : (
+                          <span className="text-text-muted-light/30 dark:text-text-muted-dark/20 font-black uppercase tracking-widest text-[10px]">Non Assigné</span>
+                        )}
+                      </td>
+                      <td className="px-10 py-6 border-none">
+                        <div className="flex items-center gap-3 text-text-muted-light dark:text-text-muted-dark text-xs font-bold">
+                          <Calendar size={16} strokeWidth={2.5} className="opacity-50" />
+                          {u.created_at ? new Date(u.created_at).toLocaleDateString("fr-FR", { day: '2-digit', month: 'long', year: 'numeric' }) : "Inconnue"}
+                        </div>
+                      </td>
+                      <td className="px-10 py-6 text-right border-none">
+                        <button className="p-3 text-text-muted-light dark:text-text-muted-dark hover:text-primary dark:hover:text-white hover:bg-primary/10 rounded-radius-button transition-all active:scale-90">
+                          <MoreVertical size={20} strokeWidth={2.5} />
+                        </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Create User Modal */}
+        <AnimatePresence>
+          {showCreateModal && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 sm:p-10">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowCreateModal(false)}
+                className="absolute inset-0 bg-bg-dark/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                className="relative w-full max-w-2xl bg-bg-light dark:bg-bg-dark rounded-radius-card shadow-premium overflow-hidden flex flex-col border border-white/20 dark:border-white/5"
+              >
+                <div className="p-8 sm:p-12 border-b border-border-light dark:border-white/5 bg-bg-light/80 dark:bg-white/[0.02]">
+                  <div className="flex items-center gap-5 mb-4">
+                    <div className="h-14 w-14 bg-primary text-white rounded-radius-button flex items-center justify-center shadow-lg shadow-primary/30">
+                      <UserPlus size={28} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Nouvel Utilisateur</h2>
+                      <p className="text-text-muted-light dark:text-text-muted-dark font-bold text-sm">Définition des droits et credentials d'accès.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-8 sm:p-12 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-bold">
+                    <InputGroup label="Identité Complète" name="name" icon={UserCircle} value={form.name} onChange={handleChange} placeholder="Ex: Jean Luc DUPONT" required />
+                    <InputGroup label="Email Professionnel" name="email" icon={Mail} type="email" value={form.email} onChange={handleChange} placeholder="j.luc@orange.com" required />
+                    <InputGroup label="Clé d'Accès" name="password" icon={Key} type="password" value={form.password} onChange={handleChange} required />
+
+                    <div className="space-y-3 group/field">
+                      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] ml-1 group-focus-within/field:text-primary transition-colors">Privilèges Système</label>
+                      <div className="relative">
+                        <ShieldCheck className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted-light/30 transition-colors group-focus-within/field:text-primary" size={20} strokeWidth={2.5} />
+                        <select
+                          name="role"
+                          className="w-full pl-16 pr-6 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-bg-dark transition-all text-xs font-black text-text-main-light dark:text-text-main-dark appearance-none uppercase tracking-[0.1em] shadow-premium"
+                          value={form.role}
+                          onChange={handleChange}
+                        >
+                          <option value="commercial">Commercial de Terrain</option>
+                          <option value="admin">Administrateur Local</option>
+                          <option value="super_admin">Super Administrateur</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <InputGroup label="Matricule (Optionnel)" name="agent_login" icon={Hash} value={form.agent_login} onChange={handleChange} placeholder="Ex: AX-1029" />
+                  </div>
+
+                  <div className="pt-8 border-t border-border-light dark:border-white/5 flex flex-col sm:flex-row justify-end gap-6 font-black uppercase tracking-widest text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(false)}
+                      className="px-10 py-5 text-text-muted-light dark:text-text-muted-dark hover:text-accent-red transition-colors"
+                    >
+                      Interrompre
+                    </button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="!px-14 !py-5 shadow-primary/30"
+                      loading={creating}
+                      icon={Plus}
+                    >
+                      Finaliser la création
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
             </div>
           )}
-        </section>
+        </AnimatePresence>
       </main>
+    </div>
+  );
+}
+
+function InputGroup({ label, name, icon: Icon, type = "text", value, onChange, placeholder, required = false }) {
+  return (
+    <div className="space-y-3 group">
+      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1 group-focus-within:text-primary transition-colors">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 group-focus-within:text-primary transition-colors" size={20} strokeWidth={2.5} />
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[20px] outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-white/10 transition-all text-xs font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 shadow-sm"
+        />
+      </div>
     </div>
   );
 }
