@@ -1,163 +1,159 @@
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import NotificationBell from "../components/NotificationBell";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  Briefcase,
+  Settings,
+  LogOut,
+  PieChart,
+  FileUp,
+  Download,
+  User as UserIcon,
+  ShieldCheck,
+  ChevronRight,
+  Menu,
+  X
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import ThemeToggle from "../components/ThemeToggle";
 
-function Sidebar() {
-  const navigate = useNavigate();
+export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = React.useState(true);
 
-  let currentUser = null;
-  try {
-    if (typeof window !== "undefined") {
-      currentUser = JSON.parse(localStorage.getItem("user") || "null");
-    }
-  } catch {
-    currentUser = null;
-  }
-
-  const isActive = (path) => location.pathname.startsWith(path);
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isAdmin = user?.role === "super_admin";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/");
+    navigate("/login");
   };
 
+  const menuItems = [
+    { name: "Tableau de Bord", icon: LayoutDashboard, path: "/dashboard" },
+    { name: "Gestion Clients", icon: Users, path: "/clients" },
+    { name: "Services & Offres", icon: Briefcase, path: "/services" },
+    { name: "Analyses & Rapports", icon: PieChart, path: "/reports" },
+    { name: "Importation", icon: FileUp, path: "/import" },
+    { name: "Exportation", icon: Download, path: "/export" },
+  ];
+
+  const adminItems = [
+    { name: "Utilisateurs CRM", icon: ShieldCheck, path: "/admin/users" },
+  ];
+
   return (
-    <aside
-      className="flex flex-col bg-slate-900 text-slate-50 p-4 w-64 h-screen sticky top-0 shadow-xl"
-    >
-      <div className="flex items-center justify-between mb-6">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => navigate("/dashboard")}
-        >
-          <div className="h-8 w-8 rounded-xl bg-indigo-500 flex items-center justify-center text-xs font-bold">
-            CF
-          </div>
-          <div>
-            <p className="text-sm font-semibold leading-tight">ClientFlow</p>
-            <p className="text-[11px] text-slate-400 leading-tight">
-              Espace {currentUser?.role || "utilisateur"}
-            </p>
-          </div>
-        </div>
-        <NotificationBell />
-      </div>
-
-      <nav className="flex-grow overflow-y-auto">
-        <ul className="space-y-1 text-sm">
-          <li>
-            <button
-              type="button"
-              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                isActive("/dashboard") ? "bg-slate-800 text-white" : "text-slate-200"
-              }`}
-              onClick={() => navigate("/dashboard")}
-            >
-              Dashboard
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                isActive("/clients") ? "bg-slate-800 text-white" : "text-slate-200"
-              }`}
-              onClick={() => navigate("/clients")}
-            >
-              Clients
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                isActive("/services") ? "bg-slate-800 text-white" : "text-slate-200"
-              }`}
-              onClick={() => navigate("/services")}
-            >
-              Services
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                isActive("/reports") ? "bg-slate-800 text-white" : "text-slate-200"
-              }`}
-              onClick={() => navigate("/reports")}
-            >
-              Rapports
-            </button>
-          </li>
-
-          {currentUser?.role === "super_admin" && (
-            <>
-              <li className="pt-2 border-t border-slate-800 mt-2">
-                <button
-                  type="button"
-                  className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                    isActive("/admin/users") ? "bg-slate-800 text-white" : "text-slate-200"
-                  }`}
-                  onClick={() => navigate("/admin/users")}
-                >
-                  Administration
-                </button>
-              </li>
-            </>
-          )}
-
-          <li>
-            <button
-              type="button"
-              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                isActive("/import") ? "bg-slate-800 text-white" : "text-slate-200"
-              }`}
-              onClick={() => navigate("/import")}
-            >
-              Import PDF / CSV
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                isActive("/export") ? "bg-slate-800 text-white" : "text-slate-200"
-              }`}
-              onClick={() => navigate("/export")}
-            >
-              Export PDF / CSV
-            </button>
-          </li>
-
-          <li className="pt-2 border-t border-slate-800 mt-2">
-            <button
-              type="button"
-              className={`w-full text-left px-3 py-2 rounded-lg transition hover:bg-slate-800 ${
-                isActive("/profile") ? "bg-slate-800 text-white" : "text-slate-200"
-              }`}
-              onClick={() => navigate("/profile")}
-            >
-              Profil
-            </button>
-          </li>
-        </ul>
-      </nav>
-
+    <>
+      {/* Mobile Toggle */}
       <button
-        className="mt-4 inline-flex items-center justify-center rounded-lg border border-red-500/70 bg-red-500/90 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-600 transition"
-        onClick={handleLogout}
+        onClick={() => setIsOpen(!isOpen)}
+        className="lg:hidden fixed bottom-6 right-6 z-[100] p-4 bg-primary text-white rounded-full shadow-2xl"
       >
-        Déconnexion
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
-    </aside>
+
+      <AnimatePresence mode="wait">
+        {isOpen && (
+          <motion.aside
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -100, opacity: 0 }}
+            className="fixed lg:static inset-y-0 left-0 w-72 bg-white dark:bg-sidebar-dark border-r border-border-light dark:border-white/5 z-[90] flex flex-col font-inter shadow-xl lg:shadow-none transition-colors duration-500"
+          >
+            {/* Header / Logo */}
+            <div className="p-8 pb-12 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary rounded-radius-card flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                  <LayoutDashboard size={22} fill="currentColor" />
+                </div>
+                <h2 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tighter uppercase whitespace-nowrap">
+                  Client<span className="text-primary">Flow</span>
+                </h2>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-grow px-4 space-y-8 overflow-y-auto custom-scrollbar">
+              <div className="space-y-1">
+                <p className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark mb-4">Menu Principal</p>
+                {menuItems.map((item) => (
+                  <NavItem
+                    key={item.path}
+                    item={item}
+                    isActive={location.pathname === item.path}
+                  />
+                ))}
+              </div>
+
+              {isAdmin && (
+                <div className="space-y-1">
+                  <p className="px-4 text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark mb-4">Administration</p>
+                  {adminItems.map((item) => (
+                    <NavItem
+                      key={item.path}
+                      item={item}
+                      isActive={location.pathname === item.path}
+                    />
+                  ))}
+                </div>
+              )}
+            </nav>
+
+            {/* Bottom Actions & User */}
+            <div className="p-4 mt-auto space-y-4">
+              <div className="flex items-center justify-center">
+                <ThemeToggle />
+              </div>
+
+              <div className="p-4 bg-bg-light dark:bg-white/5 rounded-radius-card border border-border-light dark:border-white/5 space-y-4">
+                <Link to="/profile" className="flex items-center gap-3 p-1 group">
+                  <div className="w-10 h-10 rounded-radius-card bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
+                    {user?.name?.charAt(0) || "U"}
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <p className="text-sm font-bold text-text-main-light dark:text-text-main-dark truncate">{user?.name || "Utilisateur"}</p>
+                    <p className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-black truncate uppercase tracking-widest">{user?.role || "Agent"}</p>
+                  </div>
+                  <ChevronRight size={14} className="text-text-muted-light group-hover:text-primary transition-colors" />
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 p-3 text-text-muted-light hover:text-accent-red hover:bg-accent-red/10 rounded-radius-card transition-all group"
+                >
+                  <LogOut size={18} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+                </button>
+              </div>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
-export default Sidebar;
-
+function NavItem({ item, isActive }) {
+  return (
+    <Link
+      to={item.path}
+      className={`flex items-center gap-4 px-4 py-3.5 rounded-radius-card transition-all group ${isActive
+        ? "bg-primary-light dark:bg-primary/20 text-primary"
+        : "text-text-muted-light dark:text-text-muted-dark hover:bg-bg-light dark:hover:bg-white/5 hover:text-primary dark:hover:text-white"
+        }`}
+    >
+      <item.icon size={20} className={`${isActive ? "text-primary" : "text-text-muted-light group-hover:text-primary"} transition-colors`} />
+      <span className={`text-sm font-bold tracking-tight ${isActive ? "text-primary" : ""}`}>{item.name}</span>
+      {isActive && (
+        <motion.div
+          layoutId="activeSide"
+          className="ml-auto w-1.5 h-6 bg-primary rounded-full"
+        />
+      )}
+    </Link>
+  );
+}
