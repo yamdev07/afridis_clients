@@ -1,238 +1,273 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  BarChart3,
+  Shield,
+  Zap,
+  ArrowRight,
+  CheckCircle2,
+  Layers,
+  Globe,
+  Database,
+  Star,
+  Cpu,
+  MousePointer2,
+  Sparkles
+} from "lucide-react";
 import Navbar from "./Navbar";
-import "../styles/Home.css";
+import Button from "../components/ui/Button";
+import GlassCard from "../components/ui/GlassCard";
 
 export default function Home() {
+  const navigate = useNavigate();
+
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+    transition: { duration: 0.8, ease: "easeOut" }
+  };
+
+  const features = [
+    {
+      title: "Gestion Cloud Native",
+      desc: "Centralisez vos clients et services sur une infrastructure performante et accessible partout.",
+      icon: Layers,
+      color: "text-primary",
+      bg: "bg-primary/10"
+    },
+    {
+      title: "Analytics Avancés",
+      desc: "Prenez des décisions éclairées grâce à des rapports visuels et des prévisions intelligentes.",
+      icon: BarChart3,
+      color: "text-accent-purple",
+      bg: "bg-accent-purple/10"
+    },
+    {
+      title: "Sécurité de Grade Bancaire",
+      desc: "Vos données sont cryptées bout-en-bout avec les protocoles de sécurité les plus rigoureux.",
+      icon: Shield,
+      color: "text-accent-green",
+      bg: "bg-accent-green/10"
+    }
+  ];
+
   return (
-    <div className="app-container">
+    <div className="bg-[var(--bg-main)] text-slate-900 dark:text-white font-sans selection:bg-primary/20 selection:text-primary overflow-x-hidden min-h-screen transition-colors duration-500">
       <Navbar />
 
-      <main className="main-content">
-        {/* HERO */}
-        <section className="hero-section">
-          <div className="hero-background-gradient" />
+      {/* Hero Section */}
+      <section className="relative pt-40 pb-24 lg:pt-60 lg:pb-40 overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[800px] h-[800px] bg-primary/10 dark:bg-primary/5 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-accent-purple/10 dark:bg-accent-purple/5 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '2s' }} />
 
-          <div className="hero-grid">
-            <div className="hero-text">
-              <p className="hero-subtitle">Plateforme CRM moderne pour équipes ambitieuses</p>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-5xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7 }}
+              className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 mb-10 shadow-sm"
+            >
+              <Sparkles size={16} className="text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-400">ClientFlow Evolution v2.0</span>
+            </motion.div>
 
-              <h1 className="hero-title">
-                Donnez de la clarté
-                <span className="hero-title-secondary">à chaque relation client.</span>
-              </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-6xl lg:text-8xl font-black tracking-tight text-slate-900 dark:text-white mb-8 leading-[1.1]"
+            >
+              L'excellence du <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent-purple to-primary bg-[length:200%_auto] animate-gradient">
+                pilotage client.
+              </span>
+            </motion.h1>
 
-              <p className="hero-description">
-                ClientFlow centralise contacts, rendez-vous et relances dans une interface claire.
-                Vous savez toujours qui contacter, quand, avec quel historique.
-              </p>
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.15 }}
+              className="text-lg lg:text-xl text-slate-500 dark:text-slate-400 mb-14 leading-relaxed max-w-2xl mx-auto font-medium"
+            >
+              Plus qu'un CRM, ClientFlow est votre centre de commandement pour transformer chaque interaction en une opportunité de croissance durable.
+            </motion.p>
 
-              <div className="hero-buttons">
-                <button
-                  className="btn-primary"
-                  onClick={() => document.getElementById("cta")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  Lancer une démo
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => document.getElementById("workflow")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  Voir comment ça marche
-                </button>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-6"
+            >
+              <Button onClick={() => navigate("/login")} className="w-full sm:w-auto text-sm !py-5 !px-12 uppercase tracking-widest shadow-blue-500/40" icon={ArrowRight}>
+                Démarrer Maintenant
+              </Button>
+              <Button variant="secondary" className="w-full sm:w-auto text-sm !py-5 !px-12 uppercase tracking-widest bg-white dark:bg-white/5 border-slate-200 dark:border-white/10" icon={MousePointer2}>
+                Découvrir l'Interface
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1.5, delay: 0.6 }}
+              className="mt-32 pt-16 border-t border-slate-100 dark:border-white/5 flex flex-col items-center gap-10"
+            >
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Propulsé par les technologies de pointe</p>
+              <div className="flex flex-wrap justify-center gap-16 opacity-30 dark:opacity-20 transition-opacity hover:opacity-60 duration-500">
+                <div className="flex items-center gap-3 text-2xl font-black text-slate-900 dark:text-white"><Globe size={28} /> GLOBAL</div>
+                <div className="flex items-center gap-3 text-2xl font-black text-slate-900 dark:text-white"><Database size={28} /> NEXUS</div>
+                <div className="flex items-center gap-3 text-2xl font-black text-slate-900 dark:text-white"><Zap size={28} /> PULSE</div>
+                <div className="flex items-center gap-3 text-2xl font-black text-slate-900 dark:text-white"><Cpu size={28} /> CORE</div>
               </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
-              <div className="hero-trial-info">
-                <span className="trial-dot" />
-                Pas de CB • Essai gratuit 14 jours
+      {/* Features Section */}
+      <section id="features" className="py-32 bg-slate-50/50 dark:bg-white/[0.02] relative">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-24">
+            <h2 className="text-4xl lg:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">Intelligence & Précision</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">Une suite d'outils conçue pour l'excellence opérationnelle.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {features.map((f, i) => (
+              <GlassCard key={i} className="p-12 border-slate-200 dark:border-white/5 hover:border-primary/30 transition-all group overflow-hidden" hover={true}>
+                <div className={`p-5 rounded-[22px] ${f.bg} ${f.color} w-fit mb-10 transition-all duration-500 group-hover:rotate-[10deg] shadow-sm`}>
+                  <f.icon size={36} strokeWidth={2.5} />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6 tracking-tight leading-tight">{f.title}</h3>
+                <p className="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{f.desc}</p>
+                {/* Decorative circle */}
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-slate-100 dark:bg-white/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Preview Section */}
+      <section className="py-32 bg-white dark:bg-[var(--bg-main)]">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+            <motion.div {...fadeIn}>
+              <div className="w-16 h-2 bg-primary rounded-full mb-8 shadow-lg shadow-blue-500/30" />
+              <h2 className="text-4xl lg:text-6xl font-black text-slate-900 dark:text-white mb-10 tracking-tight leading-[1.1]">
+                Prenez l'avantage <br />
+                <span className="text-primary">avec la Data.</span>
+              </h2>
+              <div className="space-y-8">
+                {[
+                  { text: "Croissance des revenus en temps réel", icon: TrendingUpIcon },
+                  { text: "Optimisation des entonnoirs de vente", icon: TargetIcon },
+                  { text: "Exportation multi-formats (PDF, XLSX)", icon: ExportIcon },
+                  { text: "Gouvernance et rôles granulaires", icon: RightsIcon }
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-6 group/item"
+                  >
+                    <div className="flex-shrink-0 w-12 h-12 rounded-[14px] bg-accent-green/10 text-accent-green flex items-center justify-center transition-transform group-hover/item:scale-110">
+                      <CheckCircle2 size={24} strokeWidth={3} />
+                    </div>
+                    <span className="text-lg font-black text-slate-700 dark:text-slate-300 tracking-tight">{item.text}</span>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            {/* Dashboard Preview */}
-            <div className="dashboard-preview">
-              <div className="dashboard-card">
-                <div className="dashboard-header">
-                  <div className="dashboard-title">
-                    <span className="status-dot" />
-                    Pipeline clients
-                  </div>
-                  <span className="dashboard-date">Cette semaine</span>
-                </div>
-
-                <div className="stats-grid">
-                  <div className="stat-card active-clients">
-                    <p>Clients actifs</p>
-                    <p className="stat-value">124</p>
-                    <p className="stat-trend positive">+18 ce mois</p>
-                  </div>
-                  <div className="stat-card follow-ups">
-                    <p>Relances à faire</p>
-                    <p className="stat-value">32</p>
-                    <p className="stat-trend warning">12 en retard</p>
-                  </div>
-                  <div className="stat-card satisfaction">
-                    <p>Satisfaction</p>
-                    <p className="stat-value">4,8/5</p>
-                    <p className="stat-trend positive">+0,3 vs N-1</p>
-                  </div>
-                </div>
-
-                <div className="tasks-card">
-                  <div className="tasks-header">
-                    <span>Relances du jour</span>
-                    <span>08 tâches</span>
-                  </div>
-                  <div className="tasks-list">
-                    <div className="task-item"><span>Rappeler Martin AHOUANSOU</span><span className="task-time success">09:30</span></div>
-                    <div className="task-item"><span>Envoyer devis agence Nova</span><span className="task-time warning">11:00</span></div>
-                    <div className="task-item"><span>Relance facture - Studio Pixel</span><span className="task-time muted">15:00</span></div>
-                  </div>
-                </div>
-              </div>
+            </motion.div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/10 rounded-[40px] blur-[80px] transform rotate-3" />
+              <GlassCard className="p-5 border-slate-200 dark:border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] overflow-hidden rounded-[32px]" hover={true}>
+                <img
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80"
+                  alt="Dashboard Preview"
+                  className="rounded-[22px] shadow-sm brightness-95 dark:brightness-75 group-hover:scale-[1.02] transition-transform duration-700"
+                />
+              </GlassCard>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* FEATURES */}
-        <section id="features" className="features-section">
-          <div className="section-container">
-            <div className="section-header">
-              <p className="section-subtitle">Fonctionnalités clés</p>
-              <h2 className="section-title">
-                Tout votre suivi client,
-                <span className="section-title-secondary">dans un seul outil minimaliste.</span>
-              </h2>
+      {/* CTA Section */}
+      <section id="cta" className="py-32">
+        <div className="container mx-auto px-6">
+          <div className="bg-primary rounded-[48px] p-16 lg:p-28 text-center relative overflow-hidden shadow-2xl shadow-blue-500/30 border border-white/10">
+            {/* Background elements */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white opacity-[0.05] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent-purple opacity-[0.2] rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2" />
+
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <div className="flex justify-center mb-8">
+                <div className="flex -space-x-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="w-12 h-12 rounded-full border-4 border-primary bg-slate-200 flex items-center justify-center overflow-hidden">
+                      <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" />
+                    </div>
+                  ))}
+                  <div className="w-12 h-12 rounded-full border-4 border-primary bg-primary-dark flex items-center justify-center text-[10px] font-black text-white">
+                    +5k
+                  </div>
+                </div>
+              </div>
+              <h2 className="text-4xl lg:text-7xl font-black text-white mb-8 tracking-tight">Prêt pour l'excellence ?</h2>
+              <p className="text-blue-100 text-lg lg:text-xl mb-14 font-medium">Rejoignez les leaders qui façonnent l'avenir de la gestion client.</p>
+              <Button variant="secondary" className="!text-sm uppercase tracking-[0.2em] !py-6 px-16 !text-primary !bg-white hover:!bg-blue-50 shadow-xl" onClick={() => navigate("/login")}>
+                Démarrer l'Aventure
+              </Button>
+              <p className="mt-10 text-blue-200/60 text-[10px] uppercase font-black tracking-widest">Zéro engagement • Support 24/7 • Intégrations Illimitées</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-24 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/[0.01]">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-10">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white font-black shadow-xl shadow-blue-500/10">
+                <Zap size={28} fill="currentColor" />
+              </div>
+              <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">ClientFlow</span>
             </div>
 
-            <div className="features-grid">
-              {[
-                { title: "Fiches clients complètes", desc: "Contacts, notes, documents et historique des échanges rassemblés sur une seule page claire." },
-                { title: "Rappels automatiques", desc: "Planifiez vos relances et laissez ClientFlow vous notifier au bon moment, sur tous vos clients." },
-                { title: "Vue pipeline simple", desc: "Suivez vos prospects et clients par étape : nouveau, en cours, à relancer, fidélisé." },
-                { title: "Fil d'activités", desc: "Une timeline par client avec tous les e-mails, appels, rendez-vous et tâches associées." },
-                { title: "Modèles d'e-mails", desc: "Gagnez du temps avec des messages prêts à l’emploi pour les relances et suivis standards." },
-                { title: "Statistiques essentielles", desc: "Identifiez rapidement qui relancer et quels clients génèrent le plus de valeur." },
-              ].map((f, i) => (
-                <div key={i} className="feature-card">
-                  <p className="feature-index">0{i + 1}</p>
-                  <h3 className="feature-title">{f.title}</h3>
-                  <p className="feature-desc">{f.desc}</p>
+            <div className="flex items-center gap-12">
+              {["Termes", "Sécurité", "Support", "API"].map(item => (
+                <button key={item} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors">{item}</button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-10 w-10 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-primary transition-all cursor-pointer">
+                  <Star size={16} />
                 </div>
               ))}
             </div>
           </div>
-        </section>
 
-        {/* WORKFLOW */}
-        <section id="workflow" className="workflow-section">
-          <div className="section-container workflow-grid">
-            <div className="workflow-text">
-              <p className="section-subtitle">Un flux simple</p>
-              <h2 className="section-title">
-                De la prise de contact
-                <span className="section-title-secondary">jusqu'à la fidélisation.</span>
-              </h2>
-              <p className="workflow-desc">
-                ClientFlow se glisse dans votre quotidien sans ajouter de complexité. Trois étapes
-                suffisent pour garder une vision claire sur l'ensemble de votre portefeuille clients.
-              </p>
-
-              <div className="workflow-steps">
-                {["Ajoutez ou importez vos contacts en quelques clics.", "Planifiez vos relances et vos rendez-vous.", "Suivez l'historique et mesurez vos résultats."].map((step, i) => (
-                  <div key={i} className="step-item">
-                    <span className="step-number">{i + 1}</span>
-                    <p>{step}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="workflow-image-card">
-              <div className="workflow-image-header">
-                <span>Vue clients</span>
-                <span>Aujourd'hui</span>
-              </div>
-              <div className="status-list">
-                {["Nouveau lead", "En discussion", "À relancer", "Client fidèle"].map((status, i) => (
-                  <div key={status} className="status-item">
-                    <div className="status-label">
-                      <span className={`status-dot-color status-dot-${i}`} />
-                      <span>{status}</span>
-                    </div>
-                    <span>{["18 contacts", "27 contacts", "12 contacts", "67 contacts"][i]}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="mt-20 pt-10 border-t border-slate-200 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">© 2026 CLIENTFLOW CRM. TOUS DROITS RÉSERVÉS.</p>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent-green" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Systèmes Opérationnels (Paris / Abidjan)</span>
             </div>
           </div>
-        </section>
-
-        {/* TESTIMONIAL */}
-        <section id="testimonial" className="testimonial-section">
-          <div className="section-container testimonial-container">
-            <p className="section-subtitle">Ils utilisent déjà ClientFlow</p>
-            <p className="testimonial-intro">
-              Pensé pour les indépendants, petites agences, cabinets de conseil, coaches et toutes
-              les équipes qui veulent un outil simple pour bien suivre leurs clients.
-            </p>
-
-            <div className="testimonial-card">
-              <p className="testimonial-quote">
-                "Depuis que nous utilisons ClientFlow, plus aucun client n'est oublié dans un fichier
-                Excel. Toute l'équipe sait qui relancer, quand et avec quel historique. On a gagné
-                un temps fou et la relation est beaucoup plus professionnelle."
-              </p>
-              <div className="testimonial-author">
-                <p>Amel Benyahia</p>
-                <p>Fondatrice de l'agence Nova Conseil</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* PRICING / CTA FINAL */}
-        <section id="cta" className="cta-section">
-          <div className="section-container cta-grid">
-            <div className="pricing-text">
-              <p className="section-subtitle">Tarification simple</p>
-              <h2 className="section-title">
-                Un abonnement clair,
-                <span className="section-title-secondary">sans engagement caché.</span>
-              </h2>
-              <p className="pricing-desc">
-                Testez ClientFlow gratuitement pendant 14 jours. Ensuite, un tarif unique adapté aux
-                indépendants, petites équipes et structures en croissance.
-              </p>
-
-              <div className="pricing-features">
-                <div className="feature-item"><span className="check-green">✓</span> Annulable à tout moment</div>
-                <div className="feature-item"><span className="check-indigo">✓</span> Support par e-mail sous 24h</div>
-              </div>
-            </div>
-
-            <div className="pricing-card">
-              <p className="pricing-label">Offre lancement</p>
-              <div className="pricing-amount">
-                <p>19&nbsp;000&nbsp;FCFA</p>
-                <span>/mois HT</span>
-              </div>
-              <p className="pricing-details">
-                Pour 1 à 3 utilisateurs, toutes les fonctionnalités incluses.
-              </p>
-
-              <button className="btn-cta">Créer mon espace ClientFlow</button>
-
-              <p className="pricing-note">
-                Aucun engagement. Facturation mensuelle simple.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="footer">
-        <p>© 2025 ClientFlow. Tous droits réservés.</p>
-        <p className="footer-links">Politique de confidentialité · Mentions légales</p>
+        </div>
       </footer>
     </div>
   );
 }
+
+// Sub-components for icons to keep code clean
+function TrendingUpIcon() { return <Sparkles size={24} /> }
+function TargetIcon() { return <Sparkles size={24} /> }
+function ExportIcon() { return <Sparkles size={24} /> }
+function RightsIcon() { return <Sparkles size={24} /> }
