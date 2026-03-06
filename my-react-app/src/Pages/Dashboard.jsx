@@ -6,7 +6,6 @@ import {
   Users,
   CheckCircle,
   Clock,
-  Activity,
   TrendingUp,
   DollarSign,
   ArrowUpRight,
@@ -24,10 +23,10 @@ import {
   PieChart,
   Pie,
   Cell,
+  Legend,
 } from "recharts";
 import GlassCard from "../components/ui/GlassCard";
 import NotificationBell from "../components/NotificationBell";
-import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 
@@ -36,6 +35,7 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [chartPeriod, setChartPeriod] = useState("week"); // 'week' | 'month'
 
   const user = useMemo(() => {
     return typeof window !== "undefined"
@@ -63,15 +63,12 @@ export default function Dashboard() {
     return () => clearInterval(intervalId);
   }, []);
 
-  const activityData = [
-    { name: "Lun", value: 12 },
-    { name: "Mar", value: 18 },
-    { name: "Mer", value: 45 },
-    { name: "Jeu", value: 30 },
-    { name: "Ven", value: 55 },
-    { name: "Sam", value: 40 },
-    { name: "Dim", value: 65 },
-  ];
+  // Filtrer les données du graphe selon la période choisie
+  const chartData = useMemo(() => {
+    const raw = summary?.chartData || [];
+    if (chartPeriod === "week") return raw.slice(-7);
+    return raw; // 30 jours
+  }, [summary, chartPeriod]);
 
   const pieData = [
     { name: "Installés", value: summary?.installed || 0, color: "#22C55E" },
@@ -125,39 +122,34 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <StatCard
             title="Total Clients"
-            value={summary?.clients}
+            value={summary?.clients ?? 0}
             icon={Users}
-            trend="+12%"
             color="primary"
           />
           <StatCard
             title="Installés"
-            value={summary?.installed}
+            value={summary?.installed ?? 0}
             icon={CheckCircle}
-            trend="+5%"
             color="green"
           />
           <StatCard
             title="En attente"
-            value={summary?.pending}
+            value={summary?.pending ?? 0}
             icon={Clock}
-            trend="-2%"
             color="orange"
           />
           {user?.role !== "commercial" ? (
             <StatCard
               title="Chiffre d'Affaires"
-              value={`${(summary?.totalRevenue || 0).toLocaleString()} F`}
+              value={`${(summary?.totalRevenue || 0).toLocaleString("fr-FR")} F`}
               icon={DollarSign}
-              trend="+8.4%"
               color="purple"
             />
           ) : (
             <StatCard
               title="Services Actifs"
-              value={summary?.tv}
+              value={summary?.tv ?? 0}
               icon={Zap}
-              trend="+3"
               color="purple"
             />
           )}
@@ -165,117 +157,203 @@ export default function Dashboard() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-          {/* Main Activity Chart */}
+          {/* Main Activity Chart — DONNÉES RÉELLES */}
           <GlassCard className="lg:col-span-2 p-8" hover={false}>
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark">Activité Clients</h3>
-                <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-medium">Flux des inscriptions hebdomadaires</p>
+                <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-medium">
+                  Clients créés vs installés — {chartPeriod === "week" ? "7 derniers jours" : "30 derniers jours"}
+                </p>
               </div>
               <div className="flex gap-2">
-                <button className="px-4 py-2 bg-bg-light dark:bg-white/5 rounded-radius-input text-[10px] font-black uppercase text-text-muted-light dark:text-text-muted-dark hover:bg-primary hover:text-white transition-all">Semaine</button>
-                <button className="px-4 py-2 bg-transparent text-[10px] font-black uppercase text-text-muted-light/40 transition-all">Mois</button>
+                <button
+                  onClick={() => setChartPeriod("week")}
+                  className={`px-4 py-2 rounded-radius-input text-[10px] font-black uppercase transition-all ${chartPeriod === "week"
+                      ? "bg-primary text-white shadow-lg shadow-primary/30"
+                      : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
+                    }`}
+                >
+                  Semaine
+                </button>
+                <button
+                  onClick={() => setChartPeriod("month")}
+                  className={`px-4 py-2 rounded-radius-input text-[10px] font-black uppercase transition-all ${chartPeriod === "month"
+                      ? "bg-primary text-white shadow-lg shadow-primary/30"
+                      : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
+                    }`}
+                >
+                  Mois
+                </button>
               </div>
             </div>
 
-            <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={activityData}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border-light dark:text-border-dark" />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 800 }}
-                    dy={15}
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: '18px',
-                      border: 'none',
-                      boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
-                    }}
-                    wrapperStyle={{
-                      backgroundColor: 'transparent'
-                    }}
-/>
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#2563EB"
-                    strokeWidth={4}
-                    fillOpacity={1}
-                    fill="url(#colorValue)"
-                    animationDuration={2000}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {chartData.length === 0 || chartData.every(d => d["créés"] === 0 && d["installés"] === 0) ? (
+              <div className="h-[300px] flex flex-col items-center justify-center gap-4 text-text-muted-light dark:text-text-muted-dark">
+                <TrendingUp size={48} className="opacity-20" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Aucune donnée sur la période</p>
+              </div>
+            ) : (
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
+                    <defs>
+                      <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorInstalled" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border-light dark:text-border-dark opacity-30" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 800 }}
+                      dy={10}
+                      interval={chartPeriod === "month" ? 4 : 0}
+                    />
+                    <YAxis
+                      hide={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 800 }}
+                      allowDecimals={false}
+                      width={25}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "16px",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        boxShadow: "0 20px 25px -5px rgba(0,0,0,0.15)",
+                        backgroundColor: "rgba(15,23,42,0.9)",
+                        color: "#fff",
+                        fontSize: "11px",
+                        fontWeight: 800,
+                      }}
+                      labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+                      formatter={(value, name) => [value, name === "créés" ? "Créés" : "Installés"]}
+                    />
+                    <Legend
+                      formatter={(value) => (
+                        <span style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                          {value === "créés" ? "Créés" : "Installés"}
+                        </span>
+                      )}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="créés"
+                      stroke="#2563EB"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorCreated)"
+                      animationDuration={1500}
+                      dot={false}
+                      activeDot={{ r: 5, fill: "#2563EB" }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="installés"
+                      stroke="#22C55E"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorInstalled)"
+                      animationDuration={1500}
+                      dot={false}
+                      activeDot={{ r: 5, fill: "#22C55E" }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </GlassCard>
 
-          {/* Service Distribution / Status Pie */}
+          {/* Status Pie — toujours dynamique */}
           <GlassCard className="p-8 flex flex-col items-center" hover={false}>
-            <div className="w-full mb-8">
+            <div className="w-full mb-6">
               <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark">Statut Global</h3>
               <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-medium">Répartition des dossiers</p>
             </div>
 
-            <div className="h-[280px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={75}
-                    outerRadius={100}
-                    paddingAngle={10}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-4xl font-black text-text-main-light dark:text-text-main-dark leading-none">{summary?.clients || 0}</span>
-                <span className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-1">Dossiers</span>
+            {(summary?.installed === 0 && summary?.pending === 0) ? (
+              <div className="flex-grow flex flex-col items-center justify-center gap-3 text-text-muted-light dark:text-text-muted-dark">
+                <Users size={48} className="opacity-20" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-center">Aucun abonnement enregistré</p>
               </div>
-            </div>
-
-            <div className="w-full space-y-4 mt-8">
-              {pieData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between p-4 bg-bg-light dark:bg-white/5 rounded-radius-card border border-border-light dark:border-white/5 transition-all hover:translate-x-1 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="h-4 w-4 rounded-full ring-4 ring-white dark:ring-bg-card-dark" style={{ backgroundColor: item.color }} />
-                    <span className="text-sm font-bold text-text-main-light dark:text-text-main-dark">{item.name}</span>
+            ) : (
+              <>
+                <div className="h-[230px] w-full relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={90}
+                        paddingAngle={8}
+                        dataKey="value"
+                        stroke="none"
+                        animationDuration={1000}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "none",
+                          boxShadow: "0 8px 16px rgba(0,0,0,0.15)",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-4xl font-black text-text-main-light dark:text-text-main-dark leading-none">{summary?.clients || 0}</span>
+                    <span className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-1">Dossiers</span>
                   </div>
-                  <span className="text-base font-black text-primary">{item.value}</span>
                 </div>
-              ))}
-            </div>
+
+                <div className="w-full space-y-3 mt-4">
+                  {pieData.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between p-4 bg-bg-light dark:bg-white/5 rounded-radius-card border border-border-light dark:border-white/5 transition-all hover:translate-x-1 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full ring-4 ring-white dark:ring-bg-card-dark" style={{ backgroundColor: item.color }} />
+                        <span className="text-sm font-bold text-text-main-light dark:text-text-main-dark">{item.name}</span>
+                      </div>
+                      <span className="text-base font-black text-primary">{item.value}</span>
+                    </div>
+                  ))}
+                  {/* Taux d'installation */}
+                  {(summary?.installed || 0) + (summary?.pending || 0) > 0 && (
+                    <div className="p-4 bg-primary/5 rounded-radius-card border border-primary/10 text-center">
+                      <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Taux d'installation</p>
+                      <p className="text-2xl font-black text-primary mt-1">
+                        {Math.round(((summary?.installed || 0) / ((summary?.installed || 0) + (summary?.pending || 0))) * 100)}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </GlassCard>
         </div>
 
-        {/* Global Performance Section */}
+        {/* CTA */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.4 }}
         >
           <div className="p-8 rounded-[24px] bg-primary/10 dark:bg-primary/5 border border-primary/20 relative overflow-hidden group">
             <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700" />
-
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
               <div className="flex items-center gap-8">
                 <div className="h-20 w-20 rounded-radius-card bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/40 shrink-0">
@@ -284,8 +362,9 @@ export default function Dashboard() {
                 <div>
                   <h2 className="text-2xl font-black text-text-main-light dark:text-text-main-dark">Impact Performance</h2>
                   <p className="text-text-muted-light dark:text-text-muted-dark mt-2 max-w-xl font-medium leading-relaxed">
-                    Votre croissance client est stable avec un taux de conversion de <span className="text-primary font-black">74%</span>.
-                    Le délai d'installation moyen a été réduit de <span className="text-accent-green font-black">1.5 jours</span>.
+                    {summary?.clients > 0
+                      ? `${summary.clients} client(s) au total · ${summary.installed} installé(s) · ${(summary.totalRevenue || 0).toLocaleString("fr-FR")} F de CA généré`
+                      : "Commencez par ajouter vos premiers clients dans ClientFlow."}
                   </p>
                 </div>
               </div>
@@ -308,34 +387,27 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, trend, color }) {
+function StatCard({ title, value, icon: Icon, color }) {
   const colors = {
-    primary: "bg-primary/10 text-primary border-primary/20",
-    green: "bg-accent-green/10 text-accent-green border-accent-green/20",
-    orange: "bg-accent-orange/10 text-accent-orange border-accent-orange/20",
-    purple: "bg-accent-purple/10 text-accent-purple border-accent-purple/20",
+    primary: { bg: "bg-primary/10", text: "text-primary" },
+    green: { bg: "bg-accent-green/10", text: "text-accent-green" },
+    orange: { bg: "bg-accent-orange/10", text: "text-accent-orange" },
+    purple: { bg: "bg-accent-purple/10", text: "text-accent-purple" },
   };
-
-  const isUp = trend?.startsWith('+');
+  const c = colors[color] || colors.primary;
 
   return (
-    <GlassCard className="p-6 group relative" hover={true}>
+    <GlassCard className="p-6 group relative overflow-hidden" hover={true}>
       <div className="absolute top-0 right-0 p-4">
-        <div className={`p-3 rounded-radius-button ${colors[color]?.split(' ').slice(0, 2).join(' ')} transition-transform group-hover:scale-110 duration-300`}>
+        <div className={`p-3 rounded-radius-button ${c.bg} ${c.text} transition-transform group-hover:scale-110 duration-300`}>
           <Icon size={24} strokeWidth={2.5} />
         </div>
       </div>
-
       <div className="mt-8">
-        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider w-fit mb-4 ${isUp ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-orange/10 text-accent-orange'}`}>
-          {isUp ? <ArrowUpRight size={14} strokeWidth={3} /> : <ArrowDownRight size={14} strokeWidth={3} />}
-          {trend}
-        </div>
         <p className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-black uppercase tracking-[0.2em] mb-2">{title}</p>
         <h3 className="text-4xl font-black text-text-main-light dark:text-text-main-dark leading-none">{value ?? "0"}</h3>
       </div>
-
-      <div className={`absolute bottom-0 left-0 h-1.5 w-full bg-current opacity-20 ${colors[color]?.split(' ')[1]}`} />
+      <div className={`absolute bottom-0 left-0 h-1.5 w-full ${c.bg.replace('/10', '/30')}`} />
     </GlassCard>
   );
 }
