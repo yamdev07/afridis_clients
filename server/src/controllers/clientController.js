@@ -161,15 +161,72 @@ export const getClientByLineNumber = async (req, res, next) => {
 export const createClient = async (req, res, next) => {
   try {
     const { full_name, phone, email, address } = req.body;
+    const currentUserId = req.user?.id;
 
-    const result = await pool.query(
+    // 1. Créer le client
+    const clientResult = await pool.query(
       `INSERT INTO clients (full_name, phone, email, address)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
       [full_name, phone || null, email || null, address || null]
     );
 
-    res.status(201).json(result.rows[0]);
+    const client = clientResult.rows[0];
+
+    // 2. Si une offre est spécifiée dans address, créer un abonnement automatiquement
+    if (address) {
+      try {
+        const meta = typeof address === 'string' ? JSON.parse(address) : address;
+        const offerCode = meta?.offer;
+
+        if (offerCode) {
+          // Trouver le service par son code
+          const serviceRes = await pool.query('SELECT id, monthly_price FROM services WHERE code = $1', [offerCode.trim()]);
+
+          if (serviceRes.rows.length > 0) {
+            const service = serviceRes.rows[0];
+
+            // Trouver le statut par défaut (pending si pas d'installation_date, installed si date passée)
+            const installDate = meta.installation_date;
+            const today = new Date().toISOString().split('T')[0];
+            const statusCode = (installDate && installDate <= today) ? 'installed' : 'pending';
+
+            const statusRes = await pool.query('SELECT id FROM statuses WHERE code = $1', [statusCode]);
+
+            if (statusRes.rows.length > 0) {
+              const statusId = statusRes.rows[0].id;
+
+              // Récupérer l'agent_id du createur si c'est un commercial
+              const userRes = await pool.query('SELECT agent_id FROM users WHERE id = $1', [currentUserId]);
+              const agentId = userRes.rows[0]?.agent_id;
+
+              // Créer l'abonnement
+              await pool.query(
+                `INSERT INTO subscriptions (
+                  client_id, agent_id, service_id, status_id, 
+                  line_number, subscription_date, installation_date, contract_cost, notes
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [
+                  client.id,
+                  agentId || null,
+                  service.id,
+                  statusId,
+                  meta.line_number || null,
+                  meta.subscription_date || today,
+                  installDate || null,
+                  meta.tarif || service.monthly_price,
+                  meta.notes || null
+                ]
+              );
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Erreur lors de la création auto de l'abonnement:", e.message);
+      }
+    }
+
+    res.status(201).json(client);
   } catch (error) {
     next(error);
   }
@@ -196,11 +253,48 @@ export const updateClient = async (req, res, next) => {
       return res.status(404).json({ message: 'Client non trouvé' });
     }
 
+    // Synchroniser installation_date et line_number depuis le JSON address → table subscriptions
+    if (address) {
+      try {
+        const meta = typeof address === 'string' ? JSON.parse(address) : address;
+        const installDate = meta?.installation_date || null;
+        const lineNumber = meta?.line_number || null;
+
+        // Mettre à jour les abonnements de ce client avec les nouvelles dates / numéro de ligne
+        if (installDate !== undefined || lineNumber !== undefined) {
+          let updateParts = [];
+          let updateValues = [];
+          let idx = 1;
+
+          if (installDate !== undefined) {
+            updateParts.push(`installation_date = $${idx++}`);
+            updateValues.push(installDate || null);
+          }
+          if (lineNumber !== undefined) {
+            updateParts.push(`line_number = $${idx++}`);
+            updateValues.push(lineNumber || null);
+          }
+
+          if (updateParts.length > 0) {
+            updateValues.push(id);
+            await pool.query(
+              `UPDATE subscriptions SET ${updateParts.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE client_id = $${idx}`,
+              updateValues
+            );
+          }
+        }
+      } catch (parseErr) {
+        // Si le JSON est malformé, on ignore la sync — on ne bloque pas la réponse
+        console.warn('Sync subscription: impossible de parser address JSON:', parseErr.message);
+      }
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
     next(error);
   }
 };
+
 
 export const deleteClient = async (req, res, next) => {
   try {
