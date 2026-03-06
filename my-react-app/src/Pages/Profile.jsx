@@ -11,14 +11,16 @@ import {
   Save,
   Bell,
   LogOut,
-  ChevronRight,
   Loader2,
   XCircle,
   Hash,
   Calendar,
-  Globe,
   Fingerprint,
-  Settings
+  Settings,
+  Lock,
+  Eye,
+  EyeOff,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/clientflow";
@@ -50,6 +52,15 @@ export default function Profile() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Modal mot de passe
+  const [showPwdModal, setShowPwdModal] = useState(false);
+  const [pwdForm, setPwdForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwdSaving, setPwdSaving] = useState(false);
+  const [pwdError, setPwdError] = useState("");
+  const [pwdSuccess, setPwdSuccess] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
@@ -72,6 +83,7 @@ export default function Profile() {
     };
 
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = (e) => {
@@ -87,16 +99,51 @@ export default function Profile() {
     setError("");
 
     try {
-      await new Promise(r => setTimeout(r, 1000));
-      const updated = { ...user, ...form };
-      setUser(updated);
-      localStorage.setItem("user", JSON.stringify(updated));
-      setSuccess("Paramètres du profil synchronisés avec succès.");
+      // Appel API réel vers PUT /auth/me
+      const updated = await api.updateProfile({ name: form.name, email: form.email, phone: form.phone });
+      const merged = { ...user, ...updated };
+      setUser(merged);
+      // Mise à jour du localStorage pour que les infos soient restaurées à la reconnexion
+      localStorage.setItem("user", JSON.stringify(merged));
+      setSuccess("Profil synchronisé et sauvegardé en base de données.");
     } catch (err) {
-      setError("Échec de la mise à jour des informations.");
+      setError(err?.response?.data?.message || "Échec de la mise à jour des informations.");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPwdError("");
+    setPwdSuccess("");
+
+    if (pwdForm.next !== pwdForm.confirm) {
+      setPwdError("Les deux nouveaux mots de passe ne correspondent pas.");
+      return;
+    }
+    if (pwdForm.next.length < 6) {
+      setPwdError("Le nouveau mot de passe doit faire au moins 6 caractères.");
+      return;
+    }
+
+    setPwdSaving(true);
+    try {
+      await api.changeOwnPassword(pwdForm.current, pwdForm.next);
+      setPwdSuccess("Mot de passe modifié avec succès !");
+      setPwdForm({ current: "", next: "", confirm: "" });
+    } catch (err) {
+      setPwdError(err?.response?.data?.message || "Erreur lors du changement de mot de passe.");
+    } finally {
+      setPwdSaving(false);
+    }
+  };
+
+  const closePwdModal = () => {
+    setShowPwdModal(false);
+    setPwdForm({ current: "", next: "", confirm: "" });
+    setPwdError("");
+    setPwdSuccess("");
   };
 
   const handleLogout = () => {
@@ -152,8 +199,8 @@ export default function Profile() {
                 <div className="w-full h-px bg-border-light dark:bg-white/5 my-10" />
 
                 <div className="w-full space-y-6">
-                  <ProfileMetric icon={Hash} label="Matricule" value={user.agent_login || "PRO-001"} />
-                  <ProfileMetric icon={Calendar} label="Date d'Adhésion" value="12 Mars 2024" />
+                  <ProfileMetric icon={Hash} label="Matricule" value={user.agent_login || "—"} />
+                  <ProfileMetric icon={Calendar} label="Membre depuis" value={user.created_at ? new Date(user.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }) : "—"} />
                 </div>
               </GlassCard>
 
@@ -234,12 +281,6 @@ export default function Profile() {
                       onChange={handleChange}
                       placeholder="+225 00 00 00 00"
                     />
-                    <div className="space-y-3 font-bold">
-                      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] ml-1">Type d'Accès</label>
-                      <div className="w-full px-6 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/5 rounded-radius-button text-xs font-black text-text-muted-light dark:text-text-muted-dark flex items-center gap-4 uppercase tracking-[0.1em] shadow-premium">
-                        <Shield size={18} strokeWidth={2.5} /> {roleLabel}
-                      </div>
-                    </div>
                   </div>
 
                   <div className="pt-10 border-t border-border-light dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -275,10 +316,15 @@ export default function Profile() {
                     </div>
                     <div>
                       <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Sécurité du Compte</h3>
-                      <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest mt-1">Dernière rotation du mot de passe : Mars 2026</p>
+                      <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest mt-1">Gérez votre mot de passe et vos accès</p>
                     </div>
                   </div>
-                  <Button variant="secondary" icon={Settings} className="w-full md:w-auto !py-4 shadow-premium">
+                  <Button
+                    variant="secondary"
+                    icon={Settings}
+                    className="w-full md:w-auto !py-4 shadow-premium"
+                    onClick={() => setShowPwdModal(true)}
+                  >
                     Gérer la sécurité
                   </Button>
                 </div>
@@ -287,6 +333,154 @@ export default function Profile() {
           </div>
         </div>
       </main>
+
+      {/* Modal Changement de Mot de Passe */}
+      <AnimatePresence>
+        {showPwdModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closePwdModal}
+              className="absolute inset-0 bg-bg-dark/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              className="relative w-full max-w-md bg-white dark:bg-bg-dark rounded-[32px] shadow-2xl overflow-hidden border border-border-light dark:border-white/10"
+            >
+              {/* Header */}
+              <div className="p-8 border-b border-border-light dark:border-white/10 bg-accent-purple/5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-accent-purple/10 text-accent-purple rounded-radius-button flex items-center justify-center">
+                    <Lock size={24} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Changer le mot de passe</h2>
+                    <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest mt-0.5">Sécurité du compte</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closePwdModal}
+                  className="p-3 bg-bg-light dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 rounded-radius-button transition-all"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handlePasswordChange} className="p-8 space-y-6">
+                <AnimatePresence>
+                  {pwdSuccess && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="p-4 bg-accent-green/10 border border-accent-green/20 rounded-radius-button flex items-center gap-3"
+                    >
+                      <CheckCircle className="text-accent-green shrink-0" size={18} strokeWidth={3} />
+                      <p className="text-xs font-black text-accent-green uppercase tracking-widest">{pwdSuccess}</p>
+                    </motion.div>
+                  )}
+                  {pwdError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="p-4 bg-accent-red/10 border border-accent-red/20 rounded-radius-button flex items-center gap-3"
+                    >
+                      <XCircle className="text-accent-red shrink-0" size={18} strokeWidth={3} />
+                      <p className="text-xs font-black text-accent-red uppercase tracking-widest">{pwdError}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Current Password */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Mot de passe actuel</label>
+                  <div className="relative">
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={18} />
+                    <input
+                      type={showCurrent ? "text" : "password"}
+                      required
+                      value={pwdForm.current}
+                      onChange={(e) => setPwdForm(p => ({ ...p, current: e.target.value }))}
+                      className="w-full pl-14 pr-14 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
+                      placeholder="Votre mot de passe actuel"
+                    />
+                    <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted-light hover:text-primary transition-colors">
+                      {showCurrent ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* New Password */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Nouveau mot de passe</label>
+                  <div className="relative">
+                    <Key className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={18} />
+                    <input
+                      type={showNext ? "text" : "password"}
+                      required
+                      value={pwdForm.next}
+                      onChange={(e) => setPwdForm(p => ({ ...p, next: e.target.value }))}
+                      className="w-full pl-14 pr-14 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
+                      placeholder="Au moins 6 caractères"
+                    />
+                    <button type="button" onClick={() => setShowNext(!showNext)} className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted-light hover:text-primary transition-colors">
+                      {showNext ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Confirmer le nouveau mot de passe</label>
+                  <div className="relative">
+                    <Key className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={18} />
+                    <input
+                      type="password"
+                      required
+                      value={pwdForm.confirm}
+                      onChange={(e) => setPwdForm(p => ({ ...p, confirm: e.target.value }))}
+                      className={`w-full pl-14 pr-6 py-4 bg-bg-light/50 dark:bg-white/5 border rounded-radius-button outline-none focus:ring-4 ring-primary/10 transition-all text-sm font-bold shadow-premium ${pwdForm.confirm && pwdForm.next !== pwdForm.confirm ? "border-accent-red/50 focus:border-accent-red" : "border-border-light dark:border-white/10 focus:border-primary"}`}
+                      placeholder="Répétez le nouveau mot de passe"
+                    />
+                    {pwdForm.confirm && (
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                        {pwdForm.next === pwdForm.confirm
+                          ? <CheckCircle size={18} className="text-accent-green" />
+                          : <XCircle size={18} className="text-accent-red" />
+                        }
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={closePwdModal}
+                    className="flex-1 py-4 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest hover:text-primary transition-colors border border-border-light dark:border-white/10 rounded-radius-button"
+                  >
+                    Annuler
+                  </button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    loading={pwdSaving}
+                    icon={Lock}
+                    className="flex-1 !py-4 shadow-primary/30"
+                  >
+                    Modifier
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -327,4 +521,3 @@ function ProfileField({ label, name, icon: Icon, type = "text", value, onChange,
     </div>
   );
 }
-
