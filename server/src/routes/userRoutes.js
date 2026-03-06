@@ -1,14 +1,15 @@
 import express from 'express';
-import { listUsers, createUser } from '../controllers/userController.js';
+import { listUsers, createUser, updateUser, deleteUser } from '../controllers/userController.js';
 import { authenticateToken, requireRole } from '../middlewares/auth.js';
 
 const router = express.Router();
 
 router.use(authenticateToken);
-router.use(requireRole('super_admin'));
 
-router.get('/', listUsers);
-router.post('/', createUser);
+// Les admins peuvent aussi lister et créer (au moins les commerciaux)
+router.get('/', requireRole('super_admin', 'admin'), listUsers);
+router.post('/', requireRole('super_admin', 'admin'), createUser);
+router.put('/:id', requireRole('super_admin'), updateUser);
+router.delete('/:id', requireRole('super_admin', 'admin'), deleteUser);
 
 export default router;
-
