@@ -89,7 +89,7 @@ export default function Navbar() {
               onClick={() => navigate("/login")}
               className="text-[11px] font-black uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors"
             >
-              Sign In
+              Se Connecter
             </button>
             <Button
               onClick={() => navigate("/login")}
