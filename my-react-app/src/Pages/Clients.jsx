@@ -33,6 +33,7 @@ import { Users } from "lucide-react";
 
 const emptyForm = {
   id: null,
+  service_category: "telecom", // 'telecom' | 'digital'
   report_date: "",
   commercial_login: "",
   full_name: "",
@@ -47,6 +48,8 @@ const emptyForm = {
   payment_reference: "",
   notes: "",
   client_type: "B2C",
+  service_description: "", // pour les services digitaux
+  tarif: "",               // tarif pour services digitaux
 };
 
 const deserializeClient = (row) => {
@@ -73,6 +76,9 @@ const deserializeClient = (row) => {
     notes: meta.notes || "",
     client_type: meta.client_type || "B2C",
     report_date: meta.report_date || "",
+    service_category: meta.service_category || "telecom",
+    service_description: meta.service_description || "",
+    tarif: meta.tarif || "",
   };
 };
 
@@ -81,6 +87,7 @@ const buildPayload = (form) => ({
   phone: form.phone,
   email: form.email,
   address: JSON.stringify({
+    service_category: form.service_category || "telecom",
     line_number: form.line_number,
     commercial_login: form.commercial_login,
     location: form.location,
@@ -92,6 +99,8 @@ const buildPayload = (form) => ({
     notes: form.notes,
     client_type: form.client_type,
     report_date: form.report_date,
+    service_description: form.service_description,
+    tarif: form.tarif,
   }),
 });
 
@@ -105,6 +114,7 @@ function Clients() {
   const [formData, setFormData] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [services, setServices] = useState([]);
 
   const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "null"), []);
 
@@ -124,18 +134,41 @@ function Clients() {
     }
   };
 
+  const fetchServices = async () => {
+    try {
+      const res = await api.listServices();
+      setServices(res?.data || []);
+    } catch (err) {
+      console.error("Erreur chargement services:", err);
+    }
+  };
+
   useEffect(() => {
     load();
+    fetchServices();
   }, []);
 
+  const [searchLogin, setSearchLogin] = useState("");
+
   const filteredClients = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return allClients;
-    return allClients.filter((client) =>
-      (client.line_number || "").toLowerCase().includes(q) ||
-      (client.full_name || "").toLowerCase().includes(q)
-    );
-  }, [allClients, search]);
+    let result = allClients;
+    const qName = search.toLowerCase().trim();
+    if (qName) {
+      result = result.filter((client) =>
+        (client.line_number || "").toLowerCase().includes(qName) ||
+        (client.full_name || "").toLowerCase().includes(qName)
+      );
+    }
+
+    const qLogin = searchLogin.toLowerCase().trim();
+    if (qLogin) {
+      result = result.filter((client) =>
+        (client.commercial_login || "").toLowerCase().includes(qLogin)
+      );
+    }
+
+    return result;
+  }, [allClients, search, searchLogin]);
 
   useEffect(() => {
     setClients(filteredClients);
@@ -154,8 +187,13 @@ function Clients() {
   };
 
   const saveClient = async () => {
-    if (!formData.full_name || !formData.line_number) {
-      alert("Nom et Numéro de ligne obligatoires");
+    if (!formData.full_name) {
+      alert("Nom complet obligatoire");
+      return;
+    }
+    // Pour les services télécom, le numéro de ligne est obligatoire
+    if (formData.service_category !== "digital" && !formData.line_number) {
+      alert("Numéro de ligne obligatoire pour les services Télécom/Internet");
       return;
     }
 
@@ -202,18 +240,28 @@ function Clients() {
         </header>
 
         {/* Toolbar */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="lg:col-span-2 relative">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={20} />
             <input
               type="search"
-              placeholder="Rechercher par nom ou numéro..."
+              placeholder="Rechercher par nom ou numéro de ligne..."
               className="w-full pl-14 pr-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all shadow-premium text-text-main-light dark:text-text-main-dark font-medium"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex gap-4 lg:col-span-2">
+          <div className="relative">
+            <User className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={20} />
+            <input
+              type="search"
+              placeholder="Filtre: Commercial (Ex: m.dupont)"
+              className="w-full pl-14 pr-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all shadow-premium text-text-main-light dark:text-text-main-dark font-medium"
+              value={searchLogin}
+              onChange={(e) => setSearchLogin(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-4">
             <button className="flex-1 px-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:bg-bg-light dark:hover:bg-white/10 transition-all shadow-premium active:scale-95">
               <Filter size={16} /> Filtres
             </button>
@@ -278,15 +326,30 @@ function Clients() {
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        {client.installation_date ? (
-                          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-green/10 text-accent-green text-[9px] font-black uppercase tracking-[0.1em] border border-accent-green/20">
-                            <CheckCircle size={10} strokeWidth={3} /> Installé
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-orange/10 text-accent-orange text-[9px] font-black uppercase tracking-[0.1em] border border-accent-orange/20">
-                            <Clock size={10} strokeWidth={3} /> En attente
-                          </span>
-                        )}
+                        {(() => {
+                          if (!client.installation_date) {
+                            return (
+                              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-orange/10 text-accent-orange text-[9px] font-black uppercase tracking-[0.1em] border border-accent-orange/20">
+                                <Clock size={10} strokeWidth={3} /> En attente
+                              </span>
+                            );
+                          }
+                          const installDate = new Date(client.installation_date);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          if (installDate <= today) {
+                            return (
+                              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-green/10 text-accent-green text-[9px] font-black uppercase tracking-[0.1em] border border-accent-green/20">
+                                <CheckCircle size={10} strokeWidth={3} /> Installé
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-[0.1em] border border-primary/20">
+                              <Zap size={10} strokeWidth={3} /> Planifié
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -437,6 +500,30 @@ function Clients() {
                 <div className="flex-grow overflow-y-auto p-10 space-y-12 custom-scrollbar">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
+                    {/* Section Catégorie de service */}
+                    <div className="md:col-span-2 space-y-3">
+                      <SectionHeader icon={Zap} title="Type de Dossier" />
+                      <div className="flex gap-3">
+                        {[
+                          { v: "telecom", l: "📡 Télécom / Internet", desc: "Ligne fixe, fibre, offre internet" },
+                          { v: "digital", l: "💻 Service Digital", desc: "Email pro, site web, application" },
+                        ].map(opt => (
+                          <button
+                            key={opt.v}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, service_category: opt.v })}
+                            className={`flex-1 p-4 rounded-radius-card border-2 transition-all text-left ${formData.service_category === opt.v
+                              ? "border-primary bg-primary/5 text-primary"
+                              : "border-border-light dark:border-white/10 text-text-muted-light hover:border-primary/30"
+                              }`}
+                          >
+                            <p className="text-sm font-black">{opt.l}</p>
+                            <p className="text-[10px] font-bold mt-1 opacity-70">{opt.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Section 1 */}
                     <div className="space-y-6 md:col-span-2">
                       <SectionHeader icon={User} title="Identité & Affectation" />
@@ -446,32 +533,58 @@ function Clients() {
                       </div>
                     </div>
 
-                    {/* Section 2 */}
+                    {/* Section 2 - Contacts */}
                     <div className="space-y-6 md:col-span-2">
                       <SectionHeader icon={Phone} title="Contacts & Technique" />
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Input label="Numéro de Ligne (Fixe)" value={formData.line_number} onChange={(v) => setFormData({ ...formData, line_number: v })} placeholder="01.23.45.67.89" required />
+                        {formData.service_category !== "digital" && (
+                          <Input label="Numéro de Ligne (Fixe)" value={formData.line_number} onChange={(v) => setFormData({ ...formData, line_number: v })} placeholder="01.23.45.67.89" required />
+                        )}
                         <Input label="Mobile" value={formData.phone} onChange={(v) => setFormData({ ...formData, phone: v })} placeholder="+225 07..." />
                         <Input label="E-mail" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} placeholder="client@domaine.com" type="email" />
                       </div>
                       <Input label="Zone Géographique / Ville" value={formData.location} onChange={(v) => setFormData({ ...formData, location: v })} placeholder="Ex: Abidjan, Plateau" icon={MapPin} />
                     </div>
 
-                    {/* Section 3 */}
+                    {/* Section 3 - Service & Billing */}
                     <div className="space-y-6 md:col-span-2">
                       <SectionHeader icon={Zap} title="Service & Billing" />
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Select label="Segmentation" value={formData.client_type} options={[{ v: 'B2C', l: 'B2C - Particulier' }, { v: 'B2B', l: 'B2B - Pro' }]} onChange={(v) => setFormData({ ...formData, client_type: v })} />
-                        <Select label="Offre Souscrite" value={formData.offer} options={[
-                          { v: '', l: 'Séléctionnez...' },
-                          { v: 'Pro 25', l: 'Pro 25 Mbps' },
-                          { v: 'Pro 50', l: 'Pro 50 Mbps' },
-                          { v: 'Office 100', l: 'Office 100 Mbps' },
-                          { v: 'Office 200', l: 'Office 200 Mbps' },
-                          { v: 'Fibre 500', l: 'Fibre 500 Mbps' }
-                        ]} onChange={(v) => setFormData({ ...formData, offer: v })} />
-                        <Input label="Référence Payeur" value={formData.payer_number} onChange={(v) => setFormData({ ...formData, payer_number: v })} placeholder="REF-0000" />
-                      </div>
+                      {formData.service_category === "digital" ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Select label="Type de Service Digital" value={formData.offer} options={[
+                            { v: '', l: 'Sélectionnez...' },
+                            { v: 'Email Pro', l: '📧 Création Email Professionnel' },
+                            { v: 'Site Web', l: '🌐 Création Site Web' },
+                            { v: 'App Mobile', l: '📱 Application Mobile' },
+                            { v: 'SEO', l: '🔍 Référencement SEO' },
+                            { v: 'Maintenance', l: '🔧 Maintenance / Support' },
+                          ]} onChange={(v) => setFormData({ ...formData, offer: v })} />
+                          <Input label="Tarif Négocié (FCFA)" type="number" value={formData.tarif} onChange={(v) => setFormData({ ...formData, tarif: v })} placeholder="Ex: 150000" />
+                          <div className="md:col-span-2 space-y-2">
+                            <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest ml-1">Description du Service</label>
+                            <textarea
+                              className="w-full px-6 py-4 bg-bg-light/30 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark h-24 resize-none placeholder:text-text-muted-light shadow-premium"
+                              placeholder="Décrivez le service commandé, les spécifications, les livrables..."
+                              value={formData.service_description}
+                              onChange={(e) => setFormData({ ...formData, service_description: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <Select label="Segmentation" value={formData.client_type} options={[{ v: 'B2C', l: 'B2C - Particulier' }, { v: 'B2B', l: 'B2B - Pro' }]} onChange={(v) => setFormData({ ...formData, client_type: v })} />
+                          <Select
+                            label="Offre Souscrite"
+                            value={formData.offer}
+                            options={[
+                              { v: '', l: 'Sélectionnez...' },
+                              ...services.map(s => ({ v: s.code, l: s.label }))
+                            ]}
+                            onChange={(v) => setFormData({ ...formData, offer: v })}
+                          />
+                          <Input label="Référence Payeur" value={formData.payer_number} onChange={(v) => setFormData({ ...formData, payer_number: v })} placeholder="REF-0000" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Section 4 */}
@@ -512,8 +625,8 @@ function Clients() {
             </div>
           )}
         </AnimatePresence>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }
 
