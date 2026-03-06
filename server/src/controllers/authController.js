@@ -255,7 +255,7 @@ export const updateProfile = async (req, res, next) => {
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $4
        RETURNING id, name, email, role, agent_id, phone`,
-      [name, email, phone, req.user.id]
+      [name, email, phone || null, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -263,6 +263,44 @@ export const updateProfile = async (req, res, next) => {
     }
 
     res.json(result.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changeOwnPassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Ancien et nouveau mot de passe requis' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Le nouveau mot de passe doit faire au moins 6 caractères' });
+    }
+
+    const userResult = await pool.query(
+      'SELECT id, password FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, userResult.rows[0].password);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [hashed, req.user.id]
+    );
+
+    res.json({ message: 'Mot de passe mis à jour avec succès' });
   } catch (error) {
     next(error);
   }
