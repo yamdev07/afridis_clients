@@ -95,6 +95,9 @@ export const api = {
   listServices: (params) =>
     instance.get("/services", { params }).then((r) => r.data),
 
+  createService: (payload) =>
+    instance.post("/services", payload).then((r) => r.data),
+
   getServiceClients: (serviceId) =>
     instance.get(`/services/${serviceId}/clients`).then((r) => r.data),
 
@@ -119,6 +122,11 @@ export const api = {
   changeUserPassword: (id, newPassword) =>
     instance
       .patch(`/users/${id}/password`, { newPassword })
+      .then((r) => r.data),
+
+  changeOwnPassword: (currentPassword, newPassword) =>
+    instance
+      .patch("/auth/me/password", { currentPassword, newPassword })
       .then((r) => r.data),
 
   // Notifications
