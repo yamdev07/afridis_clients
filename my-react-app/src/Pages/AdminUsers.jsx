@@ -42,6 +42,7 @@ export default function AdminUsers() {
   });
   const [creating, setCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const currentUser = typeof window !== "undefined"
     ? JSON.parse(localStorage.getItem("user") || "null")
@@ -91,12 +92,57 @@ export default function AdminUsers() {
     }
   };
 
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    setError("");
+    try {
+      const updated = await api.updateUser(editingUser.id, form);
+      setUsers((prev) => prev.map(u => u.id === updated.id ? updated : u));
+      setForm({ name: "", email: "", password: "", role: "admin", agent_login: "" });
+      setEditingUser(null);
+      setShowCreateModal(false);
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Erreur de mise à jour");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async (user) => {
+    if (!window.confirm(`Voulez-vous vraiment supprimer l'utilisateur ${user.name} ?`)) return;
+    try {
+      await api.deleteUser(user.id);
+      setUsers(users.filter(u => u.id !== user.id));
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Erreur de suppression");
+    }
+  };
+
+  const openEditModal = (user) => {
+    setEditingUser(user);
+    setForm({
+      name: user.name,
+      email: user.email,
+      password: "", // Laisser vide pour ne pas le modifier, sauf si l'utilisateur saisit une valeur
+      role: user.role,
+      agent_login: user.agent_login || user.agent_id || "",
+    });
+    setShowCreateModal(true);
+  };
+
+  const openCreateModal = () => {
+    setEditingUser(null);
+    setForm({ name: "", email: "", password: "", role: currentUser?.role === "admin" ? "commercial" : "admin", agent_login: "" });
+    setShowCreateModal(true);
+  };
+
   const filteredUsers = users.filter(u =>
     u.name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (!currentUser || currentUser.role !== "super_admin") {
+  if (!currentUser || !["super_admin", "admin"].includes(currentUser.role)) {
     return (
       <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
         <Sidebar />
@@ -128,14 +174,14 @@ export default function AdminUsers() {
             <div className="flex items-center gap-4">
               <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Administration</h1>
               <div className="px-5 py-2 bg-primary/10 border border-primary/20 text-primary rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-premium">
-                Niveau Super-Admin
+                Niveau {currentUser?.role === 'super_admin' ? 'Super-Admin' : 'Admin'}
               </div>
             </div>
             <p className="text-text-muted-light dark:text-text-muted-dark font-medium tracking-tight">Contrôle granulaire des accès et de la hiérarchie système.</p>
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
-            <Button icon={Plus} onClick={() => setShowCreateModal(true)} className="shadow-primary/30 font-black tracking-widest text-[10px]">
+            <Button icon={Plus} onClick={openCreateModal} className="shadow-primary/30 font-black tracking-widest text-[10px]">
               CRÉER UN UTILISATEUR
             </Button>
           </div>
@@ -229,9 +275,18 @@ export default function AdminUsers() {
                         </div>
                       </td>
                       <td className="px-10 py-6 text-right border-none">
-                        <button className="p-3 text-text-muted-light dark:text-text-muted-dark hover:text-primary dark:hover:text-white hover:bg-primary/10 rounded-radius-button transition-all active:scale-90">
-                          <MoreVertical size={20} strokeWidth={2.5} />
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          {(currentUser.role === 'super_admin' && u.role !== 'super_admin') && (
+                            <button onClick={() => openEditModal(u)} className="p-3 text-text-muted-light dark:text-text-muted-dark hover:text-accent-purple dark:hover:text-accent-purple hover:bg-accent-purple/10 rounded-radius-button transition-all active:scale-90">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            </button>
+                          )}
+                          {((currentUser.role === 'super_admin' && u.role !== 'super_admin') || (currentUser.role === 'admin' && u.role === 'commercial')) && (
+                            <button onClick={() => handleDelete(u)} className="p-3 text-text-muted-light dark:text-text-muted-dark hover:text-accent-red dark:hover:text-accent-red hover:bg-accent-red/10 rounded-radius-button transition-all active:scale-90">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -264,17 +319,17 @@ export default function AdminUsers() {
                       <UserPlus size={28} strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Nouvel Utilisateur</h2>
+                      <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">{editingUser ? "Modifier Utilisateur" : "Nouvel Utilisateur"}</h2>
                       <p className="text-text-muted-light dark:text-text-muted-dark font-bold text-sm">Définition des droits et credentials d'accès.</p>
                     </div>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 sm:p-12 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <form onSubmit={editingUser ? handleEditSubmit : handleSubmit} className="p-8 sm:p-12 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-bold">
                     <InputGroup label="Identité Complète" name="name" icon={UserCircle} value={form.name} onChange={handleChange} placeholder="Ex: Jean Luc DUPONT" required />
                     <InputGroup label="Email Professionnel" name="email" icon={Mail} type="email" value={form.email} onChange={handleChange} placeholder="j.luc@orange.com" required />
-                    <InputGroup label="Clé d'Accès" name="password" icon={Key} type="password" value={form.password} onChange={handleChange} required />
+                    <InputGroup label="Clé d'Accès" name="password" icon={Key} type="password" value={form.password} onChange={handleChange} required={!editingUser} placeholder={editingUser ? "(Laisser vide pour ne pas modifier)" : ""} />
 
                     <div className="space-y-3 group/field">
                       <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] ml-1 group-focus-within/field:text-primary transition-colors">Privilèges Système</label>
@@ -285,10 +340,11 @@ export default function AdminUsers() {
                           className="w-full pl-16 pr-6 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-bg-dark transition-all text-xs font-black text-text-main-light dark:text-text-main-dark appearance-none uppercase tracking-[0.1em] shadow-premium"
                           value={form.role}
                           onChange={handleChange}
+                          disabled={currentUser?.role === "admin"}
                         >
                           <option value="commercial">Commercial de Terrain</option>
-                          <option value="admin">Administrateur Local</option>
-                          <option value="super_admin">Super Administrateur</option>
+                          {currentUser?.role === 'super_admin' && <option value="admin">Administrateur Local</option>}
+                          {currentUser?.role === 'super_admin' && <option value="super_admin">Super Administrateur</option>}
                         </select>
                       </div>
                     </div>
@@ -311,7 +367,7 @@ export default function AdminUsers() {
                       loading={creating}
                       icon={Plus}
                     >
-                      Finaliser la création
+                      {editingUser ? "Sauvegarder" : "Finaliser la création"}
                     </Button>
                   </div>
                 </form>
