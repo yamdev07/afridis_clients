@@ -25,7 +25,7 @@ export default function Sidebar() {
 
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-  const isAdmin = user?.role === "super_admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "admin";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
