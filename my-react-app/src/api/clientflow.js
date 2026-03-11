@@ -82,6 +82,7 @@ export const api = {
 
   // Dashboard & données métier
   getDashboardSummary: () => instance.get("/dashboard").then((r) => r.data),
+  getReportsData: () => instance.get("/dashboard/reports").then((r) => r.data),
 
   listClients: (params) =>
     instance.get("/clients", { params }).then((r) => r.data),
@@ -91,6 +92,9 @@ export const api = {
 
   updateClient: (id, payload) =>
     instance.put(`/clients/${id}`, payload).then((r) => r.data),
+
+  createSubscription: (payload) =>
+    instance.post("/subscriptions", payload).then((r) => r.data),
 
   listServices: (params) =>
     instance.get("/services", { params }).then((r) => r.data),
@@ -106,9 +110,14 @@ export const api = {
 
   deleteClient: (id) => instance.delete(`/clients/${id}`),
 
+  deleteService: (id) => instance.delete(`/services/${id}`).then((r) => r.data),
+
   // Subscriptions / ventes pour l’export
   listSubscriptions: (params) =>
     instance.get("/subscriptions", { params }).then((r) => r.data),
+
+  listStatuses: () =>
+    instance.get("/subscriptions/statuses").then((r) => r.data),
 
   bulkImportSubscriptions: (rows) =>
     instance.post("/subscriptions/bulk-import", { rows }).then((r) => r.data),
@@ -134,6 +143,8 @@ export const api = {
     instance.get("/notifications", { params }).then((r) => r.data),
   markNotificationRead: (id) =>
     instance.patch(`/notifications/${id}/read`).then((r) => r.data),
+  deleteNotification: (id) =>
+    instance.delete(`/notifications/${id}`).then((r) => r.data),
   markAllNotificationsRead: () =>
     instance.patch("/notifications/mark-all-read").then((r) => r.data),
 };
