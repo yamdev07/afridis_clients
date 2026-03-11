@@ -5,12 +5,23 @@ export const listUsers = async (req, res, next) => {
   try {
     const { role } = req.query;
 
-    let query = 'SELECT id, name, email, role, agent_id, created_at FROM users';
+    let query = 'SELECT id, name, email, role, agent_id, phone, created_at FROM users';
     const params = [];
+    const conditions = [];
 
     if (role) {
-      query += ' WHERE role = $1';
+      conditions.push(`role = $${params.length + 1}`);
       params.push(role);
+    }
+
+    // Un admin local ne peut voir que les commerciaux
+    if (req.user.role === 'admin') {
+      conditions.push(`role = $${params.length + 1}`);
+      params.push('commercial');
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     query += ' ORDER BY created_at DESC';
@@ -78,6 +89,16 @@ export const createUser = async (req, res, next) => {
       [name, email, hashedPassword, role, agentId],
     );
 
+    // Notification
+    import('./notificationController.js').then(m => {
+      m.notifyAdmins({
+        type: 'user_created',
+        title: 'Nouveau compte créé',
+        message: `Un compte ${role} a été créé pour ${name}.`,
+        meta: { userId: result.rows[0].id, page: '/admin' }
+      });
+    });
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     next(error);
@@ -87,11 +108,18 @@ export const createUser = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, email, password, role, agent_login } = req.body;
+    const { name, email, password, role, agent_login, phone } = req.body;
 
-    const userToUpdate = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
-    if (userToUpdate.rows.length === 0) {
+    const userToUpdateResult = await pool.query('SELECT role, name FROM users WHERE id = $1', [id]);
+    if (userToUpdateResult.rows.length === 0) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    const userToUpdate = userToUpdateResult.rows[0];
+
+    // Permissions
+    if (req.user.role === 'admin' && userToUpdate.role !== 'commercial') {
+      return res.status(403).json({ message: 'Un admin peut seulement modifier des comptes commerciaux' });
     }
 
     let agentId = null;
@@ -111,19 +139,30 @@ export const updateUser = async (req, res, next) => {
       }
     }
 
-    let query = 'UPDATE users SET name = $1, email = $2, role = $3, agent_id = $4';
-    let values = [name, email, role, agentId];
+    let query = 'UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), role = COALESCE($3, role), agent_id = COALESCE($4, agent_id), phone = COALESCE($5, phone)';
+    let values = [name, email, role, agentId, phone];
 
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      query += ', password = $5 WHERE id = $6 RETURNING id, name, email, role, agent_id, created_at';
+      query += ', password = $6 WHERE id = $7 RETURNING id, name, email, role, agent_id, phone, created_at';
       values.push(hashedPassword, id);
     } else {
-      query += ' WHERE id = $5 RETURNING id, name, email, role, agent_id, created_at';
+      query += ' WHERE id = $6 RETURNING id, name, email, role, agent_id, phone, created_at';
       values.push(id);
     }
 
     const result = await pool.query(query, values);
+
+    // Notification
+    import('./notificationController.js').then(m => {
+      m.notifyAdmins({
+        type: 'user_updated',
+        title: 'Compte utilisateur modifié',
+        message: `Le compte de ${userToUpdate.name} a été mis à jour.`,
+        meta: { userId: id, page: '/admin' }
+      });
+    });
+
     res.json(result.rows[0]);
   } catch (error) {
     next(error);
@@ -134,22 +173,37 @@ export const deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const userToDelete = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
-    if (userToDelete.rows.length === 0) {
+    const userToDeleteResult = await pool.query('SELECT name, role FROM users WHERE id = $1', [id]);
+    if (userToDeleteResult.rows.length === 0) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
-    const roleToDelete = userToDelete.rows[0].role;
+    const userToDelete = userToDeleteResult.rows[0];
 
-    if (roleToDelete === 'super_admin') {
+    if (userToDelete.role === 'super_admin') {
       return res.status(403).json({ message: 'Impossible de supprimer un super-admin' });
     }
 
-    if (roleToDelete === 'admin' && req.user.role !== 'super_admin') {
+    if (req.user.role === 'admin' && userToDelete.role !== 'commercial') {
+      return res.status(403).json({ message: 'Un admin peut seulement supprimer des comptes commerciaux' });
+    }
+
+    if (userToDelete.role === 'admin' && req.user.role !== 'super_admin') {
       return res.status(403).json({ message: 'Seul le super-admin peut supprimer un admin' });
     }
 
     await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+    // Notification
+    import('./notificationController.js').then(m => {
+      m.notifyAdmins({
+        type: 'user_deleted',
+        title: 'Compte utilisateur supprimé',
+        message: `Le compte de ${userToDelete.name} a été supprimé.`,
+        meta: { page: '/admin' }
+      });
+    });
+
     res.json({ message: 'Utilisateur supprimé avec succès' });
   } catch (error) {
     next(error);
