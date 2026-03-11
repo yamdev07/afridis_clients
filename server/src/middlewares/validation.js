@@ -31,16 +31,16 @@ export const validateLogin = validate([
 // Validations pour les clients
 export const validateClient = validate([
   body('full_name').trim().notEmpty().withMessage('Le nom complet est requis'),
-  body('email').optional().isEmail().withMessage('Email invalide'),
-  body('phone').optional().isString(),
-  body('address').optional().isString(),
+  body('email').optional({ checkFalsy: true }).isEmail().withMessage('Email invalide'),
+  body('phone').optional({ checkFalsy: true }).isString(),
+  body('address').optional({ checkFalsy: true }).isString(),
 ]);
 
 // Validations pour les services
 export const validateService = validate([
   body('code').trim().notEmpty().withMessage('Le code est requis'),
   body('label').trim().notEmpty().withMessage('Le libellé est requis'),
-  body('monthly_price').optional().isFloat({ min: 0 }).withMessage('Le prix doit être un nombre positif'),
+  body('monthly_price').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Le prix doit être un nombre positif'),
 ]);
 
 // Validations pour les abonnements
@@ -48,8 +48,8 @@ export const validateSubscription = validate([
   body('client_id').isUUID().withMessage('ID client invalide'),
   body('service_id').isUUID().withMessage('ID service invalide'),
   body('status_id').isUUID().withMessage('ID statut invalide'),
-  body('agent_id').optional().isUUID().withMessage('ID agent invalide'),
-  body('line_number').optional().isString(),
-  body('subscription_date').optional().isISO8601().withMessage('Date invalide'),
-  body('installation_date').optional().isISO8601().withMessage('Date invalide'),
+  body('agent_id').optional({ checkFalsy: true, nullable: true }).isUUID().withMessage('ID agent invalide'),
+  body('line_number').optional({ checkFalsy: true }).isString(),
+  body('subscription_date').optional({ checkFalsy: true }).isISO8601().withMessage('Date invalide'),
+  body('installation_date').optional({ checkFalsy: true }).isISO8601().withMessage('Date invalide'),
 ]);
