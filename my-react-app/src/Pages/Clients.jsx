@@ -34,7 +34,6 @@ import { Users } from "lucide-react";
 const emptyForm = {
   id: null,
   service_category: "telecom", // 'telecom' | 'digital'
-  report_date: "",
   commercial_login: "",
   full_name: "",
   line_number: "",
@@ -75,7 +74,6 @@ const deserializeClient = (row) => {
     payment_reference: meta.payment_reference || "",
     notes: meta.notes || "",
     client_type: meta.client_type || "B2C",
-    report_date: meta.report_date || "",
     service_category: meta.service_category || "telecom",
     service_description: meta.service_description || "",
     tarif: meta.tarif || "",
@@ -98,7 +96,6 @@ const buildPayload = (form) => ({
     payment_reference: form.payment_reference,
     notes: form.notes,
     client_type: form.client_type,
-    report_date: form.report_date,
     service_description: form.service_description,
     tarif: form.tarif,
   }),
@@ -149,6 +146,7 @@ function Clients() {
   }, []);
 
   const [searchLogin, setSearchLogin] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const filteredClients = useMemo(() => {
     let result = allClients;
@@ -167,8 +165,28 @@ function Clients() {
       );
     }
 
+    if (statusFilter === "installed") {
+      result = result.filter((client) => {
+        if (!client.installation_date) return false;
+        const installDate = new Date(client.installation_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return installDate <= today;
+      });
+    } else if (statusFilter === "pending") {
+      result = result.filter((client) => !client.installation_date);
+    } else if (statusFilter === "planned") {
+      result = result.filter((client) => {
+        if (!client.installation_date) return false;
+        const installDate = new Date(client.installation_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return installDate > today;
+      });
+    }
+
     return result;
-  }, [allClients, search, searchLogin]);
+  }, [allClients, search, searchLogin, statusFilter]);
 
   useEffect(() => {
     setClients(filteredClients);
@@ -217,56 +235,71 @@ function Clients() {
     }
   };
 
+  const isCommercial = user?.role === "commercial";
+
   return (
     <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
       <Sidebar />
 
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Clients</h1>
-            <p className="text-text-muted-light dark:text-text-muted-dark mt-2 font-medium">Gestion et suivi du portefeuille client.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestion des Clients</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Gestion et suivi du portefeuille client.</p>
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
-            <Button
+            <button
               onClick={() => { setEditing(false); setFormData(emptyForm); setShowModal(true); }}
-              icon={Plus}
-              className="px-8 shadow-primary/30"
+              className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold text-xs uppercase tracking-widest shadow-sm hover:bg-primary-hover active:scale-95 transition-all flex items-center gap-2"
             >
-              Nouveau client
-            </Button>
+              <Plus size={16} strokeWidth={3} />
+              <span>Nouveau client</span>
+            </button>
           </div>
         </header>
 
         {/* Toolbar */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="lg:col-span-2 relative">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={20} />
-            <input
-              type="search"
-              placeholder="Rechercher par nom ou numéro de ligne..."
-              className="w-full pl-14 pr-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all shadow-premium text-text-main-light dark:text-text-main-dark font-medium"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-8">
+          <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 w-full lg:w-auto flex-grow">
+            <div className="relative flex-grow lg:flex-grow-0 min-w-0">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="search"
+                placeholder="Nom ou numéro de ligne..."
+                className="w-full lg:w-80 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="relative flex-grow lg:flex-grow-0 min-w-0">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="search"
+                placeholder="Commercial (Ex: m.dupont)"
+                className="w-full lg:w-64 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm"
+                value={searchLogin}
+                onChange={(e) => setSearchLogin(e.target.value)}
+              />
+            </div>
+            <div className="relative flex-grow lg:flex-grow-0 min-w-0">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <select
+                className="w-full lg:w-48 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm appearance-none cursor-pointer font-semibold"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">Tous les statuts</option>
+                <option value="installed">Installés</option>
+                <option value="pending">En attente</option>
+                <option value="planned">Planifiés</option>
+              </select>
+            </div>
           </div>
-          <div className="relative">
-            <User className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={20} />
-            <input
-              type="search"
-              placeholder="Filtre: Commercial (Ex: m.dupont)"
-              className="w-full pl-14 pr-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all shadow-premium text-text-main-light dark:text-text-main-dark font-medium"
-              value={searchLogin}
-              onChange={(e) => setSearchLogin(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-4">
-            <button className="flex-1 px-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:bg-bg-light dark:hover:bg-white/10 transition-all shadow-premium active:scale-95">
-              <Filter size={16} /> Filtres
-            </button>
-            <button onClick={load} className="flex-1 px-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:bg-bg-light dark:hover:bg-white/10 transition-all shadow-premium active:scale-95">
-              <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Actualiser
+          <div className="flex items-center gap-2 w-full lg:w-auto">
+            <button onClick={load} className="flex-1 lg:flex-none px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95">
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              <span>Actualiser</span>
             </button>
           </div>
         </div>
@@ -287,50 +320,47 @@ function Clients() {
               <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Chargement en cours...</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-radius-card border border-border-light dark:border-white/10 bg-white dark:bg-bg-card-dark shadow-premium dark:shadow-none">
+            <div className="overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                  <tr className="bg-bg-light/50 dark:bg-white/5 border-b border-border-light dark:border-white/10">
-                    <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Identité</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Ligne & Offre</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Commercial</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Statut</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] text-right">Actions</th>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Identité</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Ligne & Offre</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Commercial</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Statut</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border-light dark:divide-white/5">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                   {clients.map((client) => (
                     <tr
                       key={client.id}
-                      className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors group"
+                      className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group"
                     >
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-radius-button bg-bg-light dark:bg-white/5 flex items-center justify-center text-primary font-black text-lg shadow-sm border border-border-light dark:border-white/5 transition-transform group-hover:scale-110">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary font-bold text-xs">
                             {client.full_name?.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-black text-text-main-light dark:text-text-main-dark group-hover:text-primary transition-colors">{client.full_name}</p>
-                            <p className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-0.5">{client.client_type}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{client.full_name}</p>
+                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{client.client_type}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <p className="text-sm font-black text-text-main-light/80 dark:text-text-main-dark/80">{client.line_number}</p>
-                        <p className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-0.5">{client.offer || "Sans offre"}</p>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{client.line_number || "---"}</p>
+                        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{client.offer || "Sans offre"}</p>
                       </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-accent-purple" />
-                          <span className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">{client.commercial_login || "Inconnu"}</span>
-                        </div>
+                      <td className="px-6 py-4">
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{client.commercial_login || "Inconnu"}</span>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-4">
                         {(() => {
                           if (!client.installation_date) {
                             return (
-                              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-orange/10 text-accent-orange text-[9px] font-black uppercase tracking-[0.1em] border border-accent-orange/20">
-                                <Clock size={10} strokeWidth={3} /> En attente
+                              <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                En attente
                               </span>
                             );
                           }
@@ -339,28 +369,28 @@ function Clients() {
                           today.setHours(0, 0, 0, 0);
                           if (installDate <= today) {
                             return (
-                              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-green/10 text-accent-green text-[9px] font-black uppercase tracking-[0.1em] border border-accent-green/20">
-                                <CheckCircle size={10} strokeWidth={3} /> Installé
+                              <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500">
+                                Installé
                               </span>
                             );
                           }
                           return (
-                            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-[0.1em] border border-primary/20">
-                              <Zap size={10} strokeWidth={3} /> Planifié
+                            <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-500">
+                              Planifié
                             </span>
                           );
                         })()}
                       </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => setSelectedClient(client)} className="p-2.5 text-text-muted-light hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Détails">
-                            <Eye size={18} />
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => setSelectedClient(client)} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all">
+                            <Eye size={14} />
                           </button>
-                          <button onClick={() => { setEditing(true); setFormData(client); setShowModal(true); }} className="p-2.5 text-text-muted-light hover:text-accent-purple hover:bg-accent-purple/10 rounded-xl transition-all" title="Modifier">
-                            <Pencil size={18} />
+                          <button onClick={() => { setEditing(true); setFormData(client); setShowModal(true); }} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all">
+                            <Pencil size={14} />
                           </button>
-                          <button onClick={() => deleteClient(client.id)} className="p-2.5 text-text-muted-light hover:text-accent-red hover:bg-accent-red/10 rounded-xl transition-all" title="Supprimer">
-                            <Trash2 size={18} />
+                          <button onClick={() => deleteClient(client.id)} className="p-2 text-slate-400 hover:text-accent-red hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all">
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
@@ -538,7 +568,14 @@ function Clients() {
                       <SectionHeader icon={Phone} title="Contacts & Technique" />
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {formData.service_category !== "digital" && (
-                          <Input label="Numéro de Ligne (Fixe)" value={formData.line_number} onChange={(v) => setFormData({ ...formData, line_number: v })} placeholder="01.23.45.67.89" required />
+                          <Input
+                            label="Numéro de Ligne (Fixe)"
+                            value={formData.line_number}
+                            onChange={(v) => setFormData({ ...formData, line_number: v })}
+                            placeholder="01.23.45.67.89"
+                            required
+                            readOnly={isCommercial && editing}
+                          />
                         )}
                         <Input label="Mobile" value={formData.phone} onChange={(v) => setFormData({ ...formData, phone: v })} placeholder="+225 07..." />
                         <Input label="E-mail" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} placeholder="client@domaine.com" type="email" />
@@ -582,7 +619,6 @@ function Clients() {
                             ]}
                             onChange={(v) => setFormData({ ...formData, offer: v })}
                           />
-                          <Input label="Référence Payeur" value={formData.payer_number} onChange={(v) => setFormData({ ...formData, payer_number: v })} placeholder="REF-0000" />
                         </div>
                       )}
                     </div>
@@ -590,12 +626,10 @@ function Clients() {
                     {/* Section 4 */}
                     <div className="space-y-6 md:col-span-2">
                       <SectionHeader icon={Calendar} title="Chronologie" />
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Input label="Inscription" type="date" value={formData.subscription_date} onChange={(v) => setFormData({ ...formData, subscription_date: v })} />
-                        <Input label="Installation Prévue" type="date" value={formData.installation_date} onChange={(v) => setFormData({ ...formData, installation_date: v })} />
-                        <Input label="MAJ Rapport" type="date" value={formData.report_date} onChange={(v) => setFormData({ ...formData, report_date: v })} />
+                        <Input label="Installation" type="date" value={formData.installation_date} onChange={(v) => setFormData({ ...formData, installation_date: v })} />
                       </div>
-                      <Input label="Référence Transaction" value={formData.payment_reference} onChange={(v) => setFormData({ ...formData, payment_reference: v })} placeholder="ID TRANSACTION" />
                     </div>
 
                     <div className="md:col-span-2 space-y-4">
@@ -651,7 +685,7 @@ function DetailItem({ icon: Icon, label, value }) {
   );
 }
 
-function Input({ label, value, onChange, placeholder, type = "text", required = false }) {
+function Input({ label, value, onChange, placeholder, type = "text", required = false, readOnly = false }) {
   return (
     <div className="space-y-2">
       <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest ml-1">
@@ -659,10 +693,11 @@ function Input({ label, value, onChange, placeholder, type = "text", required = 
       </label>
       <input
         type={type}
-        className="w-full px-6 py-4 bg-bg-light/30 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light shadow-premium"
+        className={`w-full px-6 py-4 bg-bg-light/30 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light shadow-premium ${readOnly ? "opacity-60 cursor-not-allowed select-none" : ""}`}
         placeholder={placeholder}
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => !readOnly && onChange(e.target.value)}
+        readOnly={readOnly}
       />
     </div>
   );
