@@ -32,6 +32,7 @@ export default function Export() {
     from_date: "",
     to_date: "",
     agent_login: "",
+    status_code: "",
   });
   const [sortBy, setSortBy] = useState("subscription_date_desc");
   const [loading, setLoading] = useState(false);
@@ -67,6 +68,7 @@ export default function Export() {
         agent_login: filters.agent_login || undefined,
         from_date: filters.from_date || undefined,
         to_date: filters.to_date || undefined,
+        status_code: filters.status_code || undefined,
       };
       const data = await api.listSubscriptions(params);
       setRows(data?.data || []);
@@ -152,7 +154,7 @@ export default function Export() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 items-end">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark ml-1">Sourcing Agent</label>
                 <div className="relative group">
@@ -165,6 +167,23 @@ export default function Export() {
                     value={filters.agent_login}
                     onChange={handleChange}
                   />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark ml-1">Statut Installation</label>
+                <div className="relative group">
+                  <CheckCircle2 className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light transition-colors group-focus-within:text-primary" size={18} strokeWidth={2.5} />
+                  <select
+                    name="status_code"
+                    value={filters.status_code}
+                    onChange={handleChange}
+                    className="w-full pl-14 pr-5 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-white/10 transition-all text-xs font-black text-text-main-light dark:text-text-main-dark appearance-none shadow-premium cursor-pointer"
+                  >
+                    <option value="">TOUS LES STATUTS</option>
+                    <option value="installed">INSTALLÉS</option>
+                    <option value="pending">EN ATTENTE</option>
+                  </select>
                 </div>
               </div>
 
