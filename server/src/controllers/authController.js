@@ -76,9 +76,11 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Trouver l'utilisateur
     const result = await pool.query(
-      'SELECT id, name, email, password, role, agent_id FROM users WHERE email = $1',
+      `SELECT u.id, u.name, u.email, u.password, u.role, u.agent_id, u.phone, a.login as agent_login 
+       FROM users u 
+       LEFT JOIN agents a ON u.agent_id = a.id 
+       WHERE u.email = $1`,
       [email]
     );
 
@@ -113,6 +115,8 @@ export const login = async (req, res, next) => {
         email: user.email,
         role: user.role,
         agent_id: user.agent_id,
+        phone: user.phone,
+        agent_login: user.agent_login
       },
       token: accessToken,
     });
