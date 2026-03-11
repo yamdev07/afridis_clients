@@ -2,7 +2,7 @@ import pool from '../config/database.js';
 
 export const getAllClients = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '', line_number = '' } = req.query;
+    const { page = 1, limit = 20, search = '', line_number = '', status = '' } = req.query;
     const offset = (page - 1) * limit;
 
     let query = `
@@ -30,6 +30,15 @@ export const getAllClients = async (req, res, next) => {
         WHERE s2.client_id = c.id AND s2.line_number ILIKE $${queryParams.length + 1}
       )`);
       queryParams.push(`%${line_number}%`);
+    }
+
+    if (status) {
+      conditions.push(`EXISTS (
+        SELECT 1 FROM subscriptions sub
+        JOIN statuses st ON sub.status_id = st.id
+        WHERE sub.client_id = c.id AND st.code = $${queryParams.length + 1}
+      )`);
+      queryParams.push(status);
     }
 
     if (conditions.length > 0) {
@@ -61,6 +70,15 @@ export const getAllClients = async (req, res, next) => {
         WHERE s2.client_id = c.id AND s2.line_number ILIKE $${countParams.length + 1}
       )`);
       countParams.push(`%${line_number}%`);
+    }
+
+    if (status) {
+      countConditions.push(`EXISTS (
+        SELECT 1 FROM subscriptions sub
+        JOIN statuses st ON sub.status_id = st.id
+        WHERE sub.client_id = c.id AND st.code = $${countParams.length + 1}
+      )`);
+      countParams.push(status);
     }
 
     if (countConditions.length > 0) {
