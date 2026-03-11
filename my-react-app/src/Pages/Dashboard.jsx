@@ -170,8 +170,8 @@ export default function Dashboard() {
                 <button
                   onClick={() => setChartPeriod("week")}
                   className={`px-4 py-2 rounded-radius-input text-[10px] font-black uppercase transition-all ${chartPeriod === "week"
-                      ? "bg-primary text-white shadow-lg shadow-primary/30"
-                      : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
+                    : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
                     }`}
                 >
                   Semaine
@@ -179,8 +179,8 @@ export default function Dashboard() {
                 <button
                   onClick={() => setChartPeriod("month")}
                   className={`px-4 py-2 rounded-radius-input text-[10px] font-black uppercase transition-all ${chartPeriod === "month"
-                      ? "bg-primary text-white shadow-lg shadow-primary/30"
-                      : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
+                    : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
                     }`}
                 >
                   Mois
@@ -389,25 +389,24 @@ export default function Dashboard() {
 
 function StatCard({ title, value, icon: Icon, color }) {
   const colors = {
-    primary: { bg: "bg-primary/10", text: "text-primary" },
-    green: { bg: "bg-accent-green/10", text: "text-accent-green" },
-    orange: { bg: "bg-accent-orange/10", text: "text-accent-orange" },
-    purple: { bg: "bg-accent-purple/10", text: "text-accent-purple" },
+    primary: "text-primary bg-primary/5 border-primary/10",
+    green: "text-accent-green bg-accent-green/5 border-accent-green/10",
+    orange: "text-accent-orange bg-accent-orange/5 border-accent-orange/10",
+    purple: "text-accent-purple bg-accent-purple/5 border-accent-purple/10",
   };
   const c = colors[color] || colors.primary;
 
   return (
-    <GlassCard className="p-6 group relative overflow-hidden" hover={true}>
-      <div className="absolute top-0 right-0 p-4">
-        <div className={`p-3 rounded-radius-button ${c.bg} ${c.text} transition-transform group-hover:scale-110 duration-300`}>
-          <Icon size={24} strokeWidth={2.5} />
+    <GlassCard className="p-6 border-slate-200 dark:border-slate-800" hover={true}>
+      <div className="flex items-center gap-4">
+        <div className={`p-3 rounded-lg border ${c}`}>
+          <Icon size={20} strokeWidth={2} />
+        </div>
+        <div>
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{value ?? "0"}</h3>
         </div>
       </div>
-      <div className="mt-8">
-        <p className="text-text-muted-light dark:text-text-muted-dark text-[10px] font-black uppercase tracking-[0.2em] mb-2">{title}</p>
-        <h3 className="text-4xl font-black text-text-main-light dark:text-text-main-dark leading-none">{value ?? "0"}</h3>
-      </div>
-      <div className={`absolute bottom-0 left-0 h-1.5 w-full ${c.bg.replace('/10', '/30')}`} />
     </GlassCard>
   );
 }
