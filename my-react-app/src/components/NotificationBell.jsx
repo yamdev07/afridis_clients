@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Bell, Check, Trash2, Info, AlertTriangle, X, Sparkles, Filter, MoreHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api/clientflow";
 
 export default function NotificationBell() {
+  const navigate = useNavigate();
   const [count, setCount] = useState(0);
   const [opened, setOpened] = useState(false);
   const [items, setItems] = useState([]);
@@ -179,7 +181,20 @@ export default function NotificationBell() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.95, height: 0 }}
                     key={n.id}
-                    onClick={() => !n.is_read && handleMarkRead(n.id)}
+                    onClick={async () => {
+                      if (!n.is_read) await handleMarkRead(n.id);
+                      if (n.meta) {
+                        try {
+                          const meta = typeof n.meta === 'string' ? JSON.parse(n.meta) : n.meta;
+                          if (meta.page) {
+                            navigate(meta.page);
+                            setOpened(false);
+                          }
+                        } catch (e) {
+                          console.error("Error parsing notification meta", e);
+                        }
+                      }
+                    }}
                     className={`px-8 py-6 border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer transition-all relative group ${n.is_read ? "opacity-50 grayscale-[0.5]" : "bg-primary/[0.03] dark:bg-primary/[0.08] hover:bg-white dark:hover:bg-white/5"
                       }`}
                   >
