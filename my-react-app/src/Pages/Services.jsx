@@ -22,7 +22,9 @@ import {
   RefreshCw,
   MoreHorizontal,
   Box,
-  LayoutGrid
+  LayoutGrid,
+  Trash2,
+  AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/clientflow";
@@ -42,6 +44,7 @@ function Services() {
   const [clientsError, setClientsError] = useState("");
   const [showAddClientForm, setShowAddClientForm] = useState(false);
   const [addingClient, setAddingClient] = useState(false);
+  const [statuses, setStatuses] = useState([]);
 
   // Nouveaux états pour le formulaire d'ajout client
   const [newClientFullname, setNewClientFullname] = useState("");
@@ -53,6 +56,9 @@ function Services() {
   const [serviceForm, setServiceForm] = useState({ code: "", label: "", description: "", monthly_price: "", is_active: true });
   const [savingService, setSavingService] = useState(false);
   const [serviceError, setServiceError] = useState("");
+
+  const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "null"), []);
+  const canModifyCatalog = user?.role === 'admin' || user?.role === 'super_admin';
 
   const fetchServices = async () => {
     setLoading(true);
@@ -67,8 +73,18 @@ function Services() {
     }
   };
 
+  const fetchStatuses = async () => {
+    try {
+      const data = await api.listStatuses();
+      setStatuses(data || []);
+    } catch (err) {
+      console.error("Erreur statuts:", err);
+    }
+  };
+
   useEffect(() => {
     fetchServices();
+    fetchStatuses();
   }, []);
 
   const handleShowClients = async (service) => {
@@ -87,6 +103,16 @@ function Services() {
     }
   };
 
+  const handleDeleteService = async (id, label) => {
+    if (!window.confirm(`Supprimer définitivement le service "${label}" ?`)) return;
+    try {
+      await api.deleteService(id);
+      setServices(prev => prev.filter(s => s.id !== id));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Erreur lors de la suppression du service");
+    }
+  };
+
   const handleAddClientToService = async (e) => {
     e.preventDefault();
     if (!newClientFullname || !newLineNumber) {
@@ -98,16 +124,39 @@ function Services() {
     setClientsError("");
 
     try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const pendingStatus = statuses.find(s => s.code === 'pending');
+
+      if (!pendingStatus) {
+        throw new Error("Statut 'pending' introuvable.");
+      }
+
       const clientPayload = {
         full_name: newClientFullname,
-        address: JSON.stringify({ line_number: newLineNumber })
+        address: JSON.stringify({
+          line_number: newLineNumber,
+          commercial_login: user.name || "",
+          subscription_date: new Date().toISOString().split('T')[0]
+        }),
+        // On pourrait aussi ajouter les champs 'fixed' dans la table clients si besoin
       };
 
       const newClientRes = await api.createClient(clientPayload);
       const clientId = newClientRes.id;
 
-      // Créer l'abonnement avec les infos de base
-      await api.listSubscriptions(); // juste pour vérifier le token
+      // Créer l'abonnement
+      const subPayload = {
+        client_id: clientId,
+        service_id: selectedService.id,
+        status_id: pendingStatus.id,
+        agent_id: user.agent_id || null,
+        line_number: newLineNumber,
+        subscription_date: new Date().toISOString().split('T')[0],
+        contract_cost: newClientCost ? parseFloat(newClientCost) : selectedService.monthly_price,
+        notes: `Souscription via page Services pour ${selectedService.label}`
+      };
+
+      await api.createSubscription(subPayload);
 
       // On rafraîchit la liste
       const data = await api.getServiceClients(selectedService.id);
@@ -119,7 +168,7 @@ function Services() {
       setShowAddClientForm(false);
 
     } catch (err) {
-      setClientsError(err?.response?.data?.message || "Erreur lors de l'ajout du client");
+      setClientsError(err?.response?.data?.message || err.message || "Erreur lors de l'ajout du client");
     } finally {
       setAddingClient(false);
     }
@@ -173,51 +222,57 @@ function Services() {
       <Sidebar />
 
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Services & Offres</h1>
-            <p className="text-text-muted-light dark:text-text-muted-dark mt-2 font-medium">Gestion du catalogue et monitoring des souscriptions.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Services & Offres</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Gestion du catalogue et monitoring des souscriptions.</p>
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
             <div className="flex gap-3">
-              <Button variant="secondary" icon={RefreshCw} onClick={fetchServices} className="!px-5" />
-              <Button variant="primary" icon={Plus} className="shadow-primary/30" onClick={() => setShowNewServiceModal(true)}>
-                Nouveau Service
-              </Button>
+              <button onClick={fetchServices} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:text-primary transition-all shadow-sm active:scale-95">
+                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+              </button>
+              <button
+                onClick={() => setShowNewServiceModal(true)}
+                className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold text-xs uppercase tracking-widest shadow-sm hover:bg-primary-hover active:scale-95 transition-all flex items-center gap-2"
+              >
+                <Plus size={16} strokeWidth={3} />
+                <span>Nouveau Service</span>
+              </button>
             </div>
           </div>
         </header>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-          <GlassCard className="p-8 flex items-center gap-6" hover={true}>
-            <div className="h-16 w-16 bg-primary/10 text-primary rounded-radius-card shadow-sm flex items-center justify-center">
-              <Package size={32} strokeWidth={2.5} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <GlassCard className="p-6 flex items-center gap-4" hover={true}>
+            <div className="h-12 w-12 bg-primary/5 text-primary rounded-lg border border-primary/10 flex items-center justify-center">
+              <Package size={22} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] mb-1">Catalog Size</p>
-              <h3 className="text-3xl font-black text-text-main-light dark:text-text-main-dark leading-none">{filteredServices.length}</h3>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Catalog Size</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-none">{filteredServices.length}</h3>
             </div>
           </GlassCard>
 
-          <GlassCard className="p-8 flex items-center gap-6" hover={true}>
-            <div className="h-16 w-16 bg-accent-green/10 text-accent-green rounded-radius-card shadow-sm flex items-center justify-center">
-              <TrendingUp size={32} strokeWidth={2.5} />
+          <GlassCard className="p-6 flex items-center gap-4" hover={true}>
+            <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 rounded-lg border border-emerald-500/10 flex items-center justify-center">
+              <TrendingUp size={22} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] mb-1">Valeur Catalogue</p>
-              <h3 className="text-3xl font-black text-text-main-light dark:text-text-main-dark leading-none">{totalRevenue.toLocaleString("fr-FR")} F</h3>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Valeur Catalogue</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-none">{totalRevenue.toLocaleString("fr-FR")} F</h3>
             </div>
           </GlassCard>
 
-          <GlassCard className="p-8 flex items-center gap-6" hover={true}>
-            <div className="h-16 w-16 bg-accent-orange/10 text-accent-orange rounded-radius-card shadow-sm flex items-center justify-center">
-              <Users size={32} strokeWidth={2.5} />
+          <GlassCard className="p-6 flex items-center gap-4" hover={true}>
+            <div className="h-12 w-12 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-lg border border-amber-500/10 flex items-center justify-center">
+              <Users size={22} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] mb-1">Services Actifs</p>
-              <h3 className="text-3xl font-black text-text-main-light dark:text-text-main-dark leading-none">{filteredServices.filter(s => s.is_active).length}</h3>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Services Actifs</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-none">{filteredServices.filter(s => s.is_active).length}</h3>
             </div>
           </GlassCard>
         </div>
@@ -257,41 +312,53 @@ function Services() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredServices.map((service) => (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 key={service.id}
+                className="h-full"
               >
-                <GlassCard className="p-0 border-border-light dark:border-white/10 overflow-hidden group hover:border-primary/50" hover={true}>
-                  <div className="p-8">
-                    <div className="flex items-start justify-between mb-8">
-                      <div className={`p-4 rounded-radius-card transition-all duration-500 group-hover:rotate-6 ${service.is_active ? 'bg-primary/10 text-primary' : 'bg-bg-light dark:bg-white/5 text-text-muted-light'}`}>
-                        <Zap size={28} strokeWidth={2.5} />
+                <GlassCard className="p-0 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 group h-full flex flex-col" hover={true}>
+                  <div className="p-6 flex-grow">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className={`p-3 rounded-lg border ${service.is_active ? 'bg-primary/5 text-primary border-primary/10' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                        <Zap size={22} strokeWidth={2} />
                       </div>
-                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border ${service.is_active ? 'bg-accent-green/10 text-accent-green border-accent-green/20' : 'bg-bg-light dark:bg-white/5 text-text-muted-light border-border-light dark:border-white/10'}`}>
-                        {service.is_active ? "Catalogue Actif" : "Archivé"}
+                      <span className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${service.is_active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-500' : 'bg-slate-100 text-slate-500'}`}>
+                        {service.is_active ? "Actif" : "Archivé"}
                       </span>
                     </div>
 
-                    <h3 className="text-2xl font-black text-text-main-light dark:text-text-main-dark group-hover:text-primary transition-colors leading-tight mb-3">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight mb-2">
                       {service.label}
                     </h3>
-                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-bold leading-relaxed line-clamp-3 min-h-[60px]">
-                      {service.description || "Aucun descriptif technique fourni pour ce service."}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed line-clamp-2 min-h-[32px]">
+                      {service.description || "Aucun descriptif technique fourni."}
                     </p>
 
-                    <div className="mt-10 pt-8 border-t border-border-light dark:border-white/5 flex items-end justify-between">
+                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest mb-1.5">Forfait mensuel</p>
-                        <p className="text-3xl font-black text-text-main-light dark:text-text-main-dark leading-none">
-                          {(service.monthly_price || 0).toLocaleString("fr-FR")} <span className="text-sm text-primary">F</span>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Prix Mensuel</p>
+                        <p className="text-xl font-bold text-slate-900 dark:text-white leading-none">
+                          {(service.monthly_price || 0).toLocaleString("fr-FR")} <span className="text-xs text-slate-400 ml-1">F</span>
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleShowClients(service)}
-                        className="h-14 w-14 bg-bg-card-dark dark:bg-white/5 text-white dark:text-primary rounded-radius-button flex items-center justify-center hover:bg-primary hover:text-white dark:hover:bg-primary transition-all shadow-premium active:scale-95"
-                      >
-                        <Users size={22} />
-                      </button>
+                      <div className="flex gap-2">
+                        {canModifyCatalog && (
+                          <button
+                            onClick={() => handleDeleteService(service.id, service.label)}
+                            className="h-10 w-10 bg-white dark:bg-slate-800 text-slate-400 hover:text-accent-red rounded-lg flex items-center justify-center border border-slate-100 dark:border-slate-700 transition-all shadow-sm active:scale-95"
+                            title="Supprimer le service"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleShowClients(service)}
+                          className="h-10 w-10 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-lg flex items-center justify-center border border-slate-100 dark:border-slate-700 transition-all shadow-sm active:scale-95"
+                        >
+                          <Users size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </GlassCard>
@@ -312,84 +379,90 @@ function Services() {
                 className="absolute inset-0 bg-bg-dark/40 backdrop-blur-xl"
               />
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 30 }}
-                className="relative w-full max-w-5xl bg-white dark:bg-bg-dark rounded-[32px] shadow-2xl overflow-hidden flex flex-col h-[85vh] border border-border-light dark:border-white/10"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="relative w-full max-w-5xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden flex flex-col h-[85vh] border border-slate-200 dark:border-slate-800"
               >
-                <div className="p-10 border-b border-border-light dark:border-white/10 bg-bg-light/10 flex items-center justify-between">
-                  <div className="flex items-center gap-6">
-                    <div className="h-16 w-16 bg-primary text-white rounded-radius-card flex items-center justify-center shadow-xl shadow-primary/30">
-                      <Users size={32} />
+                <div className="p-8 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 bg-primary text-white rounded-lg flex items-center justify-center shadow-sm">
+                      <Users size={24} />
                     </div>
                     <div>
-                      <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">{selectedService.label}</h2>
-                      <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-1">Base d'abonnés actifs</p>
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{selectedService.label}</h2>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Liste des abonnés actifs</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <Button onClick={() => setShowAddClientForm(!showAddClientForm)} icon={Plus} variant="secondary" className="shadow-premium">
-                      Nouveau Souscripteur
-                    </Button>
-                    <button onClick={() => setSelectedService(null)} className="p-4 bg-white dark:bg-white/5 hover:bg-bg-light dark:hover:bg-white/10 rounded-radius-button border border-border-light dark:border-white/10 transition-all shadow-premium">
-                      <X size={24} />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowAddClientForm(!showAddClientForm)}
+                      className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2 shadow-sm"
+                    >
+                      <Plus size={14} /> {showAddClientForm ? "Masquer" : "Ajouter"}
+                    </button>
+                    <button onClick={() => setSelectedService(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all">
+                      <X size={20} />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-10 custom-scrollbar">
+                <div className="flex-grow overflow-y-auto p-8 custom-scrollbar bg-white dark:bg-slate-900">
                   {showAddClientForm && (
-                    <div className="mb-10 p-6 bg-bg-light dark:bg-white/5 border border-primary/20 rounded-radius-card shadow-premium mt-0 animate-in slide-in-from-top-4">
-                      <h3 className="text-sm font-black text-text-main-light dark:text-text-main-dark uppercase tracking-widest mb-4">Associer un nouveau client</h3>
+                    <div className="mb-8 p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                      <h3 className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-4">Associer un nouveau client</h3>
                       <form onSubmit={handleAddClientToService} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted-light">Nom Client</label>
-                          <input required value={newClientFullname} onChange={(e) => setNewClientFullname(e.target.value)} className="w-full p-4 rounded-radius-button outline-none border border-border-light dark:border-white/10 focus:border-primary text-sm font-bold shadow-sm bg-white dark:bg-bg-dark" placeholder="Jean Dupont" />
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nom Complet</label>
+                          <input required value={newClientFullname} onChange={(e) => setNewClientFullname(e.target.value)} className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-lg outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder="Jean Dupont" />
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted-light">Ligne / Tracker</label>
-                          <input required value={newLineNumber} onChange={(e) => setNewLineNumber(e.target.value)} className="w-full p-4 rounded-radius-button outline-none border border-border-light dark:border-white/10 focus:border-primary text-sm font-bold shadow-sm bg-white dark:bg-bg-dark" placeholder="01.23..." />
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ligne / Tracker</label>
+                          <input required value={newLineNumber} onChange={(e) => setNewLineNumber(e.target.value)} className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-lg outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder="01.23..." />
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-text-muted-light">Tarif négocié (Opt)</label>
-                          <input type="number" value={newClientCost} onChange={(e) => setNewClientCost(e.target.value)} className="w-full p-4 rounded-radius-button outline-none border border-border-light dark:border-white/10 focus:border-primary text-sm font-bold shadow-sm bg-white dark:bg-bg-dark" placeholder={selectedService.monthly_price} />
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Prix (Optionnel)</label>
+                          <input type="number" value={newClientCost} onChange={(e) => setNewClientCost(e.target.value)} className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-lg outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder={selectedService.monthly_price} />
                         </div>
-                        <Button loading={addingClient} type="submit" variant="primary" className="!p-4 shadow-primary/30">Associer</Button>
+                        <button type="submit" disabled={addingClient} className="w-full py-2.5 bg-primary text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-primary-hover transition-all flex items-center justify-center gap-2">
+                          {addingClient ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus size={14} />}
+                          Associer
+                        </button>
                       </form>
                     </div>
                   )}
                   {clientsError && (
-                    <div className="p-5 bg-accent-red/10 border border-accent-red/20 text-accent-red text-[10px] font-black uppercase tracking-widest rounded-radius-card flex items-center gap-3 mb-8">
-                      <Info size={18} /> {clientsError}
+                    <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold uppercase tracking-widest rounded-lg flex items-center gap-3 mb-6">
+                      <AlertCircle size={16} /> {clientsError}
                     </div>
                   )}
 
                   {clientsLoading ? (
-                    <div className="py-24 flex flex-col items-center justify-center gap-6">
-                      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Calcul des données...</p>
+                    <div className="py-24 flex flex-col items-center justify-center gap-4">
+                      <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chargement des abonnés...</p>
                     </div>
                   ) : serviceClients.length === 0 ? (
                     <div className="py-24 text-center">
-                      <div className="w-24 h-24 bg-bg-light dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8 text-text-muted-light/20">
-                        <Users size={48} />
+                      <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                        <Users size={32} />
                       </div>
-                      <h4 className="text-xl font-black text-text-main-light dark:text-text-main-dark uppercase tracking-widest">Aucune Souscription</h4>
-                      <p className="text-xs text-text-muted-light dark:text-text-muted-dark mt-3 font-bold">Ce service n'a pas encore de clients associés dans le système.</p>
+                      <h4 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-widest">Aucun abonné</h4>
+                      <p className="text-xs text-slate-500 mt-2 font-medium">Ce service n'a pas encore de clients associés.</p>
                     </div>
                   ) : (
-                    <div className="overflow-hidden border border-border-light dark:border-white/5 rounded-radius-card shadow-premium bg-white dark:bg-bg-card-dark">
+                    <div className="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-bg-light/50 dark:bg-white/5 border-b border-border-light dark:border-white/10">
-                            <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Client / Ligne</th>
-                            <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Affectation</th>
-                            <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Date</th>
-                            <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Mensualité</th>
-                            <th className="px-8 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Statut</th>
+                          <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Client / Ligne</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Agent</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Date</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tarif</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Statut</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-border-light dark:divide-white/5">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                           {serviceClients.map((sub) => (
                             <tr key={sub.subscription_id} className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors">
                               <td className="px-8 py-6">
