@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getAllSubscriptions,
   getSubscriptionById,
+  getStatuses,
   createSubscription,
   updateSubscription,
   deleteSubscription,
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+router.get('/statuses', getStatuses);
 router.get('/', getAllSubscriptions);
 router.get('/:id', getSubscriptionById);
 router.post('/', validateSubscription, createSubscription);
