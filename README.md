@@ -14,7 +14,7 @@ Créer une solution robuste, professionnelle et évolutive permettant aux entrep
 
 🧱 Architecture générale
 
-- Frontend : React.js + Bootstrap
+- Frontend : React.js + Tailwind CSS
 - Backend : Node Js Express.js (API REST)
 - Base de données : PostgreSQL
 - Authentification : JWT
