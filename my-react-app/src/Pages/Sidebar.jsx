@@ -16,12 +16,24 @@ import {
   X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ThemeToggle from "../components/ThemeToggle";
 
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = React.useState(true);
+  const [isOpen, setIsOpen] = React.useState(() => window.innerWidth >= 1024);
+
+  // Écouter les changements de taille pour s'adapter automatiquement
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
@@ -90,6 +102,7 @@ export default function Sidebar() {
                     key={item.path}
                     item={item}
                     isActive={location.pathname === item.path}
+                    onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }}
                   />
                 ))}
 
@@ -98,6 +111,7 @@ export default function Sidebar() {
                     key={item.path}
                     item={item}
                     isActive={location.pathname === item.path}
+                    onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }}
                   />
                 ))}
               </div>
@@ -107,6 +121,7 @@ export default function Sidebar() {
                 <NavItem
                   item={profileItem}
                   isActive={location.pathname === profileItem.path}
+                  onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }}
                 />
               </div>
 
@@ -126,10 +141,6 @@ export default function Sidebar() {
 
             {/* Bottom Actions & User */}
             <div className="p-4 mt-auto border-t border-slate-800">
-              <div className="mb-4 flex justify-center">
-                <ThemeToggle />
-              </div>
-
               <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-800 space-y-3">
                 <div className="flex items-center gap-3 p-1">
                   <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
@@ -157,10 +168,11 @@ export default function Sidebar() {
   );
 }
 
-function NavItem({ item, isActive }) {
+function NavItem({ item, isActive, onClick }) {
   return (
     <Link
       to={item.path}
+      onClick={onClick}
       className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all group ${isActive
         ? "bg-primary text-white"
         : "text-slate-400 hover:text-white hover:bg-slate-800"
