@@ -65,12 +65,12 @@ const deserializeClient = (row) => {
     phone: row.phone || "",
     email: row.email || "",
     line_number: row.main_line_number || meta.line_number || "",
-    commercial_login: meta.commercial_login || "",
+    commercial_login: row.commercial_login || meta.commercial_login || "",
     location: meta.location || "",
-    offer: meta.offer || "",
+    offer: row.offer || meta.offer || "",
     payer_number: meta.payer_number || "",
-    subscription_date: meta.subscription_date || "",
-    installation_date: meta.installation_date || "",
+    subscription_date: row.subscription_date ? row.subscription_date.split('T')[0] : (meta.subscription_date || ""),
+    installation_date: row.installation_date ? row.installation_date.split('T')[0] : (meta.installation_date || ""),
     payment_reference: meta.payment_reference || "",
     notes: meta.notes || "",
     client_type: meta.client_type || "B2C",
@@ -119,7 +119,7 @@ function Clients() {
     setLoading(true);
     setError("");
     try {
-      const res = await api.listClients({ page: 1, limit: 200 });
+      const res = await api.listClients({ page: 1, limit: 2000 });
       const data = Array.isArray(res?.data) ? res.data : [];
       const normalized = data.map(deserializeClient);
       setAllClients(normalized);
@@ -166,23 +166,9 @@ function Clients() {
     }
 
     if (statusFilter === "installed") {
-      result = result.filter((client) => {
-        if (!client.installation_date) return false;
-        const installDate = new Date(client.installation_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return installDate <= today;
-      });
+      result = result.filter((client) => !!client.installation_date);
     } else if (statusFilter === "pending") {
       result = result.filter((client) => !client.installation_date);
-    } else if (statusFilter === "planned") {
-      result = result.filter((client) => {
-        if (!client.installation_date) return false;
-        const installDate = new Date(client.installation_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return installDate > today;
-      });
     }
 
     return result;
@@ -285,14 +271,13 @@ function Clients() {
             <div className="relative flex-grow lg:flex-grow-0 min-w-0">
               <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <select
-                className="w-full lg:w-48 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm appearance-none cursor-pointer font-semibold"
+                className="w-full lg:w-48 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm appearance-none cursor-pointer font-semibold text-slate-900 dark:text-white"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="">Tous les statuts</option>
-                <option value="installed">Installés</option>
-                <option value="pending">En attente</option>
-                <option value="planned">Planifiés</option>
+                <option value="" className="bg-white dark:bg-slate-900">Tous les statuts</option>
+                <option value="installed" className="bg-white dark:bg-slate-900">Installés</option>
+                <option value="pending" className="bg-white dark:bg-slate-900">En attente</option>
               </select>
             </div>
           </div>
@@ -364,19 +349,9 @@ function Clients() {
                               </span>
                             );
                           }
-                          const installDate = new Date(client.installation_date);
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          if (installDate <= today) {
-                            return (
-                              <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500">
-                                Installé
-                              </span>
-                            );
-                          }
                           return (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-500">
-                              Planifié
+                            <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500">
+                              Installé
                             </span>
                           );
                         })()}
@@ -458,22 +433,22 @@ function Clients() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-y-8 gap-x-6 bg-bg-light/50 dark:bg-white/5 p-8 rounded-radius-card border border-border-light dark:border-white/5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 bg-slate-50 dark:bg-slate-800/50 p-8 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-inner">
                     <DetailItem icon={Phone} label="Téléphone" value={selectedClient.phone} />
                     <DetailItem icon={Mail} label="Email" value={selectedClient.email} />
                     <DetailItem icon={MapPin} label="Zone" value={selectedClient.location} />
-                    <DetailItem icon={FileText} label="Ligne Fixe" value={selectedClient.line_number} />
+                    <DetailItem icon={FileText} label="Ligne Fixe / Tracker" value={selectedClient.line_number} />
                     <DetailItem icon={Zap} label="Offre Active" value={selectedClient.offer} />
                     <DetailItem icon={CreditCard} label="Code Payeur" value={selectedClient.payer_number} />
-                    <DetailItem icon={Calendar} label="Date Contrat" value={selectedClient.subscription_date} />
-                    <DetailItem icon={CheckCircle} label="Finalisation" value={selectedClient.installation_date} />
+                    <DetailItem icon={Calendar} label="Date Souscription" value={selectedClient.subscription_date} />
+                    <DetailItem icon={CheckCircle} label="Date Installation" value={selectedClient.installation_date} />
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.25em] ml-2">Notes & Observations</h4>
-                    <div className="p-6 bg-white dark:bg-white/5 border border-border-light dark:border-white/5 rounded-radius-card min-h-[120px] shadow-premium">
-                      <p className="text-sm text-text-main-light/70 dark:text-text-main-dark/70 leading-relaxed font-bold italic">
-                        {selectedClient.notes || "Aucune observation enregistrée."}
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">Notes & Observations</h4>
+                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl min-h-[120px] shadow-sm">
+                      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                        {selectedClient.notes || "Aucune observation enregistrée pour ce client."}
                       </p>
                     </div>
                   </div>
