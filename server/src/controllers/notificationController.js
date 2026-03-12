@@ -110,7 +110,7 @@ export const notifyAdmins = async ({ type, title, message, meta }) => {
     console.log("NOTIFY ADMINS:", { type, title, message });
 
     // Notify all admins and super_admins
-    const admins = await pool.query("SELECT id FROM users WHERE role IN ('super_admin', 'admin', 'commercial')");
+    const admins = await pool.query("SELECT id FROM users WHERE role IN ('super_admin', 'admin')");
     for (const admin of admins.rows) {
       await createNotification({ userId: admin.id, type, title, message, meta });
     }
