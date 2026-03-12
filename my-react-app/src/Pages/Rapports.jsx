@@ -88,9 +88,6 @@ function Rapports() {
           <div className="flex items-center gap-3">
             <NotificationBell />
             <div className="flex gap-2">
-              <button className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2 shadow-sm">
-                <Download size={14} /> Exporter
-              </button>
             </div>
           </div>
         </header>
@@ -142,6 +139,11 @@ function Rapports() {
               <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Performances Commerciales</h3>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Évolution du revenu par mois</p>
             </div>
+            {reportsData.chartData.every(d => d.revenue === 0) ? (
+              <div className="h-[350px] flex items-center justify-center">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aucune donnée sur la période</p>
+              </div>
+            ) : (
             <div className="h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={reportsData.chartData}>
@@ -180,6 +182,7 @@ function Rapports() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+            )}
           </GlassCard>
 
           <GlassCard className="p-8 border-slate-200 dark:border-slate-800" hover={true}>
@@ -187,6 +190,12 @@ function Rapports() {
               <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Répartition Services</h3>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Top 5 des offres souscrites</p>
             </div>
+            {reportsData.pieData.length === 0 ? (
+               <div className="h-[250px] flex items-center justify-center">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aucune donnée</p>
+               </div>
+            ) : (
+            <>
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -219,6 +228,8 @@ function Rapports() {
                 </div>
               ))}
             </div>
+            </>
+            )}
           </GlassCard>
         </div>
 
