@@ -178,11 +178,11 @@ export default function Export() {
                     name="status_code"
                     value={filters.status_code}
                     onChange={handleChange}
-                    className="w-full pl-14 pr-5 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-white/10 transition-all text-xs font-black text-text-main-light dark:text-text-main-dark appearance-none shadow-premium cursor-pointer"
+                    className="w-full pl-14 pr-5 py-4 bg-bg-light/50 dark:bg-slate-900 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-slate-800 transition-all text-xs font-black text-slate-900 dark:text-white appearance-none shadow-premium cursor-pointer"
                   >
-                    <option value="">TOUS LES STATUTS</option>
-                    <option value="installed">INSTALLÉS</option>
-                    <option value="pending">EN ATTENTE</option>
+                    <option value="" className="bg-white dark:bg-slate-900">TOUS LES STATUTS</option>
+                    <option value="installed" className="bg-white dark:bg-slate-900">INSTALLÉS</option>
+                    <option value="pending" className="bg-white dark:bg-slate-900">EN ATTENTE</option>
                   </select>
                 </div>
               </div>
@@ -225,14 +225,14 @@ export default function Export() {
                 <div className="flex items-center gap-3 group">
                   <ArrowUpDown size={16} className="text-text-muted-light group-hover:text-primary transition-colors" />
                   <select
-                    className="bg-transparent text-[11px] font-black text-text-muted-light dark:text-text-muted-dark outline-none cursor-pointer uppercase tracking-widest"
+                    className="bg-transparent text-[11px] font-black text-slate-900 dark:text-white outline-none cursor-pointer uppercase tracking-widest"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                   >
-                    <option value="subscription_date_desc">CHRONOLOGIE DESC</option>
-                    <option value="subscription_date_asc">CHRONOLOGIE ASC</option>
-                    <option value="amount_desc">VOLUME AFFAIRE MAX</option>
-                    <option value="amount_asc">VOLUME AFFAIRE MIN</option>
+                    <option value="subscription_date_desc" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">CHRONOLOGIE DESC</option>
+                    <option value="subscription_date_asc" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">CHRONOLOGIE ASC</option>
+                    <option value="amount_desc" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">VOLUME AFFAIRE MAX</option>
+                    <option value="amount_asc" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">VOLUME AFFAIRE MIN</option>
                   </select>
                 </div>
               </div>
