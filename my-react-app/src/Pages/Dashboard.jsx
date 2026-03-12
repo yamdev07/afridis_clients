@@ -138,18 +138,11 @@ export default function Dashboard() {
             icon={Clock}
             color="orange"
           />
-          {user?.role !== "commercial" ? (
+          {user?.role !== "commercial" && (
             <StatCard
               title="Chiffre d'Affaires"
               value={`${(summary?.totalRevenue || 0).toLocaleString("fr-FR")} F`}
               icon={DollarSign}
-              color="purple"
-            />
-          ) : (
-            <StatCard
-              title="Services Actifs"
-              value={summary?.tv ?? 0}
-              icon={Zap}
               color="purple"
             />
           )}
@@ -188,7 +181,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {chartData.length === 0 || chartData.every(d => d["créés"] === 0 && d["installés"] === 0) ? (
+            {chartData.length === 0 || chartData.every(d => Number(d.created) === 0 && Number(d.installed) === 0) ? (
               <div className="h-[300px] flex flex-col items-center justify-center gap-4 text-text-muted-light dark:text-text-muted-dark">
                 <TrendingUp size={48} className="opacity-20" />
                 <p className="text-[10px] font-black uppercase tracking-widest">Aucune donnée sur la période</p>
@@ -235,18 +228,18 @@ export default function Dashboard() {
                         fontWeight: 800,
                       }}
                       labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
-                      formatter={(value, name) => [value, name === "créés" ? "Créés" : "Installés"]}
+                      formatter={(value, name) => [value, name === "created" ? "Créés" : "Installés"]}
                     />
                     <Legend
                       formatter={(value) => (
                         <span style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                          {value === "créés" ? "Créés" : "Installés"}
+                          {value === "created" ? "Créés" : "Installés"}
                         </span>
                       )}
                     />
                     <Area
                       type="monotone"
-                      dataKey="créés"
+                      dataKey="created"
                       stroke="#2563EB"
                       strokeWidth={3}
                       fillOpacity={1}
@@ -257,7 +250,7 @@ export default function Dashboard() {
                     />
                     <Area
                       type="monotone"
-                      dataKey="installés"
+                      dataKey="installed"
                       stroke="#22C55E"
                       strokeWidth={3}
                       fillOpacity={1}
