@@ -427,9 +427,20 @@ export const bulkImportSubscriptions = async (req, res, next) => {
 
       // Conversion des dates
       const excelToDate = (raw) => {
+        if (!raw) return null;
         if (typeof raw === 'number') {
           const excelEpoch = new Date(1899, 11, 30);
           return new Date(excelEpoch.getTime() + raw * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        }
+        if (typeof raw === 'string') {
+          const parts = raw.split(/[/\- ]/);
+          if (parts.length >= 3) {
+            if (parts[0].length === 4) {
+              return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+            } else {
+              return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+          }
         }
         return raw ? String(raw).split(' ')[0] : null;
       };
@@ -448,7 +459,6 @@ export const bulkImportSubscriptions = async (req, res, next) => {
           [lineNumber]
         );
         if (existingSub.rows.length > 0) {
-          console.log(`❌ Ligne ${lineNumber} déjà enregistrée, ignorée`);
           resultSummary.skipped++;
           continue;
         }
@@ -518,7 +528,7 @@ export const bulkImportSubscriptions = async (req, res, next) => {
       m.notifyAdmins({
         type: 'import_completed',
         title: 'Importation terminée',
-        message: `${resultSummary.created} nouveaux abonnements ont été importés.`,
+        message: `L'utilisateur ${req.user.name} a importé un fichier. ${resultSummary.created} nouveaux clients ont été importés dans la base de données.`,
         meta: { page: '/dashboard' }
       });
     });
