@@ -44,9 +44,9 @@ export const getDashboardSummary = async (req, res, next) => {
         SELECT day + INTERVAL '1 day' FROM days WHERE day < CURRENT_DATE
       )
       SELECT 
-        d.day,
-        (SELECT COUNT(*) FROM clients WHERE DATE(created_at) = d.day) as created,
-        (SELECT COUNT(*) FROM subscriptions WHERE installation_date = d.day) as installed
+        TO_CHAR(d.day, 'YYYY-MM-DD') as day,
+        (SELECT COUNT(*) FROM subscriptions WHERE DATE(subscription_date) = d.day) as created,
+        (SELECT COUNT(*) FROM subscriptions WHERE DATE(installation_date) = d.day) as installed
       FROM days d
       ORDER BY d.day
     `);
@@ -74,16 +74,24 @@ export const getDashboardSummary = async (req, res, next) => {
 export const getReportsData = async (req, res, next) => {
   try {
     // 1. Revenu par mois (6 derniers mois)
+    // 1. Revenu par mois (6 derniers mois garantis pour le graphique)
     const revenueByMonth = await pool.query(`
+      WITH RECURSIVE months AS (
+        SELECT DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months' as month_start
+        UNION ALL
+        SELECT month_start + INTERVAL '1 month' 
+        FROM months 
+        WHERE month_start < DATE_TRUNC('month', CURRENT_DATE)
+      )
       SELECT 
-        TO_CHAR(subscription_date, 'Mon') as name,
-        SUM(contract_cost) as revenue,
-        COUNT(*) as installations,
-        COUNT(DISTINCT client_id) as users
-      FROM subscriptions
-      WHERE subscription_date >= CURRENT_DATE - INTERVAL '6 months'
-      GROUP BY TO_CHAR(subscription_date, 'Mon'), DATE_TRUNC('month', subscription_date)
-      ORDER BY DATE_TRUNC('month', subscription_date)
+        TO_CHAR(m.month_start, 'Mon') as name,
+        COALESCE(SUM(s.contract_cost), 0) as revenue,
+        COUNT(s.id) as installations,
+        COUNT(DISTINCT s.client_id) as users
+      FROM months m
+      LEFT JOIN subscriptions s ON DATE_TRUNC('month', s.subscription_date) = m.month_start
+      GROUP BY m.month_start
+      ORDER BY m.month_start
     `);
 
     // 2. Top Services (répartition)
@@ -124,7 +132,12 @@ export const getReportsData = async (req, res, next) => {
     `);
 
     res.json({
-      chartData: revenueByMonth.rows.map(r => ({ ...r, revenue: parseFloat(r.revenue), users: parseInt(r.users), installations: parseInt(r.installations) })),
+      chartData: revenueByMonth.rows.map(r => ({ 
+        name: r.name, 
+        revenue: parseFloat(r.revenue || 0), 
+        users: parseInt(r.users || 0), 
+        installations: parseInt(r.installations || 0) 
+      })),
       pieData,
       tableData: detailedActivity.rows.map(r => ({
         ...r,
