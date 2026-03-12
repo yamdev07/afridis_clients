@@ -221,7 +221,7 @@ export default function NotificationBell() {
                             </button>
                           </div>
                         </div>
-                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed line-clamp-2 font-medium tracking-tight pr-4">{n.body}</p>
+                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed line-clamp-2 font-medium tracking-tight pr-4">{n.message}</p>
                         {!n.is_read && (
                           <div className="mt-4 flex items-center gap-2">
                             <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
