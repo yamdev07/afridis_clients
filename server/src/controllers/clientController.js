@@ -8,9 +8,15 @@ export const getAllClients = async (req, res, next) => {
     let query = `
       SELECT c.*,
              COUNT(DISTINCT s.id) as subscriptions_count,
-             MIN(s.line_number) as main_line_number
+             MIN(s.line_number) as main_line_number,
+             MAX(s.installation_date) as installation_date,
+             MAX(s.subscription_date) as subscription_date,
+             MAX(sv.label) as offer,
+             MAX(a.login) as commercial_login
       FROM clients c
       LEFT JOIN subscriptions s ON s.client_id = c.id
+      LEFT JOIN services sv ON s.service_id = sv.id
+      LEFT JOIN agents a ON s.agent_id = a.id
     `;
     const queryParams = [];
     const conditions = [];
@@ -280,6 +286,13 @@ export const updateClient = async (req, res, next) => {
 
         // Mettre à jour les abonnements de ce client avec les nouvelles dates / numéro de ligne
         if (installDate !== undefined || lineNumber !== undefined) {
+          if (lineNumber !== undefined && !['super_admin', 'admin'].includes(req.user?.role)) {
+            const existingSub = await pool.query('SELECT line_number FROM subscriptions WHERE client_id = $1 LIMIT 1', [id]);
+            if (existingSub.rows.length > 0 && existingSub.rows[0].line_number && existingSub.rows[0].line_number !== lineNumber) {
+               return res.status(403).json({ message: 'Seul un administrateur peut modifier le numéro de ligne' });
+            }
+          }
+
           let updateParts = [];
           let updateValues = [];
           let idx = 1;
