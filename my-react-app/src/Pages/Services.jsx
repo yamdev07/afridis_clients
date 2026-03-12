@@ -323,9 +323,6 @@ function Services() {
                       <div className={`p-3 rounded-lg border ${service.is_active ? 'bg-primary/5 text-primary border-primary/10' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                         <Zap size={22} strokeWidth={2} />
                       </div>
-                      <span className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${service.is_active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-500' : 'bg-slate-100 text-slate-500'}`}>
-                        {service.is_active ? "Actif" : "Archivé"}
-                      </span>
                     </div>
 
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight mb-2">
@@ -596,19 +593,6 @@ function Services() {
                       className="w-full px-5 py-3 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold resize-none shadow-premium"
                       placeholder="Décrivez ce service (technologie, contenu, livrables...)"
                     />
-                  </div>
-
-                  <div className="flex items-center gap-3 p-4 bg-bg-light dark:bg-white/5 rounded-radius-button border border-border-light dark:border-white/10">
-                    <button
-                      type="button"
-                      onClick={() => setServiceForm(p => ({ ...p, is_active: !p.is_active }))}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${serviceForm.is_active ? "bg-accent-green" : "bg-border-light dark:bg-white/20"}`}
-                    >
-                      <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${serviceForm.is_active ? "translate-x-7" : "translate-x-1"}`} />
-                    </button>
-                    <span className="text-[10px] font-black text-text-main-light dark:text-text-main-dark uppercase tracking-widest">
-                      Service {serviceForm.is_active ? "actif" : "inactif"}
-                    </span>
                   </div>
 
                   <div className="flex gap-4 pt-2">
