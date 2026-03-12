@@ -14,10 +14,12 @@ export const listUsers = async (req, res, next) => {
       params.push(role);
     }
 
-    // Un admin local ne peut voir que les commerciaux
+    // Un admin local ne peut voir que les commerciaux qu'il a créés lui-même
     if (req.user.role === 'admin') {
       conditions.push(`role = $${params.length + 1}`);
       params.push('commercial');
+      conditions.push(`created_by = $${params.length + 1}`);
+      params.push(req.user.id);
     }
 
     if (conditions.length > 0) {
@@ -83,10 +85,10 @@ export const createUser = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password, role, agent_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO users (name, email, password, role, agent_id, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, name, email, role, agent_id, created_at`,
-      [name, email, hashedPassword, role, agentId],
+      [name, email, hashedPassword, role, agentId, req.user.id],
     );
 
     // Notification
@@ -94,7 +96,7 @@ export const createUser = async (req, res, next) => {
       m.notifyAdmins({
         type: 'user_created',
         title: 'Nouveau compte créé',
-        message: `Un compte ${role} a été créé pour ${name}.`,
+        message: `L'administrateur ${req.user.name} a créé le compte de ${name}.`,
         meta: { userId: result.rows[0].id, page: '/admin' }
       });
     });
