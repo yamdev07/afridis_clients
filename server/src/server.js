@@ -6,8 +6,12 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import routes from './routes/index.js';
 import { errorHandler, notFound } from './middlewares/errorHandler.js';
+import pool from './config/database.js';
 
 dotenv.config();
+
+// Run the ALTER TABLE query to add created_by at the start.
+pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL').catch(e => console.error("Migration error:", e));
 
 const app = express();
 const PORT = process.env.PORT;
@@ -19,7 +23,7 @@ app.use(cookieParser());
 // CORS configuration
 const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
-  'http://localhost:5173',
+  'http://localhost:5174',
   'http://127.0.0.1:5173',
 ];
 
@@ -39,7 +43,7 @@ app.use(
 
 // Rate limiting - assoupli pour développement (éviter les 429 côté frontend)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 35 * 60 * 1000, // 15 minutes
   max: 1000, // limite chaque IP à 1000 requêtes par fenêtre
   message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
 });
