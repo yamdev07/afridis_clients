@@ -77,7 +77,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+      <div className="flex h-screen bg-bg-light font-inter transition-colors duration-500">
         <Sidebar />
         <div className="flex-grow flex items-center justify-center">
           <div className="relative">
@@ -92,7 +92,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+    <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
       <Sidebar />
 
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
@@ -101,17 +101,17 @@ export default function Dashboard() {
             <motion.h1
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight"
+              className="text-4xl font-black text-text-main-light tracking-tight"
             >
               Tableau de bord
             </motion.h1>
-            <p className="text-text-muted-light dark:text-text-muted-dark mt-2 font-medium">
+            <p className="text-text-muted-light mt-2 font-medium">
               Ravi de vous revoir, <span className="text-primary font-bold">{user?.name || "Collaborateur"}</span>. Voici les performances du jour.
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="p-1 px-2 bg-white dark:bg-white/5 rounded-radius-button border border-border-light dark:border-white/10 flex items-center shadow-premium">
-              <span className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-text-muted-light dark:text-text-muted-dark">Live Status</span>
+            <div className="p-1 px-2 bg-white rounded-radius-button border border-border-light flex items-center shadow-premium">
+              <span className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-text-muted-light">Live Status</span>
               <span className="shrink-0 w-2.5 h-2.5 bg-accent-green rounded-full animate-pulse mr-4"></span>
             </div>
             <NotificationBell />
@@ -154,8 +154,8 @@ export default function Dashboard() {
           <GlassCard className="lg:col-span-2 p-8" hover={false}>
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark">Activité Clients</h3>
-                <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-medium">
+                <h3 className="text-xl font-black text-text-main-light">Activité Clients</h3>
+                <p className="text-sm text-text-muted-light font-medium">
                   Clients créés vs installés — {chartPeriod === "week" ? "7 derniers jours" : "30 derniers jours"}
                 </p>
               </div>
@@ -164,7 +164,7 @@ export default function Dashboard() {
                   onClick={() => setChartPeriod("week")}
                   className={`px-4 py-2 rounded-radius-input text-[10px] font-black uppercase transition-all ${chartPeriod === "week"
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
+                    : "bg-bg-light text-text-muted-light hover:bg-primary/10"
                     }`}
                 >
                   Semaine
@@ -173,7 +173,7 @@ export default function Dashboard() {
                   onClick={() => setChartPeriod("month")}
                   className={`px-4 py-2 rounded-radius-input text-[10px] font-black uppercase transition-all ${chartPeriod === "month"
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark hover:bg-primary/10"
+                    : "bg-bg-light text-text-muted-light hover:bg-primary/10"
                     }`}
                 >
                   Mois
@@ -182,12 +182,12 @@ export default function Dashboard() {
             </div>
 
             {chartData.length === 0 || chartData.every(d => Number(d.created) === 0 && Number(d.installed) === 0) ? (
-              <div className="h-[300px] flex flex-col items-center justify-center gap-4 text-text-muted-light dark:text-text-muted-dark">
+              <div className="h-[250px] lg:h-[300px] flex flex-col items-center justify-center gap-4 text-text-muted-light">
                 <TrendingUp size={48} className="opacity-20" />
                 <p className="text-[10px] font-black uppercase tracking-widest">Aucune donnée sur la période</p>
               </div>
             ) : (
-              <div className="h-[300px] w-full">
+              <div className="h-[250px] lg:h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
                     <defs>
@@ -200,14 +200,14 @@ export default function Dashboard() {
                         <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border-light dark:text-border-dark opacity-30" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border-light opacity-30" />
                     <XAxis
                       dataKey="name"
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 800 }}
                       dy={10}
-                      interval={chartPeriod === "month" ? 4 : 0}
+                      interval={window.innerWidth < 768 ? (chartPeriod === "week" ? 1 : 6) : (chartPeriod === "month" ? 4 : 0)}
                     />
                     <YAxis
                       hide={false}
@@ -220,10 +220,10 @@ export default function Dashboard() {
                     <Tooltip
                       contentStyle={{
                         borderRadius: "16px",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        boxShadow: "0 20px 25px -5px rgba(0,0,0,0.15)",
-                        backgroundColor: "rgba(15,23,42,0.9)",
-                        color: "#fff",
+                        border: "1px solid rgba(0,0,0,0.05)",
+                        boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+                        backgroundColor: "#fff",
+                        color: "#0f172a",
                         fontSize: "11px",
                         fontWeight: 800,
                       }}
@@ -268,12 +268,12 @@ export default function Dashboard() {
           {/* Status Pie — toujours dynamique */}
           <GlassCard className="p-8 flex flex-col items-center" hover={false}>
             <div className="w-full mb-6">
-              <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark">Statut Global</h3>
-              <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-medium">Répartition des dossiers</p>
+              <h3 className="text-xl font-black text-text-main-light">Statut Global</h3>
+              <p className="text-sm text-text-muted-light font-medium">Répartition des dossiers</p>
             </div>
 
             {(summary?.installed === 0 && summary?.pending === 0) ? (
-              <div className="flex-grow flex flex-col items-center justify-center gap-3 text-text-muted-light dark:text-text-muted-dark">
+              <div className="flex-grow flex flex-col items-center justify-center gap-3 text-text-muted-light">
                 <Users size={48} className="opacity-20" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-center">Aucun abonnement enregistré</p>
               </div>
@@ -309,17 +309,17 @@ export default function Dashboard() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-4xl font-black text-text-main-light dark:text-text-main-dark leading-none">{summary?.clients || 0}</span>
-                    <span className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-1">Dossiers</span>
+                    <span className="text-4xl font-black text-text-main-light leading-none">{summary?.clients || 0}</span>
+                    <span className="text-[10px] text-text-muted-light font-black uppercase tracking-widest mt-1">Dossiers</span>
                   </div>
                 </div>
 
                 <div className="w-full space-y-3 mt-4">
                   {pieData.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between p-4 bg-bg-light dark:bg-white/5 rounded-radius-card border border-border-light dark:border-white/5 transition-all hover:translate-x-1 shadow-sm">
+                    <div key={item.name} className="flex items-center justify-between p-4 bg-bg-light rounded-radius-card border border-border-light transition-all hover:translate-x-1 shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="h-4 w-4 rounded-full ring-4 ring-white dark:ring-bg-card-dark" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm font-bold text-text-main-light dark:text-text-main-dark">{item.name}</span>
+                        <div className="h-4 w-4 rounded-full ring-4 ring-white" style={{ backgroundColor: item.color }} />
+                        <span className="text-sm font-bold text-text-main-light">{item.name}</span>
                       </div>
                       <span className="text-base font-black text-primary">{item.value}</span>
                     </div>
@@ -345,7 +345,7 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <div className="p-8 rounded-[24px] bg-primary/10 dark:bg-primary/5 border border-primary/20 relative overflow-hidden group">
+          <div className="p-8 rounded-[24px] bg-primary/10 border border-primary/20 relative overflow-hidden group">
             <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700" />
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
               <div className="flex items-center gap-8">
@@ -353,8 +353,8 @@ export default function Dashboard() {
                   <TrendingUp size={36} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-text-main-light dark:text-text-main-dark">Impact Performance</h2>
-                  <p className="text-text-muted-light dark:text-text-muted-dark mt-2 max-w-xl font-medium leading-relaxed">
+                  <h2 className="text-2xl font-black text-text-main-light">Impact Performance</h2>
+                  <p className="text-text-muted-light mt-2 max-w-xl font-medium leading-relaxed">
                     {summary?.clients > 0
                       ? `${summary.clients} client(s) au total · ${summary.installed} installé(s) · ${(summary.totalRevenue || 0).toLocaleString("fr-FR")} F de CA généré`
                       : "Commencez par ajouter vos premiers clients dans ClientFlow."}
@@ -367,7 +367,7 @@ export default function Dashboard() {
                 </Button>
                 <button
                   onClick={() => navigate('/reports')}
-                  className="px-8 py-4 bg-white dark:bg-bg-card-dark text-text-main-light dark:text-text-main-dark border border-border-light dark:border-white/10 rounded-radius-button font-black text-[10px] uppercase tracking-[0.2em] hover:bg-bg-light dark:hover:bg-white/5 transition-all shadow-premium"
+                  className="px-8 py-4 bg-white text-text-main-light border border-border-light rounded-radius-button font-black text-[10px] uppercase tracking-[0.2em] hover:bg-bg-light transition-all shadow-premium"
                 >
                   Analyses
                 </button>
@@ -390,14 +390,14 @@ function StatCard({ title, value, icon: Icon, color }) {
   const c = colors[color] || colors.primary;
 
   return (
-    <GlassCard className="p-6 border-slate-200 dark:border-slate-800" hover={true}>
+    <GlassCard className="p-6 border-slate-200" hover={true}>
       <div className="flex items-center gap-4">
         <div className={`p-3 rounded-lg border ${c}`}>
           <Icon size={20} strokeWidth={2} />
         </div>
         <div>
-          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{value ?? "0"}</h3>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{title}</p>
+          <h3 className="text-2xl font-bold text-slate-900 leading-tight">{value ?? "0"}</h3>
         </div>
       </div>
     </GlassCard>
