@@ -144,16 +144,16 @@ export default function AdminUsers() {
 
   if (!currentUser || !["super_admin", "admin"].includes(currentUser.role)) {
     return (
-      <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+      <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
         <Sidebar />
         <main className="flex-grow p-4 lg:p-10 flex items-center justify-center">
           <GlassCard className="p-12 text-center max-w-md border-accent-red/20 shadow-premium rounded-radius-card" hover={true}>
             <div className="w-24 h-24 bg-accent-red/10 text-accent-red rounded-[32px] flex items-center justify-center mx-auto mb-8 border border-accent-red/20 shadow-lg shadow-accent-red/10">
               <ShieldAlert size={48} strokeWidth={2.5} />
             </div>
-            <h2 className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark mb-4 tracking-[0.2em] uppercase opacity-50">Accès Non Autorisé</h2>
-            <h3 className="text-2xl font-black text-text-main-light dark:text-text-main-dark mb-4 tracking-tight">Espace Restreint</h3>
-            <p className="text-text-muted-light dark:text-text-muted-dark mb-10 leading-relaxed font-bold">
+            <h2 className="text-[10px] font-black text-text-muted-light mb-4 tracking-[0.2em] uppercase opacity-50">Accès Non Autorisé</h2>
+            <h3 className="text-2xl font-black text-text-main-light mb-4 tracking-tight">Espace Restreint</h3>
+            <p className="text-text-muted-light mb-10 leading-relaxed font-bold">
               Désolé, cette zone de haute sécurité est réservée exclusivement à l'administrateur système (Super Admin).
             </p>
             <Button onClick={() => window.history.back()} variant="primary" className="w-full !py-5 shadow-primary/30">
@@ -166,18 +166,18 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+    <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
       <Sidebar />
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="space-y-2">
             <div className="flex items-center gap-4">
-              <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Administration</h1>
+              <h1 className="text-4xl font-black text-text-main-light tracking-tight">Administration</h1>
               <div className="px-5 py-2 bg-primary/10 border border-primary/20 text-primary rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-premium">
                 Niveau {currentUser?.role === 'super_admin' ? 'Super-Admin' : 'Admin'}
               </div>
             </div>
-            <p className="text-text-muted-light dark:text-text-muted-dark font-medium tracking-tight">Contrôle granulaire des accès et de la hiérarchie système.</p>
+            <p className="text-text-muted-light font-medium tracking-tight">Contrôle granulaire des accès et de la hiérarchie système.</p>
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
@@ -194,16 +194,16 @@ export default function AdminUsers() {
             <input
               type="text"
               placeholder="Rechercher par identité ou canal mail..."
-              className="w-full pl-16 pr-6 py-5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-white/10 transition-all shadow-premium font-bold text-sm text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light"
+              className="w-full pl-16 pr-6 py-5 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white transition-all shadow-premium font-bold text-sm text-text-main-light placeholder:text-text-muted-light"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="flex gap-4">
-            <button onClick={fetchUsers} className="p-5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button text-text-muted-light hover:text-primary transition-all hover:rotate-180 transform duration-500 shadow-premium">
+            <button onClick={fetchUsers} className="p-5 bg-bg-light/50 border border-border-light rounded-radius-button text-text-muted-light hover:text-primary transition-all hover:rotate-180 transform duration-500 shadow-premium">
               <RefreshCw size={22} strokeWidth={2.5} />
             </button>
-            <button className="p-5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button text-text-muted-light hover:text-primary transition-all shadow-premium">
+            <button className="p-5 bg-bg-light/50 border border-border-light rounded-radius-button text-text-muted-light hover:text-primary transition-all shadow-premium">
               <Filter size={22} strokeWidth={2.5} />
             </button>
           </div>
@@ -216,60 +216,60 @@ export default function AdminUsers() {
           </GlassCard>
         )}
 
-        <section className="bg-bg-light/50 dark:bg-bg-card-dark rounded-radius-card border border-border-light dark:border-white/5 shadow-premium overflow-hidden font-bold">
+        <section className="bg-bg-light/50 rounded-radius-card border border-border-light shadow-premium overflow-hidden font-bold">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-bg-light dark:bg-white/5 border-b border-border-light dark:border-white/10">
-                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Identité Système</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Rôle & Privilèges</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Matricule Agent</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Enregistrement</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] text-right">Actions</th>
+                <tr className="bg-bg-light border-b border-border-light">
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Identité Système</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Rôle & Privilèges</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Matricule Agent</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em] text-right">Enregistrement</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em] text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-light dark:divide-white/5">
+              <tbody className="divide-y divide-border-light">
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="py-32 text-center">
                       <RefreshCw className="w-12 h-12 text-primary animate-spin mx-auto mb-6 opacity-40 shadow-premium rounded-full" strokeWidth={3} />
-                      <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.3em]">Synchronisation de la base...</p>
+                      <p className="text-[10px] font-black text-text-muted-light uppercase tracking-[0.3em]">Synchronisation de la base...</p>
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-32 text-center text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest text-[10px] opacity-40">
+                    <td colSpan={5} className="py-32 text-center text-text-muted-light font-black uppercase tracking-widest text-[10px] opacity-40">
                       Zéro résultat pour cette signature.
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-primary/[0.02] dark:hover:bg-primary/[0.05] transition-colors group">
+                    <tr key={u.id} className="hover:bg-primary/[0.02] transition-colors group">
                       <td className="px-10 py-6 text-text-main-light border-none">
                         <div className="flex items-center gap-5">
                           <div className="h-14 w-14 rounded-radius-button bg-primary/10 text-primary flex items-center justify-center text-xl font-black border border-primary/20 shadow-premium transition-transform group-hover:scale-110">
                             {u.name?.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-base font-black text-text-main-light dark:text-text-main-dark tracking-tight leading-none mb-1.5">{u.name}</p>
-                            <p className="text-[11px] text-text-muted-light dark:text-text-muted-dark font-bold tracking-tight">{u.email}</p>
+                            <p className="text-base font-black text-text-main-light tracking-tight leading-none mb-1.5">{u.name}</p>
+                            <p className="text-[11px] text-text-muted-light font-bold tracking-tight">{u.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-10 py-6 border-none">
                         <RoleBadge role={u.role} />
                       </td>
-                      <td className="px-10 py-6 text-sm font-black text-text-muted-light dark:text-text-muted-dark border-none">
+                      <td className="px-10 py-6 text-sm font-black text-text-muted-light border-none">
                         {u.agent_id || u.agent_login ? (
-                          <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-bg-light dark:bg-white/5 text-text-main-light dark:text-text-main-dark rounded-radius-button text-[11px] font-black uppercase tracking-widest border border-border-light dark:border-white/10 shadow-premium">
+                          <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-bg-light text-text-main-light rounded-radius-button text-[11px] font-black uppercase tracking-widest border border-border-light shadow-premium">
                             <Hash size={14} strokeWidth={3} /> {u.agent_id || u.agent_login}
                           </div>
                         ) : (
-                          <span className="text-text-muted-light/30 dark:text-text-muted-dark/20 font-black uppercase tracking-widest text-[10px]">Non Assigné</span>
+                          <span className="text-text-muted-light/30 font-black uppercase tracking-widest text-[10px]">Non Assigné</span>
                         )}
                       </td>
                       <td className="px-10 py-6 border-none">
-                        <div className="flex items-center gap-3 text-text-muted-light dark:text-text-muted-dark text-xs font-bold">
+                        <div className="flex items-center gap-3 text-text-muted-light text-xs font-bold">
                           <Calendar size={16} strokeWidth={2.5} className="opacity-50" />
                           {u.created_at ? new Date(u.created_at).toLocaleDateString("fr-FR", { day: '2-digit', month: 'long', year: 'numeric' }) : "Inconnue"}
                         </div>
@@ -277,12 +277,12 @@ export default function AdminUsers() {
                       <td className="px-10 py-6 text-right border-none">
                         <div className="flex justify-end gap-2">
                           {((currentUser.role === 'super_admin' && u.role !== 'super_admin') || (currentUser.role === 'admin' && u.role === 'commercial')) && (
-                            <button onClick={() => openEditModal(u)} className="p-3 text-text-muted-light dark:text-text-muted-dark hover:text-accent-purple dark:hover:text-accent-purple hover:bg-accent-purple/10 rounded-radius-button transition-all active:scale-90">
+                            <button onClick={() => openEditModal(u)} className="p-3 text-text-muted-light hover:text-accent-purple hover:bg-accent-purple/10 rounded-radius-button transition-all active:scale-90">
                               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                             </button>
                           )}
                           {((currentUser.role === 'super_admin' && u.role !== 'super_admin') || (currentUser.role === 'admin' && u.role === 'commercial')) && (
-                            <button onClick={() => handleDelete(u)} className="p-3 text-text-muted-light dark:text-text-muted-dark hover:text-accent-red dark:hover:text-accent-red hover:bg-accent-red/10 rounded-radius-button transition-all active:scale-90">
+                            <button onClick={() => handleDelete(u)} className="p-3 text-text-muted-light hover:text-accent-red hover:bg-accent-red/10 rounded-radius-button transition-all active:scale-90">
                               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
                           )}
@@ -305,22 +305,22 @@ export default function AdminUsers() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowCreateModal(false)}
-                className="absolute inset-0 bg-bg-dark/80 backdrop-blur-md"
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 40 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                className="relative w-full max-w-2xl bg-bg-light dark:bg-bg-dark rounded-radius-card shadow-premium overflow-hidden flex flex-col border border-white/20 dark:border-white/5"
+                className="relative w-full max-w-2xl bg-bg-light rounded-radius-card shadow-premium overflow-hidden flex flex-col border border-white/20"
               >
-                <div className="p-8 sm:p-12 border-b border-border-light dark:border-white/5 bg-bg-light/80 dark:bg-white/[0.02]">
+                <div className="p-8 sm:p-12 border-b border-border-light bg-bg-light/80">
                   <div className="flex items-center gap-5 mb-4">
                     <div className="h-14 w-14 bg-primary text-white rounded-radius-button flex items-center justify-center shadow-lg shadow-primary/30">
                       <UserPlus size={28} strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">{editingUser ? "Modifier Utilisateur" : "Nouvel Utilisateur"}</h2>
-                      <p className="text-text-muted-light dark:text-text-muted-dark font-bold text-sm">Définition des droits et credentials d'accès.</p>
+                      <h2 className="text-3xl font-black text-text-main-light tracking-tight">{editingUser ? "Modifier Utilisateur" : "Nouvel Utilisateur"}</h2>
+                      <p className="text-text-muted-light font-bold text-sm">Définition des droits et credentials d'accès.</p>
                     </div>
                   </div>
                 </div>
@@ -332,12 +332,12 @@ export default function AdminUsers() {
                     <InputGroup label="Clé d'Accès" name="password" icon={Key} type="password" value={form.password} onChange={handleChange} required={!editingUser} placeholder={editingUser ? "(Laisser vide pour ne pas modifier)" : ""} />
 
                     <div className="space-y-3 group/field">
-                      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] ml-1 group-focus-within/field:text-primary transition-colors">Privilèges Système</label>
+                      <label className="text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em] ml-1 group-focus-within/field:text-primary transition-colors">Privilèges Système</label>
                       <div className="relative">
                         <ShieldCheck className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted-light/30 transition-colors group-focus-within/field:text-primary" size={20} strokeWidth={2.5} />
                         <select
                           name="role"
-                          className="w-full pl-16 pr-6 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-bg-dark transition-all text-xs font-black text-text-main-light dark:text-text-main-dark appearance-none uppercase tracking-[0.1em] shadow-premium"
+                          className="w-full pl-16 pr-6 py-4 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-8 ring-primary/5 focus:bg-white transition-all text-xs font-black text-text-main-light appearance-none uppercase tracking-[0.1em] shadow-premium"
                           value={form.role}
                           onChange={handleChange}
                           disabled={currentUser?.role === "admin"}
@@ -352,11 +352,11 @@ export default function AdminUsers() {
                     <InputGroup label="Matricule (Optionnel)" name="agent_login" icon={Hash} value={form.agent_login} onChange={handleChange} placeholder="Ex: AX-1029" />
                   </div>
 
-                  <div className="pt-8 border-t border-border-light dark:border-white/5 flex flex-col sm:flex-row justify-end gap-6 font-black uppercase tracking-widest text-[10px]">
+                  <div className="pt-8 border-t border-border-light flex flex-col sm:flex-row justify-end gap-6 font-black uppercase tracking-widest text-[10px]">
                     <button
                       type="button"
                       onClick={() => setShowCreateModal(false)}
-                      className="px-10 py-5 text-text-muted-light dark:text-text-muted-dark hover:text-accent-red transition-colors"
+                      className="px-10 py-5 text-text-muted-light hover:text-accent-red transition-colors"
                     >
                       Interrompre
                     </button>
@@ -383,11 +383,11 @@ export default function AdminUsers() {
 function InputGroup({ label, name, icon: Icon, type = "text", value, onChange, placeholder, required = false }) {
   return (
     <div className="space-y-3 group">
-      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1 group-focus-within:text-primary transition-colors">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 group-focus-within:text-primary transition-colors">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="relative">
-        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 group-focus-within:text-primary transition-colors" size={20} strokeWidth={2.5} />
+        <Icon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} strokeWidth={2.5} />
         <input
           type={type}
           name={name}
@@ -395,7 +395,7 @@ function InputGroup({ label, name, icon: Icon, type = "text", value, onChange, p
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[20px] outline-none focus:ring-8 ring-primary/5 focus:bg-white dark:focus:bg-white/10 transition-all text-xs font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 shadow-sm"
+          className="w-full pl-16 pr-6 py-5 bg-slate-50 border border-slate-100 rounded-[20px] outline-none focus:ring-8 ring-primary/5 focus:bg-white transition-all text-xs font-black text-slate-900 placeholder:text-slate-300 shadow-sm"
         />
       </div>
     </div>
