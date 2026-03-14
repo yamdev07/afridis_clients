@@ -96,7 +96,7 @@ export const createUser = async (req, res, next) => {
       m.notifyAdmins({
         type: 'user_created',
         title: 'Nouveau compte créé',
-        message: `L'administrateur ${req.user.name} a créé le compte de ${name}.`,
+        message: `L'utilisateur ${req.user.name} a créé le compte de ${name} (Rôle: ${role}) le ${new Date().toLocaleString('fr-FR')}.`,
         meta: { userId: result.rows[0].id, page: '/admin' }
       });
     });
@@ -160,7 +160,7 @@ export const updateUser = async (req, res, next) => {
       m.notifyAdmins({
         type: 'user_updated',
         title: 'Compte utilisateur modifié',
-        message: `Le compte de ${userToUpdate.name} a été mis à jour.`,
+        message: `Le compte de ${userToUpdate.name} a été mis à jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
         meta: { userId: id, page: '/admin' }
       });
     });
@@ -194,14 +194,21 @@ export const deleteUser = async (req, res, next) => {
       return res.status(403).json({ message: 'Seul le super-admin peut supprimer un admin' });
     }
 
-    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    console.log(`[DELETE] Attempting to delete user ${userToDelete.name} (${id})`);
+    try {
+      await pool.query('DELETE FROM users WHERE id = $1', [id]);
+      console.log(`[DELETE] User ${id} deleted successfully from DB`);
+    } catch (dbErr) {
+      console.error(`[DELETE] DB Error deleting user ${id}:`, dbErr);
+      throw dbErr;
+    }
 
     // Notification
     import('./notificationController.js').then(m => {
       m.notifyAdmins({
         type: 'user_deleted',
         title: 'Compte utilisateur supprimé',
-        message: `Le compte de ${userToDelete.name} a été supprimé.`,
+        message: `Le compte de ${userToDelete.name} (${userToDelete.role}) a été supprimé par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
         meta: { page: '/admin' }
       });
     });
