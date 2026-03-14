@@ -159,14 +159,14 @@ export default function Profile() {
         : "Commercial Orange";
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+    <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
       <Sidebar />
 
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Mon Profil</h1>
-            <p className="text-text-muted-light dark:text-text-muted-dark mt-2 font-medium">Gérez votre identité numérique et vos accès sur ClientFlow.</p>
+            <h1 className="text-4xl font-black text-text-main-light tracking-tight">Mon Profil</h1>
+            <p className="text-text-muted-light mt-2 font-medium">Gérez votre identité numérique et vos accès sur ClientFlow.</p>
           </div>
           <NotificationBell />
         </header>
@@ -181,22 +181,22 @@ export default function Profile() {
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-primary/20 to-accent-purple/20 blur-2xl" />
 
                 <div className="relative mb-8 mt-4 group">
-                  <div className="h-40 w-40 rounded-[32px] bg-primary flex items-center justify-center text-white text-5xl font-black border-8 border-bg-light dark:border-bg-card-dark shadow-premium overflow-hidden transition-transform group-hover:scale-105">
+                  <div className="h-40 w-40 rounded-[32px] bg-primary flex items-center justify-center text-white text-5xl font-black border-8 border-bg-light shadow-premium overflow-hidden transition-transform group-hover:scale-105">
                     {user.name?.charAt(0) || user.email?.charAt(0) || "?"}
                   </div>
-                  <button className="absolute -bottom-2 -right-2 p-4 bg-bg-light dark:bg-white/10 shadow-premium rounded-radius-button text-primary border border-border-light dark:border-white/10 hover:scale-110 active:scale-95 transition-all">
+                  <button className="absolute -bottom-2 -right-2 p-4 bg-bg-light shadow-premium rounded-radius-button text-primary border border-border-light hover:scale-110 active:scale-95 transition-all">
                     <Camera size={20} />
                   </button>
                 </div>
 
-                <h2 className="text-2xl font-black text-text-main-light dark:text-text-main-dark tracking-tight leading-none group-hover:text-primary transition-colors">{user.name || "Utilisateur"}</h2>
-                <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest mt-3">{user.email}</p>
+                <h2 className="text-2xl font-black text-text-main-light tracking-tight leading-none group-hover:text-primary transition-colors">{user.name || "Utilisateur"}</h2>
+                <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest mt-3">{user.email}</p>
 
                 <div className="mt-6 flex items-center gap-3 px-5 py-2 bg-primary/10 rounded-full text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20 shadow-premium">
                   <Fingerprint size={14} strokeWidth={3} /> {roleLabel}
                 </div>
 
-                <div className="w-full h-px bg-border-light dark:bg-white/5 my-10" />
+                <div className="w-full h-px bg-border-light my-10" />
 
                 <div className="w-full space-y-6">
                   <ProfileMetric icon={Hash} label="Matricule" value={user.agent_login || "—"} />
@@ -209,13 +209,13 @@ export default function Profile() {
                   <div className="p-3 bg-accent-orange/20 text-accent-orange rounded-radius-button">
                     <Bell size={20} strokeWidth={2.5} />
                   </div>
-                  <h3 className="text-xs font-black text-text-main-light dark:text-text-main-dark uppercase tracking-widest">Alerte & Monitoring</h3>
+                  <h3 className="text-xs font-black text-text-main-light uppercase tracking-widest">Alerte & Monitoring</h3>
                 </div>
-                <p className="text-[11px] text-text-muted-light dark:text-text-muted-dark leading-relaxed font-bold">
+                <p className="text-[11px] text-text-muted-light leading-relaxed font-bold">
                   Restez informé des synchronisations de rapports et des succès d'installations.
                 </p>
-                <div className="mt-6 p-4 bg-bg-light dark:bg-white/5 rounded-radius-button border border-border-light dark:border-white/10 flex items-center justify-between shadow-premium">
-                  <span className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em]">Flux RSS Actif</span>
+                <div className="mt-6 p-4 bg-bg-light rounded-radius-button border border-border-light flex items-center justify-between shadow-premium">
+                  <span className="text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Flux RSS Actif</span>
                   <div className="h-2 w-2 rounded-full bg-accent-green animate-pulse" />
                 </div>
               </GlassCard>
@@ -223,10 +223,10 @@ export default function Profile() {
 
             {/* Profile Form Content */}
             <div className="lg:col-span-8 space-y-10">
-              <GlassCard className="p-10 border-border-light dark:border-white/10 shadow-premium rounded-radius-card" hover={true}>
+              <GlassCard className="p-10 border-border-light shadow-premium rounded-radius-card" hover={true}>
                 <div className="flex items-center gap-4 mb-10">
                   <div className="w-2 h-10 bg-primary rounded-full shadow-lg shadow-primary/40" />
-                  <h3 className="text-2xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Configuration Identité</h3>
+                  <h3 className="text-2xl font-black text-text-main-light tracking-tight">Configuration Identité</h3>
                 </div>
 
                 <AnimatePresence>
@@ -283,11 +283,11 @@ export default function Profile() {
                     />
                   </div>
 
-                  <div className="pt-10 border-t border-border-light dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                  <div className="pt-10 border-t border-border-light flex flex-col sm:flex-row items-center justify-between gap-6">
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="flex items-center gap-3 text-xs font-black text-text-muted-light dark:text-text-muted-dark hover:text-accent-red transition-all uppercase tracking-widest"
+                      className="flex items-center gap-3 text-xs font-black text-text-muted-light hover:text-accent-red transition-all uppercase tracking-widest"
                     >
                       <LogOut size={18} /> Fermer la session
                     </button>
@@ -315,8 +315,8 @@ export default function Profile() {
                       <Key size={28} strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Sécurité du Compte</h3>
-                      <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest mt-1">Gérez votre mot de passe et vos accès</p>
+                      <h3 className="text-xl font-black text-text-main-light tracking-tight">Sécurité du Compte</h3>
+                      <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest mt-1">Gérez votre mot de passe et vos accès</p>
                     </div>
                   </div>
                   <Button
@@ -343,28 +343,28 @@ export default function Profile() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closePwdModal}
-              className="absolute inset-0 bg-bg-dark/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 30 }}
-              className="relative w-full max-w-md bg-white dark:bg-bg-dark rounded-[32px] shadow-2xl overflow-hidden border border-border-light dark:border-white/10"
+              className="relative w-full max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden border border-border-light"
             >
               {/* Header */}
-              <div className="p-8 border-b border-border-light dark:border-white/10 bg-accent-purple/5 flex items-center justify-between">
+              <div className="p-8 border-b border-border-light bg-accent-purple/5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 bg-accent-purple/10 text-accent-purple rounded-radius-button flex items-center justify-center">
                     <Lock size={24} strokeWidth={2.5} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Changer le mot de passe</h2>
+                    <h2 className="text-xl font-black text-text-main-light tracking-tight">Changer le mot de passe</h2>
                     <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest mt-0.5">Sécurité du compte</p>
                   </div>
                 </div>
                 <button
                   onClick={closePwdModal}
-                  className="p-3 bg-bg-light dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 rounded-radius-button transition-all"
+                  className="p-3 bg-bg-light hover:bg-white rounded-radius-button transition-all"
                 >
                   <X size={20} />
                 </button>
@@ -398,7 +398,7 @@ export default function Profile() {
 
                 {/* Current Password */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Mot de passe actuel</label>
+                  <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Mot de passe actuel</label>
                   <div className="relative">
                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={18} />
                     <input
@@ -406,7 +406,7 @@ export default function Profile() {
                       required
                       value={pwdForm.current}
                       onChange={(e) => setPwdForm(p => ({ ...p, current: e.target.value }))}
-                      className="w-full pl-14 pr-14 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
+                      className="w-full pl-14 pr-14 py-4 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
                       placeholder="Votre mot de passe actuel"
                     />
                     <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted-light hover:text-primary transition-colors">
@@ -417,7 +417,7 @@ export default function Profile() {
 
                 {/* New Password */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Nouveau mot de passe</label>
+                  <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Nouveau mot de passe</label>
                   <div className="relative">
                     <Key className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={18} />
                     <input
@@ -425,7 +425,7 @@ export default function Profile() {
                       required
                       value={pwdForm.next}
                       onChange={(e) => setPwdForm(p => ({ ...p, next: e.target.value }))}
-                      className="w-full pl-14 pr-14 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
+                      className="w-full pl-14 pr-14 py-4 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
                       placeholder="Au moins 6 caractères"
                     />
                     <button type="button" onClick={() => setShowNext(!showNext)} className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted-light hover:text-primary transition-colors">
@@ -436,7 +436,7 @@ export default function Profile() {
 
                 {/* Confirm Password */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Confirmer le nouveau mot de passe</label>
+                  <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Confirmer le nouveau mot de passe</label>
                   <div className="relative">
                     <Key className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light" size={18} />
                     <input
@@ -444,7 +444,7 @@ export default function Profile() {
                       required
                       value={pwdForm.confirm}
                       onChange={(e) => setPwdForm(p => ({ ...p, confirm: e.target.value }))}
-                      className={`w-full pl-14 pr-6 py-4 bg-bg-light/50 dark:bg-white/5 border rounded-radius-button outline-none focus:ring-4 ring-primary/10 transition-all text-sm font-bold shadow-premium ${pwdForm.confirm && pwdForm.next !== pwdForm.confirm ? "border-accent-red/50 focus:border-accent-red" : "border-border-light dark:border-white/10 focus:border-primary"}`}
+                      className={`w-full pl-14 pr-6 py-4 bg-bg-light/50 border rounded-radius-button outline-none focus:ring-4 ring-primary/10 transition-all text-sm font-bold shadow-premium ${pwdForm.confirm && pwdForm.next !== pwdForm.confirm ? "border-accent-red/50 focus:border-accent-red" : "border-border-light focus:border-primary"}`}
                       placeholder="Répétez le nouveau mot de passe"
                     />
                     {pwdForm.confirm && (
@@ -462,7 +462,7 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={closePwdModal}
-                    className="flex-1 py-4 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest hover:text-primary transition-colors border border-border-light dark:border-white/10 rounded-radius-button"
+                    className="flex-1 py-4 text-[10px] font-black text-text-muted-light uppercase tracking-widest hover:text-primary transition-colors border border-border-light rounded-radius-button"
                   >
                     Annuler
                   </button>
@@ -489,12 +489,12 @@ function ProfileMetric({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center justify-between text-left group/metric">
       <div className="flex items-center gap-4">
-        <div className="p-3 rounded-radius-button bg-bg-light dark:bg-white/5 text-text-muted-light transition-colors group-hover/metric:text-primary shadow-premium border border-border-light dark:border-white/5">
+        <div className="p-3 rounded-radius-button bg-bg-light text-text-muted-light transition-colors group-hover/metric:text-primary shadow-premium border border-border-light">
           <Icon size={18} strokeWidth={2.5} />
         </div>
         <div>
-          <p className="text-[9px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest mb-0.5">{label}</p>
-          <p className="text-sm font-black text-text-main-light dark:text-text-main-dark tracking-tight">{value}</p>
+          <p className="text-[9px] font-black text-text-muted-light uppercase tracking-widest mb-0.5">{label}</p>
+          <p className="text-sm font-black text-text-main-light tracking-tight">{value}</p>
         </div>
       </div>
     </div>
@@ -504,18 +504,18 @@ function ProfileMetric({ icon: Icon, label, value }) {
 function ProfileField({ label, name, icon: Icon, type = "text", value, onChange, placeholder }) {
   return (
     <div className="space-y-3 group/field">
-      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] ml-1 group-focus-within/field:text-primary transition-colors">
+      <label className="text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em] ml-1 group-focus-within/field:text-primary transition-colors">
         {label}
       </label>
       <div className="relative">
-        <Icon className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light dark:text-text-muted-dark group-focus-within/field:text-primary transition-colors" size={20} strokeWidth={2.5} />
+        <Icon className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light group-focus-within/field:text-primary transition-colors" size={20} strokeWidth={2.5} />
         <input
           type={type}
           name={name}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="w-full pl-14 pr-6 py-4 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light shadow-premium"
+          className="w-full pl-14 pr-6 py-4 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary focus:bg-white transition-all text-sm font-bold text-text-main-light placeholder:text-text-muted-light shadow-premium"
         />
       </div>
     </div>

@@ -51,7 +51,7 @@ export default function Navbar() {
         <div className={`
           flex items-center justify-between px-8 py-4 rounded-[22px] transition-all duration-700
           ${isScrolled
-            ? "bg-white/80 dark:bg-bg-dark/80 shadow-premium backdrop-blur-xl border border-white/20 dark:border-white/5"
+            ? "bg-white/80 shadow-premium backdrop-blur-xl border border-white/20"
             : "bg-transparent border-transparent"
           }
         `}>
@@ -63,7 +63,7 @@ export default function Navbar() {
             <div className="h-12 w-12 rounded-radius-card bg-primary flex items-center justify-center text-white font-black shadow-xl shadow-primary/20 group-hover:rotate-6 transition-all duration-500">
               <Zap size={24} fill="currentColor" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-text-main-light dark:text-text-main-dark">
+            <span className="text-2xl font-black tracking-tight text-text-main-light">
               ClientFlow
             </span>
           </div>
@@ -74,7 +74,7 @@ export default function Navbar() {
               <li key={link.name}>
                 <button
                   onClick={() => handleNavClick(link.path, link.hash)}
-                  className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors relative group"
+                  className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light hover:text-primary transition-colors relative group"
                 >
                   {link.name}
                   <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-1 bg-primary rounded-full transition-all duration-500 group-hover:w-full" />
@@ -87,7 +87,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-6">
             <button
               onClick={() => navigate("/login")}
-              className="text-[11px] font-black uppercase tracking-widest text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors"
+              className="text-[11px] font-black uppercase tracking-widest text-text-muted-light hover:text-primary transition-colors"
             >
               Se Connecter
             </button>
@@ -103,7 +103,7 @@ export default function Navbar() {
 
           {/* Mobile Toggle */}
           <button
-            className="lg:hidden p-3 bg-bg-dark/5 dark:bg-white/5 rounded-xl text-text-main-light dark:text-text-main-dark transition-colors"
+            className="lg:hidden p-3 bg-slate-900/5 rounded-xl text-text-main-light transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -118,7 +118,7 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden absolute top-full left-0 right-0 mx-6 mt-4 bg-white dark:bg-bg-dark rounded-[32px] shadow-2xl border border-white/10 overflow-hidden z-[110]"
+            className="lg:hidden absolute top-full left-0 right-0 mx-6 mt-4 bg-white rounded-[32px] shadow-2xl border border-white/10 overflow-hidden z-[110]"
           >
             <div className="p-10 space-y-8 text-center">
               <ul className="space-y-6">
@@ -126,14 +126,14 @@ export default function Navbar() {
                   <li key={link.name}>
                     <button
                       onClick={() => handleNavClick(link.path, link.hash)}
-                      className="text-lg font-black uppercase tracking-widest text-text-main-light dark:text-text-main-dark hover:text-primary transition-colors"
+                      className="text-lg font-black uppercase tracking-widest text-text-main-light hover:text-primary transition-colors"
                     >
                       {link.name}
                     </button>
                   </li>
                 ))}
               </ul>
-              <div className="pt-8 border-t border-border-light dark:border-white/5 flex flex-col gap-4">
+              <div className="pt-8 border-t border-border-light flex flex-col gap-4">
                 <Button onClick={() => navigate("/login")} variant="secondary" className="w-full !py-5">
                   Se Connecter
                 </Button>

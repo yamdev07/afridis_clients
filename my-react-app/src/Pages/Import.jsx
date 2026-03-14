@@ -125,13 +125,13 @@ export default function Import() {
   };
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+    <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
       <Sidebar />
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
         <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
-            <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Acquisition de Données</h1>
-            <p className="text-text-muted-light dark:text-text-muted-dark font-medium">Automatisez vos flux d'entrée via analyse PDF et intégration massive.</p>
+            <h1 className="text-4xl font-black text-text-main-light tracking-tight">Acquisition de Données</h1>
+            <p className="text-text-muted-light font-medium">Automatisez vos flux d'entrée via analyse PDF et intégration massive.</p>
           </div>
           <NotificationBell />
         </header>
@@ -140,14 +140,14 @@ export default function Import() {
 
           {/* PDF Extraction Section */}
           <section className="space-y-8">
-            <GlassCard className="p-10 border-border-light dark:border-white/5 rounded-radius-card flex flex-col gap-10 shadow-premium" hover={true}>
+            <GlassCard className="p-10 border-border-light rounded-radius-card flex flex-col gap-10 shadow-premium" hover={true}>
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 bg-accent-red/10 text-accent-red rounded-radius-card flex items-center justify-center border border-accent-red/20">
                   <FileText size={28} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-text-main-light dark:text-text-main-dark tracking-tight leading-none mb-1">Analyseur PDF</h3>
-                  <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Technologie OCR Prioritaire</p>
+                  <h3 className="text-2xl font-black text-text-main-light tracking-tight leading-none mb-1">Analyseur PDF</h3>
+                  <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Technologie OCR Prioritaire</p>
                 </div>
               </div>
 
@@ -158,13 +158,13 @@ export default function Import() {
                   onChange={handlePdfChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="border-2 border-dashed border-border-light dark:border-white/10 group-hover:border-primary group-hover:bg-primary/[0.02] rounded-[24px] p-12 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative bg-bg-light/30 dark:bg-white/[0.01]">
-                  <div className="p-5 bg-white dark:bg-white/10 shadow-premium rounded-[18px] text-text-muted-light group-hover:text-primary transition-all duration-500 group-hover:scale-110">
+                <div className="border-2 border-dashed border-border-light group-hover:border-primary group-hover:bg-primary/[0.02] rounded-[24px] p-12 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative bg-bg-light/30">
+                  <div className="p-5 bg-white shadow-premium rounded-[18px] text-text-muted-light group-hover:text-primary transition-all duration-500 group-hover:scale-110">
                     {pdfLoading ? <RefreshCw className="animate-spin" size={32} strokeWidth={2.5} /> : <UploadCloud size={32} strokeWidth={2.5} />}
                   </div>
                   <div className="text-center space-y-2">
-                    <p className="text-xs font-black text-text-main-light dark:text-text-main-dark uppercase tracking-widest group-hover:text-primary transition-colors">Déposer le rapport d'intervention</p>
-                    <p className="text-[9px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Signature Digitale • PDF • Max 10MB</p>
+                    <p className="text-xs font-black text-text-main-light uppercase tracking-widest group-hover:text-primary transition-colors">Déposer le rapport d'intervention</p>
+                    <p className="text-[9px] font-black text-text-muted-light uppercase tracking-widest">Signature Digitale • PDF • Max 10MB</p>
                   </div>
                 </div>
               </div>
@@ -177,9 +177,9 @@ export default function Import() {
                 )}
               </AnimatePresence>
 
-              <div className="mt-4 pt-10 border-t border-border-light dark:border-white/5 space-y-6">
+              <div className="mt-4 pt-10 border-t border-border-light space-y-6">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark">Flux d'extraction temps réel</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted-light">Flux d'extraction temps réel</h4>
                   {pdfLoading && <div className="flex items-center gap-2">
                     <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
                     <span className="text-[9px] font-black text-primary uppercase tracking-widest">Décodage...</span>
@@ -188,14 +188,14 @@ export default function Import() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6">
                   {Object.entries(extractedData).slice(0, 8).map(([key, val]) => (
                     <div key={key} className="flex flex-col gap-2 group/item">
-                      <span className="text-[9px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest leading-none group-hover/item:text-primary transition-colors">{key.replace('_', ' ')}</span>
-                      <div className="px-4 py-3 bg-bg-light/50 dark:bg-white/5 rounded-[12px] border border-transparent dark:border-white/5 group-hover/item:border-primary/20 transition-all font-bold text-xs text-text-main-light dark:text-text-main-dark truncate shadow-premium">
+                      <span className="text-[9px] font-black text-text-muted-light uppercase tracking-widest leading-none group-hover/item:text-primary transition-colors">{key.replace('_', ' ')}</span>
+                      <div className="px-4 py-3 bg-bg-light/50 rounded-[12px] border border-transparent group-hover/item:border-primary/20 transition-all font-bold text-xs text-text-main-light truncate shadow-premium">
                         {val || <span className="opacity-20">—</span>}
                       </div>
                     </div>
                   ))}
                 </div>
-                <Button variant="primary" className="w-full !py-5 !rounded-radius-button !bg-bg-card-dark dark:!bg-white/5 !text-white dark:!text-primary font-black uppercase tracking-[0.2em] text-[10px] shadow-premium" icon={Zap}>
+                <Button variant="primary" className="w-full !py-5 !rounded-radius-button !bg-bg-card-dark !text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-premium" icon={Zap}>
                   Injecter dans le système
                 </Button>
               </div>
@@ -210,8 +210,8 @@ export default function Import() {
                   <TableIcon size={28} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-text-main-light dark:text-text-main-dark tracking-tight leading-none mb-1">Import de Masse</h3>
-                  <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Base de Données Excel / CSV</p>
+                  <h3 className="text-2xl font-black text-text-main-light tracking-tight leading-none mb-1">Import de Masse</h3>
+                  <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Base de Données Excel / CSV</p>
                 </div>
               </div>
 
@@ -222,13 +222,13 @@ export default function Import() {
                   onChange={handleExcelChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="border-2 border-dashed border-border-light dark:border-white/10 group-hover:border-accent-green group-hover:bg-accent-green/[0.02] rounded-[24px] p-12 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative bg-bg-light/30 dark:bg-white/[0.01]">
-                  <div className="p-5 bg-white dark:bg-white/10 shadow-premium rounded-[18px] text-text-muted-light group-hover:text-accent-green transition-all duration-500 group-hover:scale-110">
+                <div className="border-2 border-dashed border-border-light group-hover:border-accent-green group-hover:bg-accent-green/[0.02] rounded-[24px] p-12 flex flex-col items-center justify-center gap-6 transition-all duration-500 relative bg-bg-light/30">
+                  <div className="p-5 bg-white shadow-premium rounded-[18px] text-text-muted-light group-hover:text-accent-green transition-all duration-500 group-hover:scale-110">
                     {excelReading ? <RefreshCw className="animate-spin" size={32} strokeWidth={2.5} /> : <FileUp size={32} strokeWidth={2.5} />}
                   </div>
                   <div className="text-center space-y-2">
-                    <p className="text-xs font-black text-text-main-light dark:text-text-main-dark uppercase tracking-widest group-hover:text-accent-green transition-colors">Transférer votre fichier Excel</p>
-                    <p className="text-[9px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Protocoles .xlsx • .xls • .csv</p>
+                    <p className="text-xs font-black text-text-main-light uppercase tracking-widest group-hover:text-accent-green transition-colors">Transférer votre fichier Excel</p>
+                    <p className="text-[9px] font-black text-text-muted-light uppercase tracking-widest">Protocoles .xlsx • .xls • .csv</p>
                   </div>
                 </div>
               </div>
@@ -249,25 +249,25 @@ export default function Import() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-1.5 h-6 bg-accent-green rounded-full shadow-lg shadow-accent-green/30" />
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark">{excelRows.length} Signatures Capturées</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted-light">{excelRows.length} Signatures Capturées</h4>
                       </div>
                       <button onClick={() => setExcelRows([])} className="p-2.5 text-accent-red hover:text-white hover:bg-accent-red rounded-radius-button transition-all shadow-premium active:scale-95">
                         <Trash2 size={20} strokeWidth={2.5} />
                       </button>
                     </div>
 
-                    <div className="bg-bg-light/50 dark:bg-bg-card-dark border border-border-light dark:border-white/5 rounded-radius-card overflow-hidden shadow-premium">
+                    <div className="bg-bg-light/50 border border-border-light rounded-radius-card overflow-hidden shadow-premium">
                       <table className="w-full text-left">
-                        <thead className="bg-bg-light dark:bg-white/5 border-b border-border-light dark:border-white/10">
+                        <thead className="bg-bg-light border-b border-border-light">
                           <tr>
                             {Object.keys(excelRows[0]).slice(0, 3).map(k => <th key={k} className="px-6 py-4 text-[9px] font-black text-text-muted-light uppercase tracking-widest">{k}</th>)}
                             <th className="px-6 py-4">&nbsp;</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-border-light dark:divide-white/5 font-bold">
+                        <tbody className="divide-y divide-border-light font-bold">
                           {excelRows.slice(0, 4).map((r, i) => (
                             <tr key={i} className="group/row hover:bg-accent-green/[0.02]">
-                              {Object.values(r).slice(0, 3).map((v, j) => <td key={j} className="px-6 py-4 text-[11px] text-text-main-light dark:text-text-main-dark truncate max-w-[120px]">{v}</td>)}
+                              {Object.values(r).slice(0, 3).map((v, j) => <td key={j} className="px-6 py-4 text-[11px] text-text-main-light truncate max-w-[120px]">{v}</td>)}
                               <td className="px-6 py-4 text-right opacity-0 group-hover/row:opacity-100 transition-opacity">
                                 <Info size={14} className="text-text-muted-light inline-block" />
                               </td>
@@ -275,7 +275,7 @@ export default function Import() {
                           ))}
                         </tbody>
                       </table>
-                      {excelRows.length > 4 && <div className="p-3 text-center text-[9px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest border-t border-border-light dark:border-white/5 bg-bg-light/30">+{excelRows.length - 4} autres lignes</div>}
+                      {excelRows.length > 4 && <div className="p-3 text-center text-[9px] font-black text-text-muted-light uppercase tracking-widest border-t border-border-light bg-bg-light/30">+{excelRows.length - 4} autres lignes</div>}
                     </div>
 
                     <Button
@@ -296,12 +296,12 @@ export default function Import() {
                       <CheckCircle size={32} strokeWidth={3} />
                     </div>
                     <div>
-                      <h4 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Transmission Terminée</h4>
-                      <p className="text-sm text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-1">
+                      <h4 className="text-xl font-black text-text-main-light tracking-tight">Transmission Terminée</h4>
+                      <p className="text-sm text-text-muted-light font-black uppercase tracking-widest mt-1">
                         {excelResult.created} nouveaux flux injectés • {excelResult.skipped} redondances ignorées.
                       </p>
                     </div>
-                    <Button variant="secondary" onClick={() => { setExcelResult(null); setExcelRows([]); }} className="!py-4 !px-10 !rounded-radius-button !bg-white dark:!bg-white/5 !text-text-muted-light text-[10px] font-black uppercase tracking-widest shadow-premium border border-border-light dark:border-white/10">Ouvrir un nouveau lot</Button>
+                    <Button variant="secondary" onClick={() => { setExcelResult(null); setExcelRows([]); }} className="!py-4 !px-10 !rounded-radius-button !bg-white !text-text-muted-light text-[10px] font-black uppercase tracking-widest shadow-premium border border-border-light">Ouvrir un nouveau lot</Button>
                   </motion.div>
                 )}
               </AnimatePresence>

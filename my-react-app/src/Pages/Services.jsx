@@ -218,19 +218,19 @@ function Services() {
   );
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+    <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
       <Sidebar />
 
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Services & Offres</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Gestion du catalogue et monitoring des souscriptions.</p>
+            <h1 className="text-2xl font-bold text-slate-900 mt-1">Services & Offres</h1>
+            <p className="text-sm text-slate-500 mt-1 font-medium">Gestion du catalogue et monitoring des souscriptions.</p>
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
             <div className="flex gap-3">
-              <button onClick={fetchServices} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:text-primary transition-all shadow-sm active:scale-95">
+              <button onClick={fetchServices} className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-primary transition-all shadow-sm active:scale-95">
                 <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
               </button>
               <button
@@ -251,28 +251,28 @@ function Services() {
               <Package size={22} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Catalog Size</p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-none">{filteredServices.length}</h3>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Catalog Size</p>
+              <h3 className="text-xl font-bold text-slate-900 leading-none">{filteredServices.length}</h3>
             </div>
           </GlassCard>
 
           <GlassCard className="p-6 flex items-center gap-4" hover={true}>
-            <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 rounded-lg border border-emerald-500/10 flex items-center justify-center">
+            <div className="h-12 w-12 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-500/10 flex items-center justify-center">
               <TrendingUp size={22} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Valeur Catalogue</p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-none">{totalRevenue.toLocaleString("fr-FR")} F</h3>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Valeur Catalogue</p>
+              <h3 className="text-xl font-bold text-slate-900 leading-none">{totalRevenue.toLocaleString("fr-FR")} F</h3>
             </div>
           </GlassCard>
 
           <GlassCard className="p-6 flex items-center gap-4" hover={true}>
-            <div className="h-12 w-12 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-lg border border-amber-500/10 flex items-center justify-center">
+            <div className="h-12 w-12 bg-amber-50 text-amber-600 rounded-lg border border-amber-500/10 flex items-center justify-center">
               <Users size={22} strokeWidth={2} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Services Actifs</p>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-none">{filteredServices.filter(s => s.is_active).length}</h3>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Services Actifs</p>
+              <h3 className="text-xl font-bold text-slate-900 leading-none">{filteredServices.filter(s => s.is_active).length}</h3>
             </div>
           </GlassCard>
         </div>
@@ -284,12 +284,12 @@ function Services() {
             <input
               type="text"
               placeholder="Chercher une offre par label..."
-              className="w-full pl-14 pr-4 py-4 bg-white dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all shadow-premium font-bold text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light"
+              className="w-full pl-14 pr-4 py-4 bg-white border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all shadow-premium font-bold text-text-main-light placeholder:text-text-muted-light"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex bg-white dark:bg-white/5 p-1 rounded-radius-button border border-border-light dark:border-white/10 shadow-premium">
+          <div className="flex bg-white border border-border-light shadow-premium">
             <button className="p-3 bg-primary text-white rounded-[12px] shadow-lg shadow-primary/20"><LayoutGrid size={20} /></button>
             <button className="p-3 text-text-muted-light hover:text-primary transition-colors"><MoreHorizontal size={20} /></button>
           </div>
@@ -306,7 +306,7 @@ function Services() {
         {loading ? (
           <div className="py-32 flex flex-col items-center justify-center gap-6">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Synchronisation catalogue...</p>
+            <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Synchronisation catalogue...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -317,7 +317,7 @@ function Services() {
                 key={service.id}
                 className="h-full"
               >
-                <GlassCard className="p-0 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 group h-full flex flex-col" hover={true}>
+                <GlassCard className="p-0 border-slate-200 bg-white group h-full flex flex-col" hover={true}>
                   <div className="p-6 flex-grow">
                     <div className="flex items-start justify-between mb-6">
                       <div className={`p-3 rounded-lg border ${service.is_active ? 'bg-primary/5 text-primary border-primary/10' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
@@ -325,17 +325,17 @@ function Services() {
                       </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight mb-2">
+                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-primary transition-colors leading-tight mb-2">
                       {service.label}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed line-clamp-2 min-h-[32px]">
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed line-clamp-2 min-h-[32px]">
                       {service.description || "Aucun descriptif technique fourni."}
                     </p>
 
-                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Prix Mensuel</p>
-                        <p className="text-xl font-bold text-slate-900 dark:text-white leading-none">
+                        <p className="text-xl font-bold text-slate-900 leading-none">
                           {(service.monthly_price || 0).toLocaleString("fr-FR")} <span className="text-xs text-slate-400 ml-1">F</span>
                         </p>
                       </div>
@@ -343,7 +343,7 @@ function Services() {
                         {canModifyCatalog && (
                           <button
                             onClick={() => handleDeleteService(service.id, service.label)}
-                            className="h-10 w-10 bg-white dark:bg-slate-800 text-slate-400 hover:text-accent-red rounded-lg flex items-center justify-center border border-slate-100 dark:border-slate-700 transition-all shadow-sm active:scale-95"
+                            className="h-10 w-10 bg-white text-slate-400 hover:text-accent-red rounded-lg flex items-center justify-center border border-slate-100 transition-all shadow-sm active:scale-95"
                             title="Supprimer le service"
                           >
                             <Trash2 size={18} />
@@ -351,7 +351,7 @@ function Services() {
                         )}
                         <button
                           onClick={() => handleShowClients(service)}
-                          className="h-10 w-10 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-primary rounded-lg flex items-center justify-center border border-slate-100 dark:border-slate-700 transition-all shadow-sm active:scale-95"
+                          className="h-10 w-10 bg-slate-50 text-slate-400 hover:text-primary rounded-lg flex items-center justify-center border border-slate-100 transition-all shadow-sm active:scale-95"
                         >
                           <Users size={18} />
                         </button>
@@ -373,53 +373,53 @@ function Services() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedService(null)}
-                className="absolute inset-0 bg-bg-dark/40 backdrop-blur-xl"
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
-                className="relative w-full max-w-5xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden flex flex-col h-[85vh] border border-slate-200 dark:border-slate-800"
+                className="relative w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col h-[85vh] border border-slate-200"
               >
-                <div className="p-8 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+                <div className="p-8 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 bg-primary text-white rounded-lg flex items-center justify-center shadow-sm">
                       <Users size={24} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{selectedService.label}</h2>
+                      <h2 className="text-xl font-bold text-slate-900 leading-tight">{selectedService.label}</h2>
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Liste des abonnés actifs</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowAddClientForm(!showAddClientForm)}
-                      className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2 shadow-sm"
+                      className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
                     >
                       <Plus size={14} /> {showAddClientForm ? "Masquer" : "Ajouter"}
                     </button>
-                    <button onClick={() => setSelectedService(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all">
+                    <button onClick={() => setSelectedService(null)} className="p-2 text-slate-400 hover:text-slate-600 transition-all">
                       <X size={20} />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-8 custom-scrollbar bg-white dark:bg-slate-900">
+                <div className="flex-grow overflow-y-auto p-8 custom-scrollbar bg-white">
                   {showAddClientForm && (
-                    <div className="mb-8 p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
-                      <h3 className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-4">Associer un nouveau client</h3>
+                    <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
+                      <h3 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-4">Associer un nouveau client</h3>
                       <form onSubmit={handleAddClientToService} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nom Complet</label>
-                          <input required value={newClientFullname} onChange={(e) => setNewClientFullname(e.target.value)} className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-lg outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder="Jean Dupont" />
+                          <input required value={newClientFullname} onChange={(e) => setNewClientFullname(e.target.value)} className="w-full p-2.5 bg-white rounded-lg outline-none border border-slate-200 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder="Jean Dupont" />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ligne / Tracker</label>
-                          <input required value={newLineNumber} onChange={(e) => setNewLineNumber(e.target.value)} className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-lg outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder="01.23..." />
+                          <input required value={newLineNumber} onChange={(e) => setNewLineNumber(e.target.value)} className="w-full p-2.5 bg-white rounded-lg outline-none border border-slate-200 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder="01.23..." />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Prix (Optionnel)</label>
-                          <input type="number" value={newClientCost} onChange={(e) => setNewClientCost(e.target.value)} className="w-full p-2.5 bg-white dark:bg-slate-900 rounded-lg outline-none border border-slate-200 dark:border-slate-700 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder={selectedService.monthly_price} />
+                          <input type="number" value={newClientCost} onChange={(e) => setNewClientCost(e.target.value)} className="w-full p-2.5 bg-white rounded-lg outline-none border border-slate-200 focus:ring-2 ring-primary/20 text-sm font-medium transition-all" placeholder={selectedService.monthly_price} />
                         </div>
                         <button type="submit" disabled={addingClient} className="w-full py-2.5 bg-primary text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-primary-hover transition-all flex items-center justify-center gap-2">
                           {addingClient ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus size={14} />}
@@ -441,31 +441,31 @@ function Services() {
                     </div>
                   ) : serviceClients.length === 0 ? (
                     <div className="py-24 text-center">
-                      <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
                         <Users size={32} />
                       </div>
-                      <h4 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-widest">Aucun abonné</h4>
+                      <h4 className="text-lg font-bold text-slate-900 uppercase tracking-widest">Aucun abonné</h4>
                       <p className="text-xs text-slate-500 mt-2 font-medium">Ce service n'a pas encore de clients associés.</p>
                     </div>
                   ) : (
-                    <div className="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
+                    <div className="overflow-hidden border border-slate-200 rounded-lg bg-white">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Client / Ligne</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Agent</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Date</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tarif</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Statut</th>
+                          <tr className="bg-slate-50 border-b border-slate-200">
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Client / Ligne</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Agent</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tarif</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Statut</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                        <tbody className="divide-y divide-slate-100">
                           {serviceClients.map((sub) => (
-                            <tr key={sub.subscription_id} className="hover:bg-primary/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                            <tr key={sub.subscription_id} className="hover:bg-primary/[0.02] transition-colors">
                               <td className="px-8 py-6">
                                 <div>
-                                  <p className="text-sm font-black text-text-main-light dark:text-text-main-dark">{sub.full_name}</p>
-                                  <p className="text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest mt-0.5">{sub.line_number || "LIGNE INCONNUE"}</p>
+                                  <p className="text-sm font-black text-text-main-light">{sub.full_name}</p>
+                                  <p className="text-[10px] text-text-muted-light font-black uppercase tracking-widest mt-0.5">{sub.line_number || "LIGNE INCONNUE"}</p>
                                 </div>
                               </td>
                               <td className="px-8 py-6">
@@ -473,16 +473,16 @@ function Services() {
                                   {sub.agent_login || "AUTO"}
                                 </span>
                               </td>
-                              <td className="px-8 py-6 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">
+                              <td className="px-8 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-widest">
                                 {sub.subscription_date || "---"}
                               </td>
                               <td className="px-8 py-6">
-                                <p className="text-sm font-black text-text-main-light dark:text-text-main-dark">
+                                <p className="text-sm font-black text-text-main-light">
                                   {(sub.contract_cost || 0).toLocaleString("fr-FR")} <span className="text-[10px] text-primary">F</span>
                                 </p>
                               </td>
                               <td className="px-8 py-6">
-                                <span className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border ${sub.status_label === 'Actif' ? 'bg-accent-green/10 text-accent-green border-accent-green/20' : 'bg-bg-light dark:bg-white/5 text-text-muted-light dark:text-text-muted-dark border-border-light dark:border-white/10'}`}>
+                                <span className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border ${sub.status_label === 'Actif' ? 'bg-accent-green/10 text-accent-green border-accent-green/20' : 'bg-bg-light text-text-muted-light border-border-light'}`}>
                                   {sub.status_label}
                                 </span>
                               </td>
@@ -494,7 +494,7 @@ function Services() {
                   )}
                 </div>
 
-                <div className="p-10 border-t border-border-light dark:border-white/10 bg-bg-light/10 flex justify-end">
+                <div className="p-10 border-t border-border-light bg-bg-light/10 flex justify-end">
                   <Button variant="secondary" onClick={() => setSelectedService(null)} className="!px-12 !py-5 shadow-premium">
                     Fermer la vue
                   </Button>
@@ -513,28 +513,28 @@ function Services() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowNewServiceModal(false)}
-                className="absolute inset-0 bg-bg-dark/60 backdrop-blur-md"
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 30 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 30 }}
-                className="relative w-full max-w-lg bg-white dark:bg-bg-dark rounded-[32px] shadow-2xl border border-border-light dark:border-white/10 overflow-hidden"
+                className="relative w-full max-w-lg bg-white rounded-[32px] shadow-2xl border border-border-light overflow-hidden"
               >
                 {/* Header */}
-                <div className="p-8 border-b border-border-light dark:border-white/10 bg-primary/5 flex items-center justify-between">
+                <div className="p-8 border-b border-border-light bg-primary/5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 bg-primary/10 text-primary rounded-radius-card flex items-center justify-center">
                       <Plus size={24} strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Nouveau Service</h2>
+                      <h2 className="text-xl font-black text-text-main-light tracking-tight">Nouveau Service</h2>
                       <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest mt-0.5">Ajouter au catalogue</p>
                     </div>
                   </div>
                   <button
                     onClick={() => { setShowNewServiceModal(false); setServiceError(""); }}
-                    className="p-3 bg-bg-light dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 rounded-radius-button transition-all"
+                    className="p-3 bg-bg-light hover:bg-white rounded-radius-button transition-all"
                   >
                     <X size={20} />
                   </button>
@@ -550,47 +550,47 @@ function Services() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Code *</label>
+                      <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Code *</label>
                       <input
                         required
                         value={serviceForm.code}
                         onChange={e => setServiceForm(p => ({ ...p, code: e.target.value }))}
-                        className="w-full px-5 py-3 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
+                        className="w-full px-5 py-3 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
                         placeholder="email_pro"
                       />
                       <p className="text-[9px] text-text-muted-light font-bold">Identifiant unique (ex: fiber_500)</p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Tarif Mensuel (FCFA)</label>
+                      <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Tarif Mensuel (FCFA)</label>
                       <input
                         type="number"
                         min="0"
                         value={serviceForm.monthly_price}
                         onChange={e => setServiceForm(p => ({ ...p, monthly_price: e.target.value }))}
-                        className="w-full px-5 py-3 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
+                        className="w-full px-5 py-3 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
                         placeholder="75000"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Libellé *</label>
+                    <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Libellé *</label>
                     <input
                       required
                       value={serviceForm.label}
                       onChange={e => setServiceForm(p => ({ ...p, label: e.target.value }))}
-                      className="w-full px-5 py-3 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
+                      className="w-full px-5 py-3 bg-bg-light/50 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold shadow-premium"
                       placeholder="Installation Fibre Optique"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">Description</label>
+                    <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Description</label>
                     <textarea
                       value={serviceForm.description}
                       onChange={e => setServiceForm(p => ({ ...p, description: e.target.value }))}
                       rows={3}
-                      className="w-full px-5 py-3 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold resize-none shadow-premium"
+                      className="w-full px-5 py-3 bg-bg-light/50 border border-border-light rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:border-primary transition-all text-sm font-bold resize-none shadow-premium"
                       placeholder="Décrivez ce service (technologie, contenu, livrables...)"
                     />
                   </div>
@@ -599,7 +599,7 @@ function Services() {
                     <button
                       type="button"
                       onClick={() => { setShowNewServiceModal(false); setServiceError(""); }}
-                      className="flex-1 py-4 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest hover:text-primary transition-colors border border-border-light dark:border-white/10 rounded-radius-button"
+                      className="flex-1 py-4 text-[10px] font-black text-text-muted-light lineCount:800 uppercase tracking-widest hover:text-primary transition-colors border border-border-light rounded-radius-button"
                     >
                       Annuler
                     </button>

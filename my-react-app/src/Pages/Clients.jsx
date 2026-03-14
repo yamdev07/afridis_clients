@@ -224,14 +224,14 @@ function Clients() {
   const isCommercial = user?.role === "commercial";
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+    <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
       <Sidebar />
 
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestion des Clients</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Gestion et suivi du portefeuille client.</p>
+            <h1 className="text-2xl font-bold text-slate-900">Gestion des Clients</h1>
+            <p className="text-sm text-slate-500 mt-1 font-medium">Gestion et suivi du portefeuille client.</p>
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
@@ -253,7 +253,7 @@ function Clients() {
               <input
                 type="search"
                 placeholder="Nom ou numéro de ligne..."
-                className="w-full lg:w-80 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm"
+                className="w-full lg:w-80 pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -263,7 +263,7 @@ function Clients() {
               <input
                 type="search"
                 placeholder="Commercial (Ex: m.dupont)"
-                className="w-full lg:w-64 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm"
+                className="w-full lg:w-64 pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm"
                 value={searchLogin}
                 onChange={(e) => setSearchLogin(e.target.value)}
               />
@@ -271,18 +271,18 @@ function Clients() {
             <div className="relative flex-grow lg:flex-grow-0 min-w-0">
               <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <select
-                className="w-full lg:w-48 pl-12 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm appearance-none cursor-pointer font-semibold text-slate-900 dark:text-white"
+                className="w-full lg:w-48 pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 ring-primary/20 transition-all text-sm appearance-none cursor-pointer font-semibold text-slate-900"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="" className="bg-white dark:bg-slate-900">Tous les statuts</option>
-                <option value="installed" className="bg-white dark:bg-slate-900">Installés</option>
-                <option value="pending" className="bg-white dark:bg-slate-900">En attente</option>
+                <option value="" className="bg-white">Tous les statuts</option>
+                <option value="installed" className="bg-white">Installés</option>
+                <option value="pending" className="bg-white">En attente</option>
               </select>
             </div>
           </div>
           <div className="flex items-center gap-2 w-full lg:w-auto">
-            <button onClick={load} className="flex-1 lg:flex-none px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95">
+            <button onClick={load} className="flex-1 lg:flex-none px-4 py-2.5 bg-white border border-slate-200 rounded-lg flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95">
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
               <span>Actualiser</span>
             </button>
@@ -305,92 +305,127 @@ function Clients() {
               <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">Chargement en cours...</p>
             </div>
           ) : (
-            <div className="overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-              <table className="w-full text-left border-collapse min-w-[800px]">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Identité</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Ligne & Offre</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Commercial</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Statut</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                  {clients.map((client) => (
-                    <tr
-                      key={client.id}
-                      className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary font-bold text-xs">
-                            {client.full_name?.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">{client.full_name}</p>
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{client.client_type}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{client.line_number || "---"}</p>
-                        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{client.offer || "Sans offre"}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{client.commercial_login || "Inconnu"}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {(() => {
-                          if (!client.installation_date) {
-                            return (
-                              <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500">
-                                En attente
-                              </span>
-                            );
-                          }
-                          return (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500">
-                              Installé
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => setSelectedClient(client)} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all">
-                            <Eye size={14} />
-                          </button>
-                          <button onClick={() => { setEditing(true); setFormData(client); setShowModal(true); }} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all">
-                            <Pencil size={14} />
-                          </button>
-                          <button onClick={() => deleteClient(client.id)} className="p-2 text-slate-400 hover:text-accent-red hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {clients.length === 0 && !loading && (
-                    <tr>
-                      <td colSpan={5} className="px-8 py-24 text-center">
-                        <div className="flex flex-col items-center gap-6">
-                          <div className="w-20 h-20 bg-bg-light dark:bg-white/5 rounded-full flex items-center justify-center text-text-muted-light/20">
-                            <Users size={40} />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black text-text-main-light dark:text-text-main-dark uppercase tracking-[0.25em]">Aucun client</p>
-                            <p className="text-xs text-text-muted-light mt-2 font-medium">Votre base de données est vide ou aucun résultat ne correspond.</p>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+            <>
+        <div className="hidden lg:block overflow-x-auto bg-white border border-slate-200 rounded-xl shadow-sm">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Identité</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ligne & Offre</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Commercial</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {clients.map((client) => (
+                <tr
+                  key={client.id}
+                  className="hover:bg-slate-50 transition-colors group"
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center text-primary font-bold text-xs">
+                        {client.full_name?.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{client.full_name}</p>
+                        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{client.client_type}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-semibold text-slate-700">{client.line_number || "---"}</p>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{client.offer || "Sans offre"}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{client.commercial_login || "Inconnu"}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {(() => {
+                      if (!client.installation_date) {
+                        return (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-500">
+                            En attente
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-600">
+                          Installé
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setSelectedClient(client)} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 rounded transition-all">
+                        <Eye size={14} />
+                      </button>
+                      <button onClick={() => { setEditing(true); setFormData(client); setShowModal(true); }} className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 rounded transition-all">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => deleteClient(client.id)} className="p-2 text-slate-400 hover:text-accent-red hover:bg-slate-100 rounded transition-all">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+
+        {/* Mobile Grid - Better usability on Small screens */}
+        <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {clients.map((client) => (
+            <div key={client.id} className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary font-black text-xs">
+                    {client.full_name?.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 leading-none">{client.full_name}</h3>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1">{client.client_type} · {client.commercial_login}</p>
+                  </div>
+                </div>
+                {client.installation_date ? (
+                   <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Installé</span>
+                ) : (
+                   <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-slate-800 text-slate-400 border border-slate-700">Attente</span>
+                )}
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black text-slate-900 truncate">{client.offer || "Aucune offre"}</p>
+                  <p className="text-[9px] text-slate-500 font-bold tracking-widest">{client.line_number || "Fibre ND"}</p>
+                </div>
+                <div className="flex gap-2">
+                   <button onClick={() => setSelectedClient(client)} className="p-2 bg-slate-100 rounded text-slate-500"><Eye size={14}/></button>
+                   <button onClick={() => { setEditing(true); setFormData(client); setShowModal(true); }} className="p-2 bg-primary/10 rounded text-primary"><Pencil size={14}/></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    )}
+  </div>
+
+  {clients.length === 0 && !loading && (
+          <div className="py-24 text-center">
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-20 h-20 bg-bg-light rounded-full flex items-center justify-center text-text-muted-light/20">
+                <Users size={40} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-text-main-light uppercase tracking-[0.25em]">Aucun client</p>
+                <p className="text-xs text-text-muted-light mt-2 font-medium">Votre base de données est vide ou aucun résultat ne correspond.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Selected Client Modal/Panel */}
         <AnimatePresence>
@@ -401,39 +436,39 @@ function Clients() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSelectedClient(null)}
-                className="absolute inset-0 bg-bg-dark/60 backdrop-blur-md"
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
               />
               <motion.div
                 initial={{ x: "100%" }}
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
-                className="relative w-full max-w-lg h-full bg-white dark:bg-bg-dark rounded-radius-card shadow-2xl flex flex-col border border-border-light dark:border-white/10"
+                className="relative w-full max-w-lg h-full bg-white rounded-radius-card shadow-2xl flex flex-col border border-border-light"
               >
-                <div className="p-8 border-b border-border-light dark:border-white/10 flex items-center justify-between">
+                <div className="p-8 border-b border-border-light flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-8 bg-primary rounded-full shadow-lg shadow-primary/20" />
-                    <h2 className="text-2xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Fiche Client</h2>
+                    <h2 className="text-2xl font-black text-text-main-light tracking-tight">Fiche Client</h2>
                   </div>
-                  <button onClick={() => setSelectedClient(null)} className="p-3 bg-bg-light dark:bg-white/5 hover:bg-primary/10 hover:text-primary rounded-radius-button transition-all">
+                  <button onClick={() => setSelectedClient(null)} className="p-3 bg-bg-light hover:bg-primary/10 hover:text-primary rounded-radius-button transition-all">
                     <X size={20} />
                   </button>
                 </div>
 
                 <div className="flex-grow overflow-y-auto p-10 space-y-10 custom-scrollbar">
                   <div className="flex items-center gap-8">
-                    <div className="h-24 w-24 rounded-[30px] bg-primary flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-primary/40 border-8 border-white dark:border-bg-dark">
+                    <div className="h-24 w-24 rounded-[30px] bg-primary flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-primary/40 border-8 border-white">
                       {selectedClient.full_name?.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="text-3xl font-black text-text-main-light dark:text-text-main-dark leading-none">{selectedClient.full_name}</h3>
+                      <h3 className="text-3xl font-black text-text-main-light leading-none">{selectedClient.full_name}</h3>
                       <div className="flex items-center gap-3 mt-3">
-                        <span className="px-3 py-1 bg-primary/10 dark:bg-primary/20 rounded-full text-[10px] font-black text-primary uppercase tracking-widest">{selectedClient.client_type}</span>
-                        <span className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest">{selectedClient.commercial_login}</span>
+                        <span className="px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black text-primary uppercase tracking-widest">{selectedClient.client_type}</span>
+                        <span className="text-[10px] font-black text-text-muted-light uppercase tracking-widest">{selectedClient.commercial_login}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 bg-slate-50 dark:bg-slate-800/50 p-8 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-inner">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 bg-slate-50 p-8 rounded-2xl border border-slate-200 shadow-inner">
                     <DetailItem icon={Phone} label="Téléphone" value={selectedClient.phone} />
                     <DetailItem icon={Mail} label="Email" value={selectedClient.email} />
                     <DetailItem icon={MapPin} label="Zone" value={selectedClient.location} />
@@ -446,15 +481,15 @@ function Clients() {
 
                   <div className="space-y-4">
                     <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">Notes & Observations</h4>
-                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl min-h-[120px] shadow-sm">
-                      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl min-h-[120px] shadow-sm">
+                      <p className="text-sm text-slate-700 leading-relaxed font-medium">
                         {selectedClient.notes || "Aucune observation enregistrée pour ce client."}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-8 border-t border-border-light dark:border-white/10 flex gap-4 bg-bg-light/30 dark:bg-white/[0.02]">
+                <div className="p-8 border-t border-border-light flex gap-4 bg-bg-light/30">
                   <Button
                     variant="primary"
                     className="flex-grow !py-5 shadow-primary/20"
@@ -484,20 +519,20 @@ function Clients() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowModal(false)}
-                className="absolute inset-0 bg-bg-dark/40 backdrop-blur-xl"
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 30 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 30 }}
-                className="relative w-full max-w-3xl bg-white dark:bg-bg-dark rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-border-light dark:border-white/10"
+                className="relative w-full max-w-3xl bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-border-light"
               >
-                <div className="p-10 border-b border-border-light dark:border-white/10 flex items-center justify-between bg-bg-light/10">
+                <div className="p-10 border-b border-border-light flex items-center justify-between bg-bg-light/10">
                   <div>
-                    <h2 className="text-3xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">{editing ? "Mise à jour Dossier" : "Nouveau Dossier Client"}</h2>
-                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark mt-2 font-medium">Configurez les paramètres du client dans ClientFlow.</p>
+                    <h2 className="text-3xl font-black text-text-main-light tracking-tight">{editing ? "Mise à jour Dossier" : "Nouveau Dossier Client"}</h2>
+                    <p className="text-sm text-text-muted-light mt-2 font-medium">Configurez les paramètres du client dans ClientFlow.</p>
                   </div>
-                  <button onClick={() => setShowModal(false)} className="p-4 bg-bg-light dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 rounded-radius-button transition-all shadow-premium">
+                  <button onClick={() => setShowModal(false)} className="p-4 bg-bg-light hover:bg-white rounded-radius-button transition-all shadow-premium">
                     <X size={24} />
                   </button>
                 </div>
@@ -519,7 +554,7 @@ function Clients() {
                             onClick={() => setFormData({ ...formData, service_category: opt.v })}
                             className={`flex-1 p-4 rounded-radius-card border-2 transition-all text-left ${formData.service_category === opt.v
                               ? "border-primary bg-primary/5 text-primary"
-                              : "border-border-light dark:border-white/10 text-text-muted-light hover:border-primary/30"
+                              : "border-border-light text-text-muted-light hover:border-primary/30"
                               }`}
                           >
                             <p className="text-sm font-black">{opt.l}</p>
@@ -573,9 +608,9 @@ function Clients() {
                           ]} onChange={(v) => setFormData({ ...formData, offer: v })} />
                           <Input label="Tarif Négocié (FCFA)" type="number" value={formData.tarif} onChange={(v) => setFormData({ ...formData, tarif: v })} placeholder="Ex: 150000" />
                           <div className="md:col-span-2 space-y-2">
-                            <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest ml-1">Description du Service</label>
+                            <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest ml-1">Description du Service</label>
                             <textarea
-                              className="w-full px-6 py-4 bg-bg-light/30 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark h-24 resize-none placeholder:text-text-muted-light shadow-premium"
+                              className="w-full px-6 py-4 bg-bg-light/30 border border-border-light rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:bg-white transition-all text-sm font-bold text-text-main-light h-24 resize-none placeholder:text-text-muted-light shadow-premium"
                               placeholder="Décrivez le service commandé, les spécifications, les livrables..."
                               value={formData.service_description}
                               onChange={(e) => setFormData({ ...formData, service_description: e.target.value })}
@@ -610,7 +645,7 @@ function Clients() {
                     <div className="md:col-span-2 space-y-4">
                       <SectionHeader icon={FileText} title="Observations" />
                       <textarea
-                        className="w-full px-6 py-4 bg-bg-light/30 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark h-32 resize-none placeholder:text-text-muted-light shadow-premium"
+                        className="w-full px-6 py-4 bg-bg-light/30 border border-border-light rounded-radius-card outline-none focus:ring-4 ring-primary/10 focus:bg-white transition-all text-sm font-bold text-text-main-light h-32 resize-none placeholder:text-text-muted-light shadow-premium"
                         placeholder="Rédigez les détails spécifiques ici..."
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -619,10 +654,10 @@ function Clients() {
                   </div>
                 </div>
 
-                <div className="p-10 border-t border-border-light dark:border-white/10 bg-bg-light/30 dark:bg-white/[0.02] flex flex-col sm:flex-row justify-end gap-6">
+                <div className="p-10 border-t border-border-light bg-bg-light/30 flex flex-col sm:flex-row justify-end gap-6">
                   <button
                     onClick={() => setShowModal(false)}
-                    className="px-10 py-5 text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-[0.2em] hover:text-primary transition-colors"
+                    className="px-10 py-5 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em] hover:text-primary transition-colors"
                   >
                     Abandonner
                   </button>
@@ -641,9 +676,9 @@ function Clients() {
 
 function SectionHeader({ icon: Icon, title }) {
   return (
-    <div className="flex items-center gap-3 border-b border-border-light dark:border-white/5 pb-3">
+    <div className="flex items-center gap-3 border-b border-border-light pb-3">
       <Icon className="text-primary" size={20} strokeWidth={3} />
-      <h3 className="text-[10px] font-black text-text-main-light dark:text-text-main-dark uppercase tracking-[0.25em]">{title}</h3>
+      <h3 className="text-[10px] font-black text-text-main-light uppercase tracking-[0.25em]">{title}</h3>
     </div>
   );
 }
@@ -651,11 +686,11 @@ function SectionHeader({ icon: Icon, title }) {
 function DetailItem({ icon: Icon, label, value }) {
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-2 text-text-muted-light dark:text-text-muted-dark mb-1">
+      <div className="flex items-center gap-2 text-text-muted-light mb-1">
         <Icon size={14} />
         <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
       </div>
-      <p className="text-sm font-black text-text-main-light dark:text-text-main-dark truncate">{value || "---"}</p>
+      <p className="text-sm font-black text-text-main-light truncate">{value || "---"}</p>
     </div>
   );
 }
@@ -663,12 +698,12 @@ function DetailItem({ icon: Icon, label, value }) {
 function Input({ label, value, onChange, placeholder, type = "text", required = false, readOnly = false }) {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest ml-1">
+      <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest ml-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
         type={type}
-        className={`w-full px-6 py-4 bg-bg-light/30 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark placeholder:text-text-muted-light shadow-premium ${readOnly ? "opacity-60 cursor-not-allowed select-none" : ""}`}
+        className={`w-full px-6 py-4 bg-bg-light/30 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:bg-white transition-all text-sm font-bold text-text-main-light placeholder:text-text-muted-light shadow-premium ${readOnly ? "opacity-60 cursor-not-allowed select-none" : ""}`}
         placeholder={placeholder}
         value={value || ""}
         onChange={(e) => !readOnly && onChange(e.target.value)}
@@ -681,15 +716,15 @@ function Input({ label, value, onChange, placeholder, type = "text", required = 
 function Select({ label, value, options, onChange }) {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-black text-text-muted-light dark:text-text-muted-dark uppercase tracking-widest ml-1">{label}</label>
+      <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest ml-1">{label}</label>
       <div className="relative">
         <select
-          className="w-full px-6 py-4 bg-bg-light/30 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:bg-white dark:focus:bg-white/10 transition-all text-sm font-bold text-text-main-light dark:text-text-main-dark appearance-none cursor-pointer shadow-premium"
+          className="w-full px-6 py-4 bg-bg-light/30 border border-border-light rounded-radius-button outline-none focus:ring-4 ring-primary/10 focus:bg-white transition-all text-sm font-bold text-text-main-light appearance-none cursor-pointer shadow-premium"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >
           {options.map(opt => (
-            <option key={opt.v} value={opt.v} className="bg-white dark:bg-bg-dark">{opt.l}</option>
+            <option key={opt.v} value={opt.v} className="bg-white">{opt.l}</option>
           ))}
         </select>
         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted-light">

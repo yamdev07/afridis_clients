@@ -41,7 +41,7 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-6 bg-bg-light dark:bg-bg-dark overflow-hidden font-inter transition-colors duration-500">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-6 bg-bg-light overflow-hidden font-inter transition-colors duration-500">
 
       {/* Background Animated Blobs - Official Palette Gradients */}
       <motion.div
@@ -51,7 +51,7 @@ export default function Login() {
           scale: [1, 1.1, 1]
         }}
         transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-        className="absolute -top-[10%] -left-[10%] w-[600px] h-[600px] bg-primary/20 dark:bg-primary/10 blur-[120px] rounded-full pointer-events-none"
+        className="absolute -top-[10%] -left-[10%] w-[600px] h-[600px] bg-primary/20 blur-[120px] rounded-full pointer-events-none"
       />
       <motion.div
         animate={{
@@ -60,10 +60,10 @@ export default function Login() {
           scale: [1, 1.2, 1]
         }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear", delay: 2 }}
-        className="absolute -bottom-[10%] -right-[10%] w-[700px] h-[700px] bg-accent-purple/15 dark:bg-accent-purple/5 blur-[130px] rounded-full pointer-events-none"
+        className="absolute -bottom-[10%] -right-[10%] w-[700px] h-[700px] bg-accent-purple/15 blur-[130px] rounded-full pointer-events-none"
       />
 
-      <Link to="/" className="fixed top-8 left-8 p-3 glass-card !rounded-2xl hover:scale-110 transition-transform z-50 text-text-main-light dark:text-text-main-dark flex items-center gap-2 font-bold text-sm bg-white/40 dark:bg-white/5 border-white/20">
+      <Link to="/" className="fixed top-8 left-8 p-3 glass-card !rounded-2xl hover:scale-110 transition-transform z-50 text-text-main-light flex items-center gap-2 font-bold text-sm bg-white/40 border-white/20">
         <HomeIcon size={18} /> Accueil
       </Link>
 
@@ -73,7 +73,7 @@ export default function Login() {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="w-full max-w-lg z-10"
       >
-        <div className="p-10 md:p-14 rounded-[24px] bg-white/70 dark:bg-bg-card-dark/60 backdrop-blur-lg border border-white/30 dark:border-white/10 shadow-2xl relative overflow-hidden group">
+        <div className="p-10 md:p-14 rounded-[24px] bg-white/70 backdrop-blur-lg border border-white/30 shadow-2xl relative overflow-hidden group">
           {/* Subtle line decoration */}
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
 
@@ -84,20 +84,20 @@ export default function Login() {
             >
               <Lock size={36} />
             </motion.div>
-            <h1 className="text-4xl font-black text-text-main-light dark:text-text-main-dark mb-3 tracking-tight">Accès CRM</h1>
-            <p className="text-text-muted-light dark:text-text-muted-dark font-medium">Connectez-vous à votre espace <span className="text-primary font-bold">ClientFlow</span></p>
+            <h1 className="text-4xl font-black text-text-main-light mb-3 tracking-tight">Accès CRM</h1>
+            <p className="text-text-muted-light font-medium">Connectez-vous à votre espace <span className="text-primary font-bold">ClientFlow</span></p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark ml-1">Identifiant E-mail</label>
+              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light ml-1">Identifiant E-mail</label>
               <div className="relative group/input">
                 <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted-light group-focus-within/input:text-primary transition-colors" size={20} />
                 <input
                   type="email"
                   name="email"
                   placeholder="nom@entreprise.com"
-                  className="w-full pl-14 pr-4 py-4.5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-input outline-none focus:ring-4 ring-primary/10 focus:border-primary focus:bg-white dark:focus:bg-white/10 transition-all text-text-main-light dark:text-text-main-dark font-bold placeholder:text-text-muted-light/50"
+                  className="w-full pl-14 pr-4 py-4.5 bg-bg-light/50 border border-border-light rounded-radius-input outline-none focus:ring-4 ring-primary/10 focus:border-primary focus:bg-white transition-all text-text-main-light font-bold placeholder:text-text-muted-light/50"
                   value={form.email}
                   onChange={handleChange}
                   required
@@ -107,7 +107,7 @@ export default function Login() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light dark:text-text-muted-dark ml-1">Mot de passe</label>
+                <label className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted-light ml-1">Mot de passe</label>
                 <button
                   type="button"
                   onClick={() => setForgotOpen(true)}
@@ -121,7 +121,7 @@ export default function Login() {
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  className="w-full pl-14 pr-14 py-4.5 bg-bg-light/50 dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-input outline-none focus:ring-4 ring-primary/10 focus:border-primary focus:bg-white dark:focus:bg-white/10 transition-all text-text-main-light dark:text-text-main-dark font-bold placeholder:text-text-muted-light/50"
+                  className="w-full pl-14 pr-14 py-4.5 bg-bg-light/50 border border-border-light rounded-radius-input outline-none focus:ring-4 ring-primary/10 focus:border-primary focus:bg-white transition-all text-text-main-light font-bold placeholder:text-text-muted-light/50"
                   placeholder="••••••••"
                   value={form.password}
                   onChange={handleChange}
@@ -157,11 +157,11 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-12 pt-8 border-t border-border-light dark:border-white/5 text-center flex items-center justify-center gap-6">
-            <div className="flex items-center gap-2 text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest">
+          <div className="mt-12 pt-8 border-t border-border-light text-center flex items-center justify-center gap-6">
+            <div className="flex items-center gap-2 text-[10px] text-text-muted-light font-black uppercase tracking-widest">
               <CheckCircle2 size={12} className="text-accent-green" /> Sécurisé SSL
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-text-muted-light dark:text-text-muted-dark font-black uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-[10px] text-text-muted-light font-black uppercase tracking-widest">
               <CheckCircle2 size={12} className="text-accent-green" /> Chiffré AES
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function Login() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setForgotOpen(false)}
-              className="absolute inset-0 bg-bg-dark/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
             />
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -185,9 +185,9 @@ export default function Login() {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               className="relative w-full max-w-md"
             >
-              <div className="p-10 bg-white dark:bg-bg-card-dark border border-border-light dark:border-white/10 rounded-[24px] shadow-2xl">
-                <h3 className="text-2xl font-black text-text-main-light dark:text-text-main-dark mb-2">Récupération</h3>
-                <p className="text-sm text-text-muted-light dark:text-text-muted-dark mb-8 font-medium">
+              <div className="p-10 bg-white border border-border-light rounded-[24px] shadow-2xl">
+                <h3 className="text-2xl font-black text-text-main-light mb-2">Récupération</h3>
+                <p className="text-sm text-text-muted-light mb-8 font-medium">
                   Saisissez votre e-mail pour réinitialiser vos accès.
                 </p>
 
@@ -197,7 +197,7 @@ export default function Login() {
                     <input
                       type="email"
                       placeholder="E-mail de récupération"
-                      className="w-full pl-12 pr-4 py-4 bg-bg-light dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-input outline-none focus:border-primary text-text-main-light dark:text-text-main-dark font-bold"
+                      className="w-full pl-12 pr-4 py-4 bg-bg-light border border-border-light rounded-radius-input outline-none focus:border-primary text-text-main-light font-bold"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
                     />
@@ -207,7 +207,7 @@ export default function Login() {
                     <input
                       type="password"
                       placeholder="Nouveau mot de passe"
-                      className="w-full pl-12 pr-4 py-4 bg-bg-light dark:bg-white/5 border border-border-light dark:border-white/10 rounded-radius-input outline-none focus:border-primary text-text-main-light dark:text-text-main-dark font-bold"
+                      className="w-full pl-12 pr-4 py-4 bg-bg-light border border-border-light rounded-radius-input outline-none focus:border-primary text-text-main-light font-bold"
                       value={forgotNewPassword}
                       onChange={(e) => setForgotNewPassword(e.target.value)}
                     />
@@ -223,7 +223,7 @@ export default function Login() {
                 <div className="flex gap-4 mt-10">
                   <Button
                     variant="ghost"
-                    className="flex-1 !bg-transparent !text-text-muted-light hover:!text-text-main-light dark:hover:!text-text-main-dark"
+                    className="flex-1 !bg-transparent !text-text-muted-light hover:!text-text-main-light"
                     onClick={() => setForgotOpen(false)}
                   >
                     Annuler

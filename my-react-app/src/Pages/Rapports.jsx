@@ -66,7 +66,7 @@ function Rapports() {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-bg-light dark:bg-bg-dark transition-colors duration-500">
+      <div className="flex h-screen bg-bg-light transition-colors duration-500">
         <Sidebar />
         <div className="flex-grow flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
@@ -76,14 +76,14 @@ function Rapports() {
   }
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark font-inter transition-colors duration-500">
+    <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
       <Sidebar />
 
       <main className="flex-grow p-4 lg:p-10 overflow-y-auto custom-scrollbar">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Rapports & Analyses</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">Performance globale de votre CRM en temps réel.</p>
+            <h1 className="text-2xl font-black text-text-main-light tracking-tight">Rapports & Analyses</h1>
+            <p className="text-text-muted-light mt-2 font-medium">Performance globale de votre CRM en temps réel.</p>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
@@ -94,11 +94,11 @@ function Rapports() {
 
         {/* Toolbar Minimaliste */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-8">
-          <div className="flex p-1 bg-slate-100 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-800 w-full lg:w-auto">
+          <div className="flex p-1 bg-slate-100 rounded-lg border border-slate-200 w-full lg:w-auto">
             {["Historique"].map((p) => (
               <button
                 key={p}
-                className="px-6 py-2 bg-white dark:bg-slate-700 text-primary shadow-sm rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
+                className="px-6 py-2 bg-white text-primary shadow-sm rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
               >
                 {p}
               </button>
@@ -108,7 +108,7 @@ function Rapports() {
           <div className="flex items-center gap-3 w-full lg:w-auto">
             <div className="relative flex-grow lg:flex-grow-0">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <select className="w-full lg:w-56 pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg outline-none cursor-pointer text-xs font-medium appearance-none">
+              <select className="w-full lg:w-56 pl-10 pr-4 py-2.5 bg-white border border-border-light shadow-premium rounded-lg outline-none cursor-pointer text-xs font-medium appearance-none">
                 <option>6 Derniers Mois</option>
               </select>
             </div>
@@ -118,14 +118,14 @@ function Rapports() {
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {stats.map((stat, idx) => (
-            <GlassCard key={idx} className="p-6 border-slate-200 dark:border-slate-800" hover={true}>
+            <GlassCard key={idx} className="p-6 border-slate-200" hover={true}>
               <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg border ${stat.accent === 'primary' ? 'bg-primary/5 text-primary border-primary/10' : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-500 dark:border-emerald-500/20'}`}>
+                <div className={`p-3 rounded-lg border ${stat.accent === 'primary' ? 'bg-primary/5 text-primary border-primary/10' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
                   <stat.icon size={20} strokeWidth={2} />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{stat.value}</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 leading-tight">{stat.value}</h3>
                 </div>
               </div>
             </GlassCard>
@@ -134,17 +134,17 @@ function Rapports() {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <GlassCard className="lg:col-span-2 p-8 border-slate-200 dark:border-slate-800" hover={true}>
+          <GlassCard className="lg:col-span-2 p-8 border-slate-200" hover={true}>
             <div className="mb-8">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Performances Commerciales</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Performances Commerciales</h3>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Évolution du revenu par mois</p>
             </div>
             {reportsData.chartData.every(d => d.revenue === 0) ? (
-              <div className="h-[350px] flex items-center justify-center">
+              <div className="h-[250px] lg:h-[350px] flex items-center justify-center">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aucune donnée sur la période</p>
               </div>
             ) : (
-            <div className="h-[350px] w-full">
+            <div className="h-[250px] lg:h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={reportsData.chartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.1)" />
@@ -153,6 +153,7 @@ function Rapports() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
+                    interval={window.innerWidth < 1024 ? 1 : 0}
                   />
                   <YAxis
                     axisLine={false}
@@ -161,11 +162,11 @@ function Rapports() {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#0f172a',
+                      backgroundColor: '#fff',
                       borderRadius: '12px',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      border: '1px solid #e2e8f0',
                       boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                      color: '#fff',
+                      color: '#0f172a',
                       fontSize: '11px',
                       fontWeight: 800
                     }}
@@ -185,9 +186,9 @@ function Rapports() {
             )}
           </GlassCard>
 
-          <GlassCard className="p-8 border-slate-200 dark:border-slate-800" hover={true}>
+          <GlassCard className="p-8 border-slate-200" hover={true}>
             <div className="mb-8">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Répartition Services</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Répartition Services</h3>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Top 5 des offres souscrites</p>
             </div>
             {reportsData.pieData.length === 0 ? (
@@ -222,9 +223,9 @@ function Rapports() {
                 <div key={idx} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{item.name}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.name}</span>
                   </div>
-                  <span className="text-[11px] font-black text-slate-900 dark:text-white">{item.value}</span>
+                  <span className="text-[11px] font-black text-slate-900">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -235,13 +236,13 @@ function Rapports() {
 
         {/* Detailed Table Section */}
         <GlassCard className="p-0 overflow-hidden" hover={true}>
-          <div className="p-8 border-b border-border-light dark:border-white/5 flex items-center justify-between bg-white/[0.02]">
+          <div className="p-8 border-b border-border-light flex items-center justify-between bg-white/[0.02]">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
                 <Layers size={24} strokeWidth={2.5} />
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Activité Mensuelle</h3>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">Activité Mensuelle</h3>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Journal consolidé des transactions</p>
               </div>
             </div>
@@ -252,18 +253,18 @@ function Rapports() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50">
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">Période</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">C.A Brut</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">C.A Net (Est.)</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">Installations</th>
-                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">Statut</th>
+                <tr className="bg-slate-50">
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">Période</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">C.A Brut</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">C.A Net (Est.)</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">Installations</th>
+                  <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">Statut</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+              <tbody className="divide-y divide-slate-100">
                 {reportsData.tableData.map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                    <td className="px-8 py-5 text-sm font-black text-slate-900 dark:text-white capitalize">{row.period}</td>
+                  <tr key={i} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-8 py-5 text-sm font-black text-slate-900 capitalize">{row.period}</td>
                     <td className="px-8 py-5 text-sm text-slate-500 font-bold">{row.gross}</td>
                     <td className="px-8 py-5 text-sm font-black text-primary">{row.net}</td>
                     <td className="px-8 py-5 text-sm text-slate-500 font-bold">{row.volume}</td>
