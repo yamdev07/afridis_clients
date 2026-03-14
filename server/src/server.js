@@ -4,14 +4,15 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import routes from './routes/index.js';
+import indexRoutes from './routes/index.js'; // Changed 'routes' to 'indexRoutes'
 import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import pool from './config/database.js';
 
 dotenv.config();
 
-// Run the ALTER TABLE query to add created_by at the start.
-pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL').catch(e => console.error("Migration error:", e));
+// Run the ALTER TABLE queries to add created_by at the start.
+pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL').catch(err => console.error(err));
+pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL').catch(err => console.error(err));
 
 const app = express();
 const PORT = process.env.PORT;
@@ -25,6 +26,7 @@ const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
 ];
 
 app.use(
@@ -55,7 +57,7 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // Routes
-app.use('/api', routes);
+app.use('/api', indexRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
