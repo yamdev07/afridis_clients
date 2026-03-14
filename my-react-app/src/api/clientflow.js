@@ -108,7 +108,7 @@ export const api = {
   getClientByLineNumber: (line_number) =>
     instance.get(`/clients/line/${line_number}`).then((r) => r.data),
 
-  deleteClient: (id) => instance.delete(`/clients/${id}`),
+  deleteClient: (id) => instance.delete(`/clients/${id}`).then((r) => r.data),
 
   deleteService: (id) => instance.delete(`/services/${id}`).then((r) => r.data),
 
