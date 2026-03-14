@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { notifyAdmins } from './notificationController.js';
 
 export const getAllServices = async (req, res, next) => {
   try {
@@ -105,7 +106,19 @@ export const createService = async (req, res, next) => {
       [code, label, description || null, monthly_price, is_active]
     );
 
-    res.status(201).json(result.rows[0]);
+    const service = result.rows[0];
+
+    // Notification
+    import('./notificationController.js').then(m => {
+      m.notifyAdmins({
+        type: 'service_created',
+        title: 'Nouveau service créé',
+        message: `Le service "${label}" (${code}) a été créé par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { serviceId: service.id, page: '/services' }
+      });
+    });
+
+    res.status(201).json(service);
   } catch (error) {
     if (error.code === '23505') { // Unique violation
       return res.status(400).json({ message: 'Un service avec ce code existe déjà' });
@@ -136,7 +149,19 @@ export const updateService = async (req, res, next) => {
       return res.status(404).json({ message: 'Service non trouvé' });
     }
 
-    res.json(result.rows[0]);
+    const updatedService = result.rows[0];
+
+    // Notification
+    import('./notificationController.js').then(m => {
+      m.notifyAdmins({
+        type: 'service_updated',
+        title: 'Service modifié',
+        message: `Le service "${updatedService.label}" a été mis à jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { serviceId: id, page: '/services' }
+      });
+    });
+
+    res.json(updatedService);
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ message: 'Un service avec ce code existe déjà' });
@@ -149,14 +174,29 @@ export const deleteService = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query('DELETE FROM services WHERE id = $1 RETURNING id', [id]);
-
-    if (result.rows.length === 0) {
+    // Récupérer les infos avant suppression
+    const serviceRes = await pool.query('SELECT label FROM services WHERE id = $1', [id]);
+    if (serviceRes.rows.length === 0) {
       return res.status(404).json({ message: 'Service non trouvé' });
     }
+    const serviceLabel = serviceRes.rows[0].label;
 
-    res.status(204).send();
+    // Supprimer manuellement les abonnements liés à ce service
+    await pool.query('DELETE FROM subscriptions WHERE service_id = $1', [id]);
+    await pool.query('DELETE FROM services WHERE id = $1', [id]);
+
+    // Notification (non-bloquant)
+    notifyAdmins({
+      type: 'service_deleted',
+      title: 'Service supprimé',
+      message: `Le service "${serviceLabel}" a été supprimé par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+      meta: { page: '/services' }
+    }).catch(err => console.error('Error in notifyAdmins during service deletion:', err));
+
+    console.log(`[DELETE] Service ${serviceLabel} (${id}) deleted successfully`);
+    res.json({ success: true, message: 'Service supprimé avec succès' });
   } catch (error) {
+    console.error(`[DELETE] Error deleting service ${id}:`, error);
     next(error);
   }
 };

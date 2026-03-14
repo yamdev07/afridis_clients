@@ -9,6 +9,7 @@ export const listNotifications = async (req, res, next) => {
              type,
              title,
              message,
+             body,
              meta,
              is_read,
              created_at
@@ -93,9 +94,9 @@ export const createNotification = async ({ userId, type, title, message, meta })
       throw new Error("Notification message is required");
     }
     await pool.query(
-      `INSERT INTO notifications (user_id, type, title, message, meta)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [userId, type, title, message, meta ? JSON.stringify(meta) : null]
+      `INSERT INTO notifications (user_id, type, title, message, body, meta)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId, type, title, message, message, meta ? JSON.stringify(meta) : null]
     );
     return true;
   } catch (error) {

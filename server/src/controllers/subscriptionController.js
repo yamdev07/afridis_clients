@@ -1,6 +1,6 @@
 import pool from '../config/database.js';
 
-const createNotificationForSubscription = async (subscriptionId, type, title, message) => {
+const createNotificationForSubscription = async (subscriptionId, type, title, message, authorName) => {
   // Crée des notifications pour le commercial lié (si présent)
   const detailsResult = await pool.query(
     `SELECT s.id,
@@ -38,7 +38,9 @@ const createNotificationForSubscription = async (subscriptionId, type, title, me
       [
         type,
         title,
-        message || `Client ${details.client_name} – Service ${details.service_label}`,
+        message || (authorName 
+          ? `${authorName} a géré : Client ${details.client_name} – Service ${details.service_label} le ${new Date().toLocaleString('fr-FR')}`
+          : `Client ${details.client_name} – Service ${details.service_label} le ${new Date().toLocaleString('fr-FR')}`),
         JSON.stringify(meta),
         details.agent_id,
       ],
@@ -54,7 +56,9 @@ const createNotificationForSubscription = async (subscriptionId, type, title, me
     [
       type,
       title,
-      message || `Client ${details.client_name} – Service ${details.service_label}`,
+      message || (authorName 
+        ? `${authorName} a géré : Client ${details.client_name} – Service ${details.service_label} le ${new Date().toLocaleString('fr-FR')}`
+        : `Client ${details.client_name} – Service ${details.service_label} le ${new Date().toLocaleString('fr-FR')}`),
       JSON.stringify(meta),
     ],
   );
@@ -99,6 +103,12 @@ export const getAllSubscriptions = async (req, res, next) => {
     const params = [];
     const conditions = [];
 
+    // Filter by role: non-super admins only see subscriptions for their created clients
+    if (req.user && req.user.role !== 'super_admin') {
+      conditions.push(`c.created_by = $${params.length + 1}`);
+      params.push(req.user.id);
+    }
+
     if (client_id) {
       conditions.push(`s.client_id = $${params.length + 1}`);
       params.push(client_id);
@@ -138,9 +148,14 @@ export const getAllSubscriptions = async (req, res, next) => {
     const result = await pool.query(query, params);
 
     // Compter le total
-    let countQuery = 'SELECT COUNT(*) FROM subscriptions s LEFT JOIN agents a ON s.agent_id = a.id LEFT JOIN statuses st ON s.status_id = st.id';
+    let countQuery = 'SELECT COUNT(*) FROM subscriptions s LEFT JOIN clients c ON s.client_id = c.id LEFT JOIN agents a ON s.agent_id = a.id LEFT JOIN statuses st ON s.status_id = st.id';
     const countParams = [];
     const countConditions = [];
+
+    if (req.user && req.user.role !== 'super_admin') {
+      countConditions.push(`c.created_by = $${countParams.length + 1}`);
+      countParams.push(req.user.id);
+    }
 
     if (client_id) {
       countConditions.push(`s.client_id = $${countParams.length + 1}`);
@@ -207,12 +222,12 @@ export const getSubscriptionById = async (req, res, next) => {
        JOIN services sv ON s.service_id = sv.id
        JOIN statuses st ON s.status_id = st.id
        LEFT JOIN agents a ON s.agent_id = a.id
-       WHERE s.id = $1`,
+       WHERE s.id = $1 ${req.user.role === 'super_admin' ? '' : `AND c.created_by = '${req.user.id}'`}`,
       [id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Abonnement non trouvé' });
+      return res.status(404).json({ message: 'Abonnement non trouvé ou accès refusé' });
     }
 
     res.json(result.rows[0]);
@@ -267,6 +282,7 @@ export const createSubscription = async (req, res, next) => {
         'subscription_created',
         'Nouvelle souscription',
         null,
+        req.user?.name
       );
     } catch (notifyError) {
       // On log mais on ne bloque pas la réponse principale
@@ -349,6 +365,7 @@ export const updateSubscription = async (req, res, next) => {
         'subscription_updated',
         'Mise à jour d’un abonnement',
         null,
+        req.user?.name
       );
     } catch (notifyError) {
       // eslint-disable-next-line no-console
@@ -480,8 +497,8 @@ export const bulkImportSubscriptions = async (req, res, next) => {
       // Si pas trouvé ou si nouveau numéro de ligne (donc nouveau client selon consigne)
       if (!clientId) {
         const insertRes = await pool.query(
-          `INSERT INTO clients (full_name, phone, email) VALUES ($1, $2, $3) RETURNING id`,
-          [clientName || 'Client Inconnu', clientPhone || null, email || null]
+          `INSERT INTO clients (full_name, phone, email, created_by) VALUES ($1, $2, $3, $4) RETURNING id`,
+          [clientName || 'Client Inconnu', clientPhone || null, email || null, req.user.id]
         );
         clientId = insertRes.rows[0].id;
       }
@@ -528,7 +545,7 @@ export const bulkImportSubscriptions = async (req, res, next) => {
       m.notifyAdmins({
         type: 'import_completed',
         title: 'Importation terminée',
-        message: `L'utilisateur ${req.user.name} a importé un fichier. ${resultSummary.created} nouveaux clients ont été importés dans la base de données.`,
+        message: `L'utilisateur ${req.user.name} a importé un fichier contenant ${resultSummary.created} nouveaux clients le ${new Date().toLocaleString('fr-FR')}.`,
         meta: { page: '/dashboard' }
       });
     });
