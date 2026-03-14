@@ -88,7 +88,7 @@ export default function Sidebar() {
                   <LayoutDashboard size={18} fill="currentColor" />
                 </div>
                 <h2 className="text-lg font-bold text-white tracking-tight uppercase whitespace-nowrap">
-                  CRM<span className="text-primary italic ml-1">Fiber</span>
+                  Client<span className="text-primary italic">Flow</span>
                 </h2>
               </div>
             </div>
