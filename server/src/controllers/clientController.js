@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { notifyAdmins } from './notificationController.js';
 
 export const getAllClients = async (req, res, next) => {
   try {
@@ -20,6 +21,12 @@ export const getAllClients = async (req, res, next) => {
     `;
     const queryParams = [];
     const conditions = [];
+
+    // Filter by created_by for non-super admins. Admins and commercials see only their clients. 
+    if (req.user && req.user.role !== 'super_admin') {
+      conditions.push(`c.created_by = $${queryParams.length + 1}`);
+      queryParams.push(req.user.id);
+    }
 
     if (search) {
       conditions.push(`(
@@ -60,6 +67,11 @@ export const getAllClients = async (req, res, next) => {
     let countQuery = 'SELECT COUNT(DISTINCT c.id) FROM clients c';
     const countParams = [];
     const countConditions = [];
+
+    if (req.user && req.user.role !== 'super_admin') {
+      countConditions.push(`c.created_by = $${countParams.length + 1}`);
+      countParams.push(req.user.id);
+    }
 
     if (search) {
       countConditions.push(`(
@@ -130,13 +142,13 @@ export const getClientById = async (req, res, next) => {
        LEFT JOIN subscriptions s ON s.client_id = c.id
        LEFT JOIN services sv ON s.service_id = sv.id
        LEFT JOIN statuses st ON s.status_id = st.id
-       WHERE c.id = $1
-       GROUP BY c.id`,
+        WHERE c.id = $1 ${req.user.role === 'super_admin' ? '' : `AND c.created_by = '${req.user.id}'`}
+        GROUP BY c.id`,
       [id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Client non trouvé' });
+      return res.status(404).json({ message: 'Client non trouvé ou accès refusé' });
     }
 
     res.json(result.rows[0]);
@@ -189,13 +201,23 @@ export const createClient = async (req, res, next) => {
 
     // 1. Créer le client
     const clientResult = await pool.query(
-      `INSERT INTO clients (full_name, phone, email, address)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO clients (full_name, phone, email, address, created_by)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [full_name, phone || null, email || null, address || null]
+      [full_name, phone || null, email || null, address || null, currentUserId]
     );
 
     const client = clientResult.rows[0];
+
+    // Notification
+    import('./notificationController.js').then(m => {
+      m.notifyAdmins({
+        type: 'client_created',
+        title: 'Nouveau client créé',
+        message: `${req.user.name} a créé le client ${full_name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { clientId: client.id, page: '/clients' }
+      });
+    });
 
     // 2. Si une offre est spécifiée dans address, créer un abonnement automatiquement
     if (address) {
@@ -242,6 +264,16 @@ export const createClient = async (req, res, next) => {
                   meta.notes || null
                 ]
               );
+
+              // Notification specific to service addition
+              import('./notificationController.js').then(m => {
+                m.notifyAdmins({
+                  type: 'client_subscribed',
+                  title: 'Nouveau service souscrit',
+                  message: `Le client ${client.full_name} a été automatiquement inscrit au service "${offerCode}" par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+                  meta: { clientId: client.id, serviceCode: offerCode, page: '/clients' }
+                });
+              });
             }
           }
         }
@@ -320,7 +352,19 @@ export const updateClient = async (req, res, next) => {
       }
     }
 
-    res.json(result.rows[0]);
+    const updatedClient = result.rows[0];
+
+    // Notification
+    import('./notificationController.js').then(m => {
+      m.notifyAdmins({
+        type: 'client_updated',
+        title: 'Fiche client modifiée',
+        message: `Les informations de ${updatedClient.full_name} ont été mises à jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { clientId: id, page: '/clients' }
+      });
+    });
+
+    res.json(updatedClient);
   } catch (error) {
     next(error);
   }
@@ -331,13 +375,33 @@ export const deleteClient = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query('DELETE FROM clients WHERE id = $1 RETURNING id', [id]);
-
-    if (result.rows.length === 0) {
+    // Récupérer le nom avant suppression pour la notification
+    const clientRes = await pool.query('SELECT full_name FROM clients WHERE id = $1', [id]);
+    if (clientRes.rows.length === 0) {
       return res.status(404).json({ message: 'Client non trouvé' });
     }
+    const clientName = clientRes.rows[0].full_name;
 
-    res.status(204).send();
+    console.log(`[DELETE] Attempting to delete client ${clientName} (${id})`);
+    try {
+      // Supprimer manuellement les abonnements si CASCADE pose souci
+      await pool.query('DELETE FROM subscriptions WHERE client_id = $1', [id]);
+      await pool.query('DELETE FROM clients WHERE id = $1', [id]);
+      console.log(`[DELETE] Client ${id} and subscriptions deleted successfully`);
+    } catch (dbErr) {
+      console.error(`[DELETE] DB Error deleting client ${id}:`, dbErr);
+      throw dbErr;
+    }
+
+    // Notification (non-bloquant)
+    notifyAdmins({
+      type: 'client_deleted',
+      title: 'Client supprimé',
+      message: `Le client ${clientName} a été supprimé par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+      meta: { page: '/clients' }
+    }).catch(err => console.error('Error in notifyAdmins during client deletion:', err));
+
+    return res.status(200).json({ success: true, message: 'Client supprimé avec succès' });
   } catch (error) {
     next(error);
   }
