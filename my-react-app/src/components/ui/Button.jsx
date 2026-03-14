@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 const Button = ({ children, onClick, type = 'button', variant = 'primary', className = '', loading = false, disabled = false, icon: Icon }) => {
     const variants = {
         primary: 'bg-primary text-white hover:bg-primary-hover shadow-primary/20',
-        secondary: 'bg-white dark:bg-white/10 text-text-main-light dark:text-text-main-dark border border-border-light dark:border-white/10 hover:bg-bg-light dark:hover:bg-white/20 shadow-sm',
+        secondary: 'bg-white text-text-main-light border border-border-light hover:bg-bg-light shadow-sm',
         danger: 'bg-accent-red text-white hover:bg-accent-red/90 shadow-accent-red/20',
-        ghost: 'bg-transparent text-text-muted-light dark:text-text-muted-dark hover:bg-bg-light dark:hover:bg-white/5',
+        ghost: 'bg-transparent text-text-muted-light hover:bg-bg-light',
     };
 
     return (
