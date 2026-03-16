@@ -29,6 +29,8 @@ export function getTransporter() {
     host,
     port,
     secure,
+    // Force IPv4 to éviter les erreurs ENETUNREACH sur IPv6
+    family: 4,
     auth: { user, pass },
   });
 
