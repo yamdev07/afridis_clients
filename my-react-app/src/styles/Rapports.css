@@ -1,0 +1,22 @@
+.report-card {
+  transition: all 0.3s ease;
+  border-radius: 15px;
+}
+
+.report-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.filter-btn {
+  transition: 0.3s;
+}
+
+.filter-btn:hover {
+  transform: translateY(-3px);
+}
+
+.action-btn:hover {
+  background-color: #007bff;
+  color: white;
+}

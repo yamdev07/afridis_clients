@@ -1,0 +1,29 @@
+.export-wrapper {
+  max-width: 580px;
+  margin: 2rem auto;
+  padding: 0 15px;
+}
+
+.export-card {
+  border: 1px solid #198754;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.export-card .btn-lg {
+  font-size: 1.25rem;
+  transition: all 0.2s;
+}
+
+.export-card .btn-lg:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(25, 135, 84, 0.3);
+}
+
+/* Très petit écran */
+@media (max-width: 576px) {
+  .export-card .btn-lg {
+    width: 100%;
+    font-size: 1.1rem;
+  }
+}

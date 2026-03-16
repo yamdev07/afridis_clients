@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@theme {
+  /* Professional Corporate Palette */
+  --color-primary: #1e40af;
+  /* Deeper, serious blue */
+  --color-primary-hover: #1e3a8a;
+  --color-primary-light: #f1f5f9;
+
+  --color-accent-green: #059669;
+  --color-accent-orange: #d97706;
+  --color-accent-red: #dc2626;
+  --color-accent-purple: #4f46e5;
+
+  /* Neutrals - Clean and Professional Light Theme */
+  --color-bg-light: #f8fafc;
+  --color-bg-card-light: #ffffff;
+  --color-text-main-light: #0f172a;
+  --color-text-muted-light: #64748b;
+  --color-border-light: #e2e8f0;
+
+  --color-sidebar-dark: #0f172a;
+  --color-sidebar-border: #1e293b;
+
+  /* Typography - Professional and readable */
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radius - Standard Professional */
+  --radius-card: 12px;
+  --radius-button: 8px;
+  --radius-input: 8px;
+
+  /* Shadows - Subtle and clean */
+  --shadow-premium: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Global Styles */
+@layer base {
+  body {
+    @apply font-inter transition-colors duration-300;
+  }
+
+  :root {
+    --bg-main: var(--color-bg-light);
+    --bg-card: var(--color-bg-card-light);
+    --text-main: var(--color-text-main-light);
+    --text-muted: var(--color-text-muted-light);
+    --border-color: var(--color-border-light);
+  }
+
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+  }
+}
+
+/* Components Utility */
+@layer components {
+  .glass-card {
+    @apply bg-white border border-slate-200 shadow-sm;
+  }
+
+
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-6 rounded-button transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider text-[11px];
+  }
+
+  .input-standard {
+    @apply w-full px-4 py-2.5 bg-white border border-slate-200 rounded-input outline-none focus:ring-2 ring-primary/20 transition-all text-sm;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+/* Professional Tables */
+.crm-table {
+  @apply w-full border-collapse bg-white rounded-xl overflow-hidden border border-slate-200;
+}
+
+.crm-table th {
+  @apply bg-slate-50 px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-left border-b border-slate-200;
+}
+
+.crm-table td {
+  @apply px-6 py-4 text-sm border-b border-slate-100;
+}
+
+.crm-table tr:last-child td {
+  @apply border-b-0;
+}
+
+.crm-table tr:hover {
+  @apply bg-slate-50/50 transition-colors;
+}
