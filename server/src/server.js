@@ -7,8 +7,16 @@ import dotenv from 'dotenv';
 import indexRoutes from './routes/index.js'; // Changed 'routes' to 'indexRoutes'
 import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import pool from './config/database.js';
+import dns from 'dns';
 
 dotenv.config();
+
+// Forcer la résolution DNS en IPv4 en priorité (évite les connexions SMTP en IPv6)
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch (e) {
+  console.warn('[DNS] Unable to set default result order:', e?.message || e);
+}
 
 // Run the ALTER TABLE queries to add created_by at the start.
 pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL').catch(err => console.error(err));
