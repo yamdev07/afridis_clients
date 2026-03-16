@@ -32,6 +32,7 @@ export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -74,9 +75,11 @@ export default function AdminUsers() {
     e.preventDefault();
     setCreating(true);
     setError("");
+    setSuccess("");
     try {
       const created = await api.createUser(form);
       setUsers((prev) => [created, ...prev]);
+      setSuccess("Utilisateur créé. Les identifiants ont été envoyés par email (si SMTP configuré).");
       setForm({
         name: "",
         email: "",
@@ -213,6 +216,13 @@ export default function AdminUsers() {
           <GlassCard className="mb-10 p-5 bg-accent-red/10 border border-accent-red/20 rounded-radius-button flex items-center gap-4 shadow-premium">
             <XCircle className="text-accent-red" size={20} strokeWidth={3} />
             <p className="text-[11px] font-black text-accent-red uppercase tracking-widest">{error}</p>
+          </GlassCard>
+        )}
+
+        {success && (
+          <GlassCard className="mb-10 p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-radius-button flex items-center gap-4 shadow-premium">
+            <CheckCircle2 className="text-emerald-600" size={20} strokeWidth={3} />
+            <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">{success}</p>
           </GlassCard>
         )}
 
