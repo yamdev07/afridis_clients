@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import pool from '../config/database.js';
+import { sendAccountCreatedEmail } from '../services/mailer.js';
 
 export const listUsers = async (req, res, next) => {
   try {
@@ -90,6 +91,19 @@ export const createUser = async (req, res, next) => {
        RETURNING id, name, email, role, agent_id, created_at`,
       [name, email, hashedPassword, role, agentId, req.user.id],
     );
+
+    // Email des accès au nouvel utilisateur (si SMTP configuré)
+    try {
+      await sendAccountCreatedEmail({
+        to: email,
+        userName: name,
+        accountEmail: email,
+        accountPassword: password,
+        createdByName: req.user?.name,
+      });
+    } catch (e) {
+      console.warn('[MAIL] Failed to send account credentials email:', e?.message || e);
+    }
 
     // Notification
     import('./notificationController.js').then(m => {

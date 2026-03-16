@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { sendNotificationEmail } from '../services/mailer.js';
 
 export const listNotifications = async (req, res, next) => {
   try {
@@ -93,11 +94,28 @@ export const createNotification = async ({ userId, type, title, message, meta })
     if (!message) {
       throw new Error("Notification message is required");
     }
-    await pool.query(
+    const insertResult = await pool.query(
       `INSERT INTO notifications (user_id, type, title, message, body, meta)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, user_id, type, title, message, body, meta, is_read, created_at`,
       [userId, type, title, message, message, meta ? JSON.stringify(meta) : null]
     );
+
+    // Email automatique de la notification (si SMTP configuré). Ne doit jamais casser l'API.
+    try {
+      const userResult = await pool.query('SELECT name, email FROM users WHERE id = $1', [userId]);
+      const user = userResult.rows[0];
+      if (user?.email) {
+        await sendNotificationEmail({
+          to: user.email,
+          userName: user.name,
+          notification: insertResult.rows[0],
+        });
+      }
+    } catch (e) {
+      console.warn('[MAIL] Failed to send notification email:', e?.message || e);
+    }
+
     return true;
   } catch (error) {
     console.error('Error creating notification:', error);
