@@ -111,7 +111,7 @@ export const createUser = async (req, res, next) => {
         type: 'user_created',
         title: 'Nouveau compte créé',
         message: `L'utilisateur ${req.user.name} a créé le compte de ${name} (Rôle: ${role}) le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { userId: result.rows[0].id, page: '/admin' }
+        meta: { userId: result.rows[0].id, page: '/admin/users' }
       });
     });
 
@@ -175,7 +175,7 @@ export const updateUser = async (req, res, next) => {
         type: 'user_updated',
         title: 'Compte utilisateur modifié',
         message: `Le compte de ${userToUpdate.name} a été mis à jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { userId: id, page: '/admin' }
+        meta: { userId: id, page: '/admin/users' }
       });
     });
 
@@ -223,7 +223,7 @@ export const deleteUser = async (req, res, next) => {
         type: 'user_deleted',
         title: 'Compte utilisateur supprimé',
         message: `Le compte de ${userToDelete.name} (${userToDelete.role}) a été supprimé par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { page: '/admin' }
+        meta: { page: '/admin/users' }
       });
     });
 
