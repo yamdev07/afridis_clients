@@ -25,6 +25,8 @@ pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by UUID REFEREN
 const app = express();
 const PORT = process.env.PORT;
 
+app.set('trust proxy', 1);
+
 // Middlewares de sécurité
 app.use(helmet());
 app.use(cookieParser());
