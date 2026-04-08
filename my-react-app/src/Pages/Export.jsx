@@ -186,8 +186,6 @@ export default function Export() {
                     <option value="">TOUS LES STATUTS</option>
                     <option value="installed">INSTALLES</option>
                     <option value="pending">EN ATTENTE</option>
-                    <option value="suspended">SUSPENDUS</option>
-                    <option value="cancelled">ANNULES</option>
                   </select>
                 </div>
               </div>
