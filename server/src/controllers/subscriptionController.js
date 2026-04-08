@@ -6,17 +6,40 @@ async function getScopeOwnerId(user) {
   return getOrganizationOwnerId(pool, user.id);
 }
 
+async function resolveAgentIdByLogin(login, fallbackName = '') {
+  if (!login) return null;
+
+  const normalizedLogin = String(login).trim();
+  if (!normalizedLogin) return null;
+
+  const existing = await pool.query('SELECT id FROM agents WHERE login = $1 LIMIT 1', [normalizedLogin]);
+  if (existing.rows.length > 0) {
+    return existing.rows[0].id;
+  }
+
+  const created = await pool.query(
+    `INSERT INTO agents (login, first_name, last_name, active)
+     VALUES ($1, $2, '', true)
+     RETURNING id`,
+    [normalizedLogin, fallbackName || normalizedLogin],
+  );
+
+  return created.rows[0].id;
+}
+
 const createNotificationForSubscription = async (subscriptionId, type, title, message, authorName) => {
   const detailsResult = await pool.query(
     `SELECT s.id,
             s.client_id,
             s.service_id,
             s.agent_id,
+            COALESCE(c.commercial_login, a.login) as agent_login,
             c.full_name as client_name,
             sv.label as service_label
      FROM subscriptions s
      JOIN clients c ON s.client_id = c.id
      JOIN services sv ON s.service_id = sv.id
+     LEFT JOIN agents a ON s.agent_id = a.id
      WHERE s.id = $1`,
     [subscriptionId],
   );
@@ -93,10 +116,14 @@ export const getAllSubscriptions = async (req, res, next) => {
 
     let query = `
       SELECT s.*,
-             c.full_name as client_name, c.email as client_email, c.phone as client_phone,
-             sv.code as service_code, sv.label as service_label,
-             st.code as status_code, st.label as status_label,
-             a.login as agent_login
+             c.full_name as client_name,
+             c.email as client_email,
+             c.phone as client_phone,
+             sv.code as service_code,
+             sv.label as service_label,
+             st.code as status_code,
+             st.label as status_label,
+             COALESCE(NULLIF(c.commercial_login, ''), a.login) as agent_login
       FROM subscriptions s
       JOIN clients c ON s.client_id = c.id
       JOIN services sv ON s.service_id = sv.id
@@ -127,7 +154,7 @@ export const getAllSubscriptions = async (req, res, next) => {
       params.push(status_code);
     }
     if (agent_login) {
-      conditions.push(`a.login ILIKE $${params.length + 1}`);
+      conditions.push(`COALESCE(NULLIF(c.commercial_login, ''), a.login) ILIKE $${params.length + 1}`);
       params.push(`%${String(agent_login).trim()}%`);
     }
     if (from_date) {
@@ -179,7 +206,7 @@ export const getAllSubscriptions = async (req, res, next) => {
       countParams.push(status_code);
     }
     if (agent_login) {
-      countConditions.push(`a.login ILIKE $${countParams.length + 1}`);
+      countConditions.push(`COALESCE(NULLIF(c.commercial_login, ''), a.login) ILIKE $${countParams.length + 1}`);
       countParams.push(`%${String(agent_login).trim()}%`);
     }
     if (from_date) {
@@ -225,7 +252,7 @@ export const getSubscriptionById = async (req, res, next) => {
     }
 
     const result = await pool.query(
-      `SELECT s.*, c.*, sv.*, st.*, a.login as agent_login, a.first_name as agent_first_name, a.last_name as agent_last_name
+      `SELECT s.*, c.*, sv.*, st.*, COALESCE(c.commercial_login, a.login) as agent_login, a.first_name as agent_first_name, a.last_name as agent_last_name
        FROM subscriptions s
        JOIN clients c ON s.client_id = c.id
        JOIN services sv ON s.service_id = sv.id
@@ -477,13 +504,24 @@ export const bulkImportSubscriptions = async (req, res, next) => {
         );
         if (clientRes.rows.length > 0) {
           clientId = clientRes.rows[0].id;
+          if (commercialLogin) {
+            await pool.query(
+              `UPDATE clients
+               SET commercial_login = COALESCE(NULLIF(commercial_login, ''), $1),
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE id = $2`,
+              [commercialLogin, clientId],
+            );
+          }
         }
       }
 
       if (!clientId) {
         const insertRes = await pool.query(
-          `INSERT INTO clients (full_name, phone, email, created_by) VALUES ($1, $2, $3, $4) RETURNING id`,
-          [clientName || 'Client Inconnu', clientPhone || null, email || null, ownerId],
+          `INSERT INTO clients (full_name, phone, email, commercial_login, created_by)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
+          [clientName || 'Client Inconnu', clientPhone || null, email || null, commercialLogin || null, ownerId],
         );
         clientId = insertRes.rows[0].id;
       }
@@ -500,13 +538,7 @@ export const bulkImportSubscriptions = async (req, res, next) => {
         serviceId = newSer.rows[0].id;
       }
 
-      let agentId = null;
-      if (commercialLogin) {
-        const agentRes = await pool.query('SELECT id FROM agents WHERE login = $1', [commercialLogin]);
-        if (agentRes.rows.length > 0) {
-          agentId = agentRes.rows[0].id;
-        }
-      }
+      const agentId = commercialLogin ? await resolveAgentIdByLogin(commercialLogin, clientName) : null;
 
       await pool.query(
         `INSERT INTO subscriptions (

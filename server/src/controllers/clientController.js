@@ -7,6 +7,27 @@ async function getScopeOwnerId(user) {
   return getOrganizationOwnerId(pool, user.id);
 }
 
+async function resolveAgentIdByLogin(login, fallbackName = '') {
+  if (!login) return null;
+
+  const normalizedLogin = String(login).trim();
+  if (!normalizedLogin) return null;
+
+  const existing = await pool.query('SELECT id FROM agents WHERE login = $1 LIMIT 1', [normalizedLogin]);
+  if (existing.rows.length > 0) {
+    return existing.rows[0].id;
+  }
+
+  const created = await pool.query(
+    `INSERT INTO agents (login, first_name, last_name, active)
+     VALUES ($1, $2, '', true)
+     RETURNING id`,
+    [normalizedLogin, fallbackName || normalizedLogin],
+  );
+
+  return created.rows[0].id;
+}
+
 export const getAllClients = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '', line_number = '', status = '' } = req.query;
@@ -14,13 +35,20 @@ export const getAllClients = async (req, res, next) => {
     const scopeOwnerId = await getScopeOwnerId(req.user);
 
     let query = `
-      SELECT c.*,
+      SELECT c.id,
+             c.full_name,
+             c.phone,
+             c.email,
+             c.address,
+             c.created_at,
+             c.updated_at,
+             c.created_by,
+             COALESCE(MAX(NULLIF(c.commercial_login, '')), MAX(a.login)) as commercial_login,
              COUNT(DISTINCT s.id) as subscriptions_count,
              MIN(s.line_number) as main_line_number,
              MAX(s.installation_date) as installation_date,
              MAX(s.subscription_date) as subscription_date,
-             MAX(sv.label) as offer,
-             MAX(a.login) as commercial_login
+             MAX(sv.label) as offer
       FROM clients c
       LEFT JOIN subscriptions s ON s.client_id = c.id
       LEFT JOIN services sv ON s.service_id = sv.id
@@ -64,7 +92,10 @@ export const getAllClients = async (req, res, next) => {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ` GROUP BY c.id ORDER BY c.created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+    query += `
+      GROUP BY c.id, c.full_name, c.phone, c.email, c.address, c.created_at, c.updated_at, c.created_by
+      ORDER BY c.created_at DESC
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
     queryParams.push(limit, offset);
 
     const result = await pool.query(query, queryParams);
@@ -148,13 +179,15 @@ export const getClientById = async (req, res, next) => {
                   'subscription_date', s.subscription_date,
                   'installation_date', s.installation_date,
                   'contract_cost', s.contract_cost,
-                  'notes', s.notes
+                  'notes', s.notes,
+                  'agent_login', COALESCE(c.commercial_login, a.login)
                 )
               ) FILTER (WHERE s.id IS NOT NULL) as subscriptions
        FROM clients c
        LEFT JOIN subscriptions s ON s.client_id = c.id
        LEFT JOIN services sv ON s.service_id = sv.id
        LEFT JOIN statuses st ON s.status_id = st.id
+       LEFT JOIN agents a ON s.agent_id = a.id
        WHERE c.id = $1${scopeClause}
        GROUP BY c.id`,
       params,
@@ -193,13 +226,15 @@ export const getClientByLineNumber = async (req, res, next) => {
                   'subscription_date', s.subscription_date,
                   'installation_date', s.installation_date,
                   'contract_cost', s.contract_cost,
-                  'notes', s.notes
+                  'notes', s.notes,
+                  'agent_login', COALESCE(c.commercial_login, a.login)
                 )
               ) FILTER (WHERE s.id IS NOT NULL) as subscriptions
        FROM clients c
        LEFT JOIN subscriptions s ON s.client_id = c.id AND s.line_number = $1
        LEFT JOIN services sv ON s.service_id = sv.id
        LEFT JOIN statuses st ON s.status_id = st.id
+       LEFT JOIN agents a ON s.agent_id = a.id
        WHERE EXISTS (SELECT 1 FROM subscriptions WHERE client_id = c.id AND line_number = $1)${scopeClause}
        GROUP BY c.id`,
       params,
@@ -221,11 +256,20 @@ export const createClient = async (req, res, next) => {
     const scopeOwnerId = await getScopeOwnerId(req.user);
     const ownerId = scopeOwnerId || req.user?.id;
 
+    let meta = {};
+    try {
+      meta = typeof address === 'string' ? JSON.parse(address) : address || {};
+    } catch {
+      meta = {};
+    }
+
+    const commercialLogin = meta?.commercial_login ? String(meta.commercial_login).trim() : null;
+
     const clientResult = await pool.query(
-      `INSERT INTO clients (full_name, phone, email, address, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO clients (full_name, phone, email, commercial_login, address, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [full_name, phone || null, email || null, address || null, ownerId],
+      [full_name, phone || null, email || null, commercialLogin || null, address || null, ownerId],
     );
 
     const client = clientResult.rows[0];
@@ -241,7 +285,6 @@ export const createClient = async (req, res, next) => {
 
     if (address) {
       try {
-        const meta = typeof address === 'string' ? JSON.parse(address) : address;
         const offerCode = meta?.offer;
 
         if (offerCode) {
@@ -256,8 +299,9 @@ export const createClient = async (req, res, next) => {
 
             if (statusRes.rows.length > 0) {
               const statusId = statusRes.rows[0].id;
-              const userRes = await pool.query('SELECT agent_id FROM users WHERE id = $1', [req.user.id]);
-              const agentId = userRes.rows[0]?.agent_id;
+              const agentId = commercialLogin
+                ? await resolveAgentIdByLogin(commercialLogin, full_name)
+                : (await pool.query('SELECT agent_id FROM users WHERE id = $1', [req.user.id])).rows[0]?.agent_id || null;
 
               await pool.query(
                 `INSERT INTO subscriptions (
@@ -304,7 +348,17 @@ export const updateClient = async (req, res, next) => {
     const { id } = req.params;
     const { full_name, phone, email, address } = req.body;
     const scopeOwnerId = await getScopeOwnerId(req.user);
-    const params = [full_name, phone, email, address, id];
+
+    let meta = {};
+    try {
+      meta = typeof address === 'string' ? JSON.parse(address) : address || {};
+    } catch {
+      meta = {};
+    }
+
+    const commercialLogin = meta?.commercial_login ? String(meta.commercial_login).trim() : null;
+
+    const params = [full_name, phone, email, commercialLogin || null, address, id];
     let scopeClause = '';
 
     if (scopeOwnerId) {
@@ -317,9 +371,10 @@ export const updateClient = async (req, res, next) => {
        SET full_name = COALESCE($1, full_name),
            phone = COALESCE($2, phone),
            email = COALESCE($3, email),
-           address = COALESCE($4, address),
+           commercial_login = COALESCE($4, commercial_login),
+           address = COALESCE($5, address),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $5${scopeClause}
+       WHERE id = $6${scopeClause}
        RETURNING *`,
       params,
     );
@@ -330,38 +385,38 @@ export const updateClient = async (req, res, next) => {
 
     if (address) {
       try {
-        const meta = typeof address === 'string' ? JSON.parse(address) : address;
         const installDate = meta?.installation_date || null;
         const lineNumber = meta?.line_number || null;
+        const updateParts = [];
+        const updateValues = [];
+        let idx = 1;
 
-        if (installDate !== undefined || lineNumber !== undefined) {
+        if (installDate !== undefined) {
+          updateParts.push(`installation_date = $${idx++}`);
+          updateValues.push(installDate || null);
+        }
+        if (lineNumber !== undefined) {
           if (lineNumber !== undefined && !['super_admin', 'admin_local', 'admin'].includes(req.user?.role)) {
             const existingSub = await pool.query('SELECT line_number FROM subscriptions WHERE client_id = $1 LIMIT 1', [id]);
             if (existingSub.rows.length > 0 && existingSub.rows[0].line_number && existingSub.rows[0].line_number !== lineNumber) {
               return res.status(403).json({ message: 'Seul un administrateur peut modifier le numero de ligne' });
             }
           }
+          updateParts.push(`line_number = $${idx++}`);
+          updateValues.push(lineNumber || null);
+        }
+        if (commercialLogin) {
+          const agentId = await resolveAgentIdByLogin(commercialLogin, full_name || result.rows[0].full_name);
+          updateParts.push(`agent_id = $${idx++}`);
+          updateValues.push(agentId || null);
+        }
 
-          const updateParts = [];
-          const updateValues = [];
-          let idx = 1;
-
-          if (installDate !== undefined) {
-            updateParts.push(`installation_date = $${idx++}`);
-            updateValues.push(installDate || null);
-          }
-          if (lineNumber !== undefined) {
-            updateParts.push(`line_number = $${idx++}`);
-            updateValues.push(lineNumber || null);
-          }
-
-          if (updateParts.length > 0) {
-            updateValues.push(id);
-            await pool.query(
-              `UPDATE subscriptions SET ${updateParts.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE client_id = $${idx}`,
-              updateValues,
-            );
-          }
+        if (updateParts.length > 0) {
+          updateValues.push(id);
+          await pool.query(
+            `UPDATE subscriptions SET ${updateParts.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE client_id = $${idx}`,
+            updateValues,
+          );
         }
       } catch (parseErr) {
         console.warn('Sync subscription: impossible de parser address JSON:', parseErr.message);
