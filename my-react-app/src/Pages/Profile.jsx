@@ -152,11 +152,7 @@ export default function Profile() {
   };
 
   const roleLabel =
-    user?.role === "super_admin"
-      ? "Administrateur Système"
-      : user?.role === "admin"
-        ? "Gestionnaire"
-        : "Commercial Orange";
+    user?.role === "super_admin" ? "Administrateur Systeme" : user?.role === "admin_local" ? "Administrateur Local" : user?.role === "admin" ? "Administrateur" : "Commercial";
 
   return (
     <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
@@ -521,3 +517,4 @@ function ProfileField({ label, name, icon: Icon, type = "text", value, onChange,
     </div>
   );
 }
+
