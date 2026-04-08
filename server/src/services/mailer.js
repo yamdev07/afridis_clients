@@ -14,36 +14,39 @@ function getNumberEnv(name, fallback) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+function isRetriableMailError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return [
+    'etimedout',
+    'enetunreach',
+    'econnrefused',
+    'connection timeout',
+    'greeting never received',
+  ].some((token) => message.includes(token));
+}
+
+function ipv4Lookup(hostname, options, callback) {
+  const dnsOptions = typeof options === 'object' ? options : {};
+  dns.lookup(hostname, { ...dnsOptions, family: 4, all: false }, callback);
+}
+
 export function isMailerConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
-async function resolveSmtpHost(host) {
-  try {
-    const resolved = await dns.promises.lookup(host, { family: 4 });
-    return resolved?.address || host;
-  } catch (error) {
-    console.warn('[MAIL] IPv4 lookup failed, falling back to hostname:', error?.message || error);
-    return host;
-  }
-}
-
-export async function getTransporter() {
-  if (cachedTransporter) return cachedTransporter;
-
+function buildTransporter() {
   if (!isMailerConfigured()) {
     throw new Error('SMTP is not configured (missing SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS)');
   }
 
   const host = process.env.SMTP_HOST;
-  const resolvedHost = await resolveSmtpHost(host);
   const port = Number(process.env.SMTP_PORT);
   const secure = getBoolEnv('SMTP_SECURE', false);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
-  cachedTransporter = nodemailer.createTransport({
-    host: resolvedHost,
+  return nodemailer.createTransport({
+    host,
     port,
     secure,
     requireTLS: getBoolEnv('SMTP_REQUIRE_TLS', false),
@@ -55,9 +58,19 @@ export async function getTransporter() {
       servername: host,
       family: 4,
     },
+    lookup: ipv4Lookup,
   });
+}
 
+export async function getTransporter(forceRefresh = false) {
+  if (!forceRefresh && cachedTransporter) return cachedTransporter;
+  cachedTransporter = buildTransporter();
   return cachedTransporter;
+}
+
+async function sendWithTransporter(transporter, payload) {
+  const info = await transporter.sendMail(payload);
+  return { messageId: info.messageId };
 }
 
 export async function sendMail({ to, subject, text, html }) {
@@ -65,17 +78,26 @@ export async function sendMail({ to, subject, text, html }) {
 
   const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
   const fromName = process.env.SMTP_FROM_NAME || 'ClientFlow';
-  const transporter = await getTransporter();
-
-  const info = await transporter.sendMail({
+  const payload = {
     from: `${fromName} <${fromEmail}>`,
     to,
     subject,
     text,
     html,
-  });
+  };
 
-  return { messageId: info.messageId };
+  try {
+    const transporter = await getTransporter();
+    return await sendWithTransporter(transporter, payload);
+  } catch (error) {
+    if (!isRetriableMailError(error)) {
+      throw error;
+    }
+
+    console.warn('[MAIL] Retrying email after transport failure:', error?.message || error);
+    const freshTransporter = await getTransporter(true);
+    return sendWithTransporter(freshTransporter, payload);
+  }
 }
 
 function escapeHtml(str) {
