@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import dns from 'dns';
 
 let cachedTransporter = null;
 
@@ -17,7 +18,17 @@ export function isMailerConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
-export function getTransporter() {
+async function resolveSmtpHost(host) {
+  try {
+    const resolved = await dns.promises.lookup(host, { family: 4 });
+    return resolved?.address || host;
+  } catch (error) {
+    console.warn('[MAIL] IPv4 lookup failed, falling back to hostname:', error?.message || error);
+    return host;
+  }
+}
+
+export async function getTransporter() {
   if (cachedTransporter) return cachedTransporter;
 
   if (!isMailerConfigured()) {
@@ -25,21 +36,25 @@ export function getTransporter() {
   }
 
   const host = process.env.SMTP_HOST;
+  const resolvedHost = await resolveSmtpHost(host);
   const port = Number(process.env.SMTP_PORT);
   const secure = getBoolEnv('SMTP_SECURE', false);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
   cachedTransporter = nodemailer.createTransport({
-    host,
+    host: resolvedHost,
     port,
     secure,
-    family: 4,
     requireTLS: getBoolEnv('SMTP_REQUIRE_TLS', false),
     connectionTimeout: getNumberEnv('SMTP_CONNECTION_TIMEOUT', 10000),
     greetingTimeout: getNumberEnv('SMTP_GREETING_TIMEOUT', 10000),
     socketTimeout: getNumberEnv('SMTP_SOCKET_TIMEOUT', 15000),
     auth: { user, pass },
+    tls: {
+      servername: host,
+      family: 4,
+    },
   });
 
   return cachedTransporter;
@@ -50,7 +65,7 @@ export async function sendMail({ to, subject, text, html }) {
 
   const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
   const fromName = process.env.SMTP_FROM_NAME || 'ClientFlow';
-  const transporter = getTransporter();
+  const transporter = await getTransporter();
 
   const info = await transporter.sendMail({
     from: `${fromName} <${fromEmail}>`,
