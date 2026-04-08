@@ -239,9 +239,10 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-12">
-              {["Termes", "Sécurité", "Support", "API"].map(item => (
-                <button key={item} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors">{item}</button>
-              ))}
+              <button onClick={() => navigate("/privacy")} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors">Confidentialite</button>
+              <button onClick={() => navigate("/security-terms")} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors">Securite</button>
+              <button className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors">Support</button>
+              <button className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-colors">API</button>
             </div>
 
             <div className="flex items-center gap-3">

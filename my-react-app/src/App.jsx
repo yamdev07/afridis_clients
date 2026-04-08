@@ -11,6 +11,8 @@ import Export from './Pages/Export'
 import Login from './Pages/Login'
 import Profile from './Pages/Profile'
 import AdminUsers from './Pages/AdminUsers'
+import PrivacyPolicy from './Pages/PrivacyPolicy'
+import SecurityTerms from './Pages/SecurityTerms'
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 
 function App() {
@@ -25,6 +27,8 @@ function App() {
           <Route path="/auth" element={<Navigate to="/login" replace />} />
           <Route path="/register" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/security-terms" element={<SecurityTerms />} />
           <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/clients' element={<Clients />} />
           <Route path='/services' element={<Services />} />
