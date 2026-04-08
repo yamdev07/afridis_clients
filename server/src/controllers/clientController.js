@@ -1,10 +1,17 @@
 import pool from '../config/database.js';
 import { notifyAdmins } from './notificationController.js';
+import { getOrganizationOwnerId } from '../utils/access.js';
+
+async function getScopeOwnerId(user) {
+  if (!user || user.role === 'super_admin') return null;
+  return getOrganizationOwnerId(pool, user.id);
+}
 
 export const getAllClients = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '', line_number = '', status = '' } = req.query;
     const offset = (page - 1) * limit;
+    const scopeOwnerId = await getScopeOwnerId(req.user);
 
     let query = `
       SELECT c.*,
@@ -22,10 +29,9 @@ export const getAllClients = async (req, res, next) => {
     const queryParams = [];
     const conditions = [];
 
-    // Filter by created_by for non-super admins. Admins and commercials see only their clients. 
-    if (req.user && req.user.role !== 'super_admin') {
+    if (scopeOwnerId) {
       conditions.push(`c.created_by = $${queryParams.length + 1}`);
-      queryParams.push(req.user.id);
+      queryParams.push(scopeOwnerId);
     }
 
     if (search) {
@@ -63,14 +69,13 @@ export const getAllClients = async (req, res, next) => {
 
     const result = await pool.query(query, queryParams);
 
-    // Compter le total pour la pagination
     let countQuery = 'SELECT COUNT(DISTINCT c.id) FROM clients c';
     const countParams = [];
     const countConditions = [];
 
-    if (req.user && req.user.role !== 'super_admin') {
+    if (scopeOwnerId) {
       countConditions.push(`c.created_by = $${countParams.length + 1}`);
-      countParams.push(req.user.id);
+      countParams.push(scopeOwnerId);
     }
 
     if (search) {
@@ -104,13 +109,13 @@ export const getAllClients = async (req, res, next) => {
     }
 
     const countResult = await pool.query(countQuery, countParams);
-    const total = parseInt(countResult.rows[0].count);
+    const total = parseInt(countResult.rows[0].count, 10);
 
     res.json({
       data: result.rows,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         total,
         totalPages: Math.ceil(total / limit),
       },
@@ -123,6 +128,14 @@ export const getAllClients = async (req, res, next) => {
 export const getClientById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const scopeOwnerId = await getScopeOwnerId(req.user);
+    const params = [id];
+    let scopeClause = '';
+
+    if (scopeOwnerId) {
+      params.push(scopeOwnerId);
+      scopeClause = ` AND c.created_by = $${params.length}`;
+    }
 
     const result = await pool.query(
       `SELECT c.*,
@@ -142,13 +155,13 @@ export const getClientById = async (req, res, next) => {
        LEFT JOIN subscriptions s ON s.client_id = c.id
        LEFT JOIN services sv ON s.service_id = sv.id
        LEFT JOIN statuses st ON s.status_id = st.id
-        WHERE c.id = $1 ${req.user.role === 'super_admin' ? '' : `AND c.created_by = '${req.user.id}'`}
-        GROUP BY c.id`,
-      [id]
+       WHERE c.id = $1${scopeClause}
+       GROUP BY c.id`,
+      params,
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Client non trouvé ou accès refusé' });
+      return res.status(404).json({ message: 'Client non trouve ou acces refuse' });
     }
 
     res.json(result.rows[0]);
@@ -160,6 +173,14 @@ export const getClientById = async (req, res, next) => {
 export const getClientByLineNumber = async (req, res, next) => {
   try {
     const { line_number } = req.params;
+    const scopeOwnerId = await getScopeOwnerId(req.user);
+    const params = [line_number];
+    let scopeClause = '';
+
+    if (scopeOwnerId) {
+      params.push(scopeOwnerId);
+      scopeClause = ` AND c.created_by = $${params.length}`;
+    }
 
     const result = await pool.query(
       `SELECT c.*,
@@ -179,13 +200,13 @@ export const getClientByLineNumber = async (req, res, next) => {
        LEFT JOIN subscriptions s ON s.client_id = c.id AND s.line_number = $1
        LEFT JOIN services sv ON s.service_id = sv.id
        LEFT JOIN statuses st ON s.status_id = st.id
-       WHERE EXISTS (SELECT 1 FROM subscriptions WHERE client_id = c.id AND line_number = $1)
+       WHERE EXISTS (SELECT 1 FROM subscriptions WHERE client_id = c.id AND line_number = $1)${scopeClause}
        GROUP BY c.id`,
-      [line_number]
+      params,
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Aucun client trouvé pour ce numéro de ligne' });
+      return res.status(404).json({ message: 'Aucun client trouve pour ce numero de ligne' });
     }
 
     res.json(result.rows[0]);
@@ -197,59 +218,50 @@ export const getClientByLineNumber = async (req, res, next) => {
 export const createClient = async (req, res, next) => {
   try {
     const { full_name, phone, email, address } = req.body;
-    const currentUserId = req.user?.id;
+    const scopeOwnerId = await getScopeOwnerId(req.user);
+    const ownerId = scopeOwnerId || req.user?.id;
 
-    // 1. Créer le client
     const clientResult = await pool.query(
       `INSERT INTO clients (full_name, phone, email, address, created_by)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [full_name, phone || null, email || null, address || null, currentUserId]
+      [full_name, phone || null, email || null, address || null, ownerId],
     );
 
     const client = clientResult.rows[0];
 
-    // Notification
-    import('./notificationController.js').then(m => {
+    import('./notificationController.js').then((m) => {
       m.notifyAdmins({
         type: 'client_created',
-        title: 'Nouveau client créé',
-        message: `${req.user.name} a créé le client ${full_name} le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { clientId: client.id, page: '/clients' }
+        title: 'Nouveau client cree',
+        message: `${req.user.name} a cree le client ${full_name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { clientId: client.id, page: '/clients' },
       });
     });
 
-    // 2. Si une offre est spécifiée dans address, créer un abonnement automatiquement
     if (address) {
       try {
         const meta = typeof address === 'string' ? JSON.parse(address) : address;
         const offerCode = meta?.offer;
 
         if (offerCode) {
-          // Trouver le service par son code
           const serviceRes = await pool.query('SELECT id, monthly_price FROM services WHERE code = $1', [offerCode.trim()]);
 
           if (serviceRes.rows.length > 0) {
             const service = serviceRes.rows[0];
-
-            // Trouver le statut par défaut (pending si pas d'installation_date, installed si date passée)
             const installDate = meta.installation_date;
             const today = new Date().toISOString().split('T')[0];
-            const statusCode = (installDate && installDate <= today) ? 'installed' : 'pending';
-
+            const statusCode = installDate && installDate <= today ? 'installed' : 'pending';
             const statusRes = await pool.query('SELECT id FROM statuses WHERE code = $1', [statusCode]);
 
             if (statusRes.rows.length > 0) {
               const statusId = statusRes.rows[0].id;
-
-              // Récupérer l'agent_id du createur si c'est un commercial
-              const userRes = await pool.query('SELECT agent_id FROM users WHERE id = $1', [currentUserId]);
+              const userRes = await pool.query('SELECT agent_id FROM users WHERE id = $1', [req.user.id]);
               const agentId = userRes.rows[0]?.agent_id;
 
-              // Créer l'abonnement
               await pool.query(
                 `INSERT INTO subscriptions (
-                  client_id, agent_id, service_id, status_id, 
+                  client_id, agent_id, service_id, status_id,
                   line_number, subscription_date, installation_date, contract_cost, notes
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
                 [
@@ -261,24 +273,23 @@ export const createClient = async (req, res, next) => {
                   meta.subscription_date || today,
                   installDate || null,
                   meta.tarif || service.monthly_price,
-                  meta.notes || null
-                ]
+                  meta.notes || null,
+                ],
               );
 
-              // Notification specific to service addition
-              import('./notificationController.js').then(m => {
+              import('./notificationController.js').then((m) => {
                 m.notifyAdmins({
                   type: 'client_subscribed',
                   title: 'Nouveau service souscrit',
-                  message: `Le client ${client.full_name} a été automatiquement inscrit au service "${offerCode}" par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-                  meta: { clientId: client.id, serviceCode: offerCode, page: '/clients' }
+                  message: `Le client ${client.full_name} a ete automatiquement inscrit au service "${offerCode}" par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+                  meta: { clientId: client.id, serviceCode: offerCode, page: '/clients' },
                 });
               });
             }
           }
         }
       } catch (e) {
-        console.warn("Erreur lors de la création auto de l'abonnement:", e.message);
+        console.warn("Erreur lors de la creation auto de l'abonnement:", e.message);
       }
     }
 
@@ -292,6 +303,14 @@ export const updateClient = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { full_name, phone, email, address } = req.body;
+    const scopeOwnerId = await getScopeOwnerId(req.user);
+    const params = [full_name, phone, email, address, id];
+    let scopeClause = '';
+
+    if (scopeOwnerId) {
+      params.push(scopeOwnerId);
+      scopeClause = ` AND created_by = $${params.length}`;
+    }
 
     const result = await pool.query(
       `UPDATE clients
@@ -300,33 +319,31 @@ export const updateClient = async (req, res, next) => {
            email = COALESCE($3, email),
            address = COALESCE($4, address),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $5
+       WHERE id = $5${scopeClause}
        RETURNING *`,
-      [full_name, phone, email, address, id]
+      params,
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Client non trouvé' });
+      return res.status(404).json({ message: 'Client non trouve' });
     }
 
-    // Synchroniser installation_date et line_number depuis le JSON address → table subscriptions
     if (address) {
       try {
         const meta = typeof address === 'string' ? JSON.parse(address) : address;
         const installDate = meta?.installation_date || null;
         const lineNumber = meta?.line_number || null;
 
-        // Mettre à jour les abonnements de ce client avec les nouvelles dates / numéro de ligne
         if (installDate !== undefined || lineNumber !== undefined) {
-          if (lineNumber !== undefined && !['super_admin', 'admin'].includes(req.user?.role)) {
+          if (lineNumber !== undefined && !['super_admin', 'admin_local', 'admin'].includes(req.user?.role)) {
             const existingSub = await pool.query('SELECT line_number FROM subscriptions WHERE client_id = $1 LIMIT 1', [id]);
             if (existingSub.rows.length > 0 && existingSub.rows[0].line_number && existingSub.rows[0].line_number !== lineNumber) {
-               return res.status(403).json({ message: 'Seul un administrateur peut modifier le numéro de ligne' });
+              return res.status(403).json({ message: 'Seul un administrateur peut modifier le numero de ligne' });
             }
           }
 
-          let updateParts = [];
-          let updateValues = [];
+          const updateParts = [];
+          const updateValues = [];
           let idx = 1;
 
           if (installDate !== undefined) {
@@ -342,25 +359,23 @@ export const updateClient = async (req, res, next) => {
             updateValues.push(id);
             await pool.query(
               `UPDATE subscriptions SET ${updateParts.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE client_id = $${idx}`,
-              updateValues
+              updateValues,
             );
           }
         }
       } catch (parseErr) {
-        // Si le JSON est malformé, on ignore la sync — on ne bloque pas la réponse
         console.warn('Sync subscription: impossible de parser address JSON:', parseErr.message);
       }
     }
 
     const updatedClient = result.rows[0];
 
-    // Notification
-    import('./notificationController.js').then(m => {
+    import('./notificationController.js').then((m) => {
       m.notifyAdmins({
         type: 'client_updated',
-        title: 'Fiche client modifiée',
-        message: `Les informations de ${updatedClient.full_name} ont été mises à jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { clientId: id, page: '/clients' }
+        title: 'Fiche client modifiee',
+        message: `Les informations de ${updatedClient.full_name} ont ete mises a jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { clientId: id, page: '/clients' },
       });
     });
 
@@ -370,38 +385,35 @@ export const updateClient = async (req, res, next) => {
   }
 };
 
-
 export const deleteClient = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const scopeOwnerId = await getScopeOwnerId(req.user);
+    const params = [id];
+    let scopeClause = '';
 
-    // Récupérer le nom avant suppression pour la notification
-    const clientRes = await pool.query('SELECT full_name FROM clients WHERE id = $1', [id]);
+    if (scopeOwnerId) {
+      params.push(scopeOwnerId);
+      scopeClause = ` AND created_by = $${params.length}`;
+    }
+
+    const clientRes = await pool.query(`SELECT full_name FROM clients WHERE id = $1${scopeClause}`, params);
     if (clientRes.rows.length === 0) {
-      return res.status(404).json({ message: 'Client non trouvé' });
+      return res.status(404).json({ message: 'Client non trouve' });
     }
     const clientName = clientRes.rows[0].full_name;
 
-    console.log(`[DELETE] Attempting to delete client ${clientName} (${id})`);
-    try {
-      // Supprimer manuellement les abonnements si CASCADE pose souci
-      await pool.query('DELETE FROM subscriptions WHERE client_id = $1', [id]);
-      await pool.query('DELETE FROM clients WHERE id = $1', [id]);
-      console.log(`[DELETE] Client ${id} and subscriptions deleted successfully`);
-    } catch (dbErr) {
-      console.error(`[DELETE] DB Error deleting client ${id}:`, dbErr);
-      throw dbErr;
-    }
+    await pool.query('DELETE FROM subscriptions WHERE client_id = $1', [id]);
+    await pool.query(`DELETE FROM clients WHERE id = $1${scopeClause}`, params);
 
-    // Notification (non-bloquant)
     notifyAdmins({
       type: 'client_deleted',
-      title: 'Client supprimé',
-      message: `Le client ${clientName} a été supprimé par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-      meta: { page: '/clients' }
-    }).catch(err => console.error('Error in notifyAdmins during client deletion:', err));
+      title: 'Client supprime',
+      message: `Le client ${clientName} a ete supprime par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+      meta: { page: '/clients' },
+    }).catch((err) => console.error('Error in notifyAdmins during client deletion:', err));
 
-    return res.status(200).json({ success: true, message: 'Client supprimé avec succès' });
+    return res.status(200).json({ success: true, message: 'Client supprime avec succes' });
   } catch (error) {
     next(error);
   }
