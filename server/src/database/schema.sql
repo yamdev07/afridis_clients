@@ -1,10 +1,8 @@
--- Script d'initialisation de la base de données ClientFlow
--- À exécuter sur la base de données PostgreSQL existante 'client_flow'
+-- Script d'initialisation de la base de donnees ClientFlow
+-- A executer sur la base de donnees PostgreSQL existante 'client_flow'
 
--- Extension pour UUID
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Table des agents/commerciaux
 CREATE TABLE IF NOT EXISTS agents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     login VARCHAR(255) UNIQUE NOT NULL,
@@ -17,7 +15,6 @@ CREATE TABLE IF NOT EXISTS agents (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des statuts
 CREATE TABLE IF NOT EXISTS statuses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     code VARCHAR(50) UNIQUE NOT NULL,
@@ -26,7 +23,6 @@ CREATE TABLE IF NOT EXISTS statuses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des utilisateurs (avec rôles)
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -40,18 +36,17 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des clients
 CREATE TABLE IF NOT EXISTS clients (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     full_name VARCHAR(255) NOT NULL,
     phone VARCHAR(50),
     email VARCHAR(255),
+    commercial_login VARCHAR(255),
     address TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des services
 CREATE TABLE IF NOT EXISTS services (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     code VARCHAR(50) UNIQUE NOT NULL,
@@ -63,7 +58,6 @@ CREATE TABLE IF NOT EXISTS services (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des abonnements
 CREATE TABLE IF NOT EXISTS subscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -80,7 +74,6 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des événements d'installation
 CREATE TABLE IF NOT EXISTS installation_events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     subscription_id UUID NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
@@ -90,7 +83,6 @@ CREATE TABLE IF NOT EXISTS installation_events (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table de l'historique des statuts d'abonnement
 CREATE TABLE IF NOT EXISTS subscription_status_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     subscription_id UUID NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
@@ -100,7 +92,6 @@ CREATE TABLE IF NOT EXISTS subscription_status_history (
     notes TEXT
 );
 
--- Table pour la blacklist des tokens JWT (pour logout)
 CREATE TABLE IF NOT EXISTS token_blacklist (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     token_id VARCHAR(255) UNIQUE NOT NULL,
@@ -108,7 +99,6 @@ CREATE TABLE IF NOT EXISTS token_blacklist (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des notifications utilisateurs
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -120,35 +110,31 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Index pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_agent_id ON users(agent_id);
+CREATE INDEX IF NOT EXISTS idx_clients_commercial_login ON clients(commercial_login);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_client_id ON subscriptions(client_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_service_id ON subscriptions(service_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status_id ON subscriptions(status_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_line_number ON subscriptions(line_number);
 CREATE INDEX IF NOT EXISTS idx_token_blacklist_expires_at ON token_blacklist(expires_at);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created_at
-  ON notifications(user_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created_at ON notifications(user_id, is_read, created_at DESC);
 
--- Données initiales pour les statuts
 INSERT INTO statuses (code, label) VALUES
     ('pending', 'En attente'),
-    ('installed', 'Installé'),
+    ('installed', 'Installe'),
     ('suspended', 'Suspendu'),
-    ('cancelled', 'Annulé')
+    ('cancelled', 'Annule')
 ON CONFLICT (code) DO NOTHING;
 
--- Données initiales pour les services (exemples)
 INSERT INTO services (code, label, description, monthly_price, is_active) VALUES
-    ('email_pro', 'Création Email Professionnel', 'Création et configuration d''adresses emails professionnelles sécurisées', 5000, true),
-    ('website', 'Création Site Web', 'Développement de sites web modernes et optimisés SEO', 150000, true),
-    ('mobile_app', 'Application Mobile', 'Développement d''applications Android & iOS', 350000, true),
+    ('email_pro', 'Creation Email Professionnel', 'Creation et configuration d''adresses emails professionnelles securisees', 5000, true),
+    ('website', 'Creation Site Web', 'Developpement de sites web modernes et optimises SEO', 150000, true),
+    ('mobile_app', 'Application Mobile', 'Developpement d''applications Android & iOS', 350000, true),
     ('internet_enterprise', 'Installation Internet Entreprise', 'Installation et configuration internet pour entreprises', 75000, true),
-    ('fiber', 'Installation Fibre Optique', 'Installation fibre internet haut débit', 120000, true)
+    ('fiber', 'Installation Fibre Optique', 'Installation fibre internet haut debit', 120000, true)
 ON CONFLICT (code) DO NOTHING;
 
--- Fonction pour mettre à jour updated_at automatiquement
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -157,7 +143,6 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Triggers pour mettre à jour updated_at
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -175,4 +160,3 @@ CREATE TRIGGER update_agents_updated_at BEFORE UPDATE ON agents
 
 CREATE TRIGGER update_statuses_updated_at BEFORE UPDATE ON statuses
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
