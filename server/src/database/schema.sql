@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role VARCHAR(50) DEFAULT 'commercial' CHECK (role IN ('super_admin', 'admin', 'commercial')),
+    role VARCHAR(50) DEFAULT 'commercial' CHECK (role IN ('super_admin', 'admin_local', 'admin', 'commercial')),
     agent_id UUID REFERENCES agents(id) ON DELETE SET NULL,
     email_verified_at TIMESTAMP,
     remember_token VARCHAR(255),
@@ -175,3 +175,4 @@ CREATE TRIGGER update_agents_updated_at BEFORE UPDATE ON agents
 
 CREATE TRIGGER update_statuses_updated_at BEFORE UPDATE ON statuses
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
