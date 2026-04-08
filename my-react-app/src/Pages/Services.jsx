@@ -58,7 +58,7 @@ function Services() {
   const [serviceError, setServiceError] = useState("");
 
   const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "null"), []);
-  const canModifyCatalog = user?.role === 'admin' || user?.role === 'super_admin';
+  const canModifyCatalog = ['admin_local', 'admin', 'super_admin'].includes(user?.role);
 
   const fetchServices = async () => {
     setLoading(true);
@@ -618,3 +618,4 @@ function Services() {
 }
 
 export default Services;
+
