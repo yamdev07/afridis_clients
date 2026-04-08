@@ -22,6 +22,7 @@ async function runStartupMigrations() {
     await pool.query('CREATE TABLE IF NOT EXISTS app_migrations (name VARCHAR(255) PRIMARY KEY, executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL');
     await pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL');
+    await pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS commercial_login VARCHAR(255)');
     await pool.query('ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT');
 
     const migrationName = 'roles_admin_local_split_v1';
@@ -55,18 +56,37 @@ async function runStartupMigrations() {
       );
       await pool.query('INSERT INTO app_migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [migrationName]);
     }
+
+    await pool.query(
+      `UPDATE clients c
+       SET commercial_login = COALESCE(
+         NULLIF(c.commercial_login, ''),
+         CASE
+           WHEN c.address IS NOT NULL AND btrim(c.address) LIKE '{%'
+           THEN c.address::jsonb ->> 'commercial_login'
+           ELSE NULL
+         END,
+         sub.agent_login
+       )
+       FROM (
+         SELECT s.client_id, MAX(a.login) AS agent_login
+         FROM subscriptions s
+         LEFT JOIN agents a ON a.id = s.agent_id
+         GROUP BY s.client_id
+       ) sub
+       WHERE c.id = sub.client_id
+          OR (c.address IS NOT NULL AND btrim(c.address) LIKE '{%')`,
+    );
   } catch (error) {
     console.error('[MIGRATIONS] Startup migration failed:', error);
+    throw error;
   }
 }
-
-runStartupMigrations();
 
 const app = express();
 const PORT = process.env.PORT;
 
 app.set('trust proxy', 1);
-
 app.use(helmet());
 app.use(cookieParser());
 
@@ -109,8 +129,16 @@ app.get('/health', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Serveur demarre sur le port ${PORT}`);
-  console.log(`API disponible sur http://localhost:${PORT}/api`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
+async function startServer() {
+  await runStartupMigrations();
+  app.listen(PORT, () => {
+    console.log(`Serveur demarre sur le port ${PORT}`);
+    console.log(`API disponible sur http://localhost:${PORT}/api`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('[STARTUP] Server failed to start:', error);
+  process.exit(1);
 });
