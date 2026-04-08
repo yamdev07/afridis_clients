@@ -8,6 +8,11 @@ function getBoolEnv(name, fallback = false) {
   return String(v).toLowerCase() === 'true' || String(v) === '1';
 }
 
+function getNumberEnv(name, fallback) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 export function isMailerConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
@@ -21,7 +26,7 @@ export function getTransporter() {
 
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT);
-  const secure = getBoolEnv('SMTP_SECURE', false); // true for 465, false for 587
+  const secure = getBoolEnv('SMTP_SECURE', false);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
@@ -29,8 +34,11 @@ export function getTransporter() {
     host,
     port,
     secure,
-    // Force IPv4 to éviter les erreurs ENETUNREACH sur IPv6
     family: 4,
+    requireTLS: getBoolEnv('SMTP_REQUIRE_TLS', false),
+    connectionTimeout: getNumberEnv('SMTP_CONNECTION_TIMEOUT', 10000),
+    greetingTimeout: getNumberEnv('SMTP_GREETING_TIMEOUT', 10000),
+    socketTimeout: getNumberEnv('SMTP_SOCKET_TIMEOUT', 15000),
     auth: { user, pass },
   });
 
@@ -65,29 +73,29 @@ function escapeHtml(str) {
 }
 
 export async function sendAccountCreatedEmail({ to, userName, accountEmail, accountPassword, createdByName }) {
-  const subject = 'Vos accès ClientFlow';
+  const subject = 'Vos acces ClientFlow';
   const safeName = escapeHtml(userName || '');
   const safeEmail = escapeHtml(accountEmail || to || '');
   const safePassword = escapeHtml(accountPassword || '');
-  const safeCreatedBy = escapeHtml(createdByName || 'l’administrateur');
+  const safeCreatedBy = escapeHtml(createdByName || 'l\'administrateur');
 
   const text =
     `Bonjour ${userName || ''},\n\n` +
-    `${safeCreatedBy} vient de créer votre compte ClientFlow.\n\n` +
+    `${createdByName || 'L\'administrateur'} vient de creer votre compte ClientFlow.\n\n` +
     `Email: ${accountEmail}\n` +
     `Mot de passe: ${accountPassword}\n\n` +
-    `Conseil sécurité: modifiez votre mot de passe dès votre première connexion.\n`;
+    `Conseil securite: modifiez votre mot de passe des votre premiere connexion.\n`;
 
   const html = `
     <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b1220; padding:24px;">
       <div style="max-width:640px; margin:0 auto; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:16px; overflow:hidden;">
         <div style="padding:20px 22px; background:linear-gradient(135deg, rgba(99,102,241,0.22), rgba(236,72,153,0.12)); border-bottom:1px solid rgba(255,255,255,0.10);">
           <div style="font-weight:800; letter-spacing:0.12em; text-transform:uppercase; font-size:11px; color:rgba(255,255,255,0.75)">ClientFlow</div>
-          <div style="font-size:22px; font-weight:800; color:white; margin-top:6px;">Vos accès viennent d’être créés</div>
+          <div style="font-size:22px; font-weight:800; color:white; margin-top:6px;">Vos acces viennent d'etre crees</div>
         </div>
         <div style="padding:22px; color:rgba(255,255,255,0.88);">
           <p style="margin:0 0 14px 0; line-height:1.6;">Bonjour <b>${safeName}</b>,</p>
-          <p style="margin:0 0 18px 0; line-height:1.6;">${safeCreatedBy} vient de créer votre compte. Voici vos identifiants :</p>
+          <p style="margin:0 0 18px 0; line-height:1.6;">${safeCreatedBy} vient de creer votre compte. Voici vos identifiants :</p>
           <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.10); border-radius:14px; padding:14px 16px; margin:0 0 18px 0;">
             <div style="font-size:12px; opacity:0.9; margin-bottom:6px;">Email</div>
             <div style="font-size:16px; font-weight:800; color:white;">${safeEmail}</div>
@@ -96,7 +104,7 @@ export async function sendAccountCreatedEmail({ to, userName, accountEmail, acco
             <div style="font-size:16px; font-weight:800; color:white; letter-spacing:0.06em;">${safePassword}</div>
           </div>
           <p style="margin:0; line-height:1.6; font-size:12px; opacity:0.85;">
-            Conseil sécurité : changez votre mot de passe dès votre première connexion.
+            Conseil securite : changez votre mot de passe des votre premiere connexion.
           </p>
         </div>
       </div>
@@ -107,7 +115,7 @@ export async function sendAccountCreatedEmail({ to, userName, accountEmail, acco
 }
 
 export async function sendNotificationEmail({ to, userName, notification }) {
-  const subject = `ClientFlow — ${notification?.title || 'Nouvelle notification'}`;
+  const subject = `ClientFlow - ${notification?.title || 'Nouvelle notification'}`;
   const title = escapeHtml(notification?.title || 'Notification');
   const message = escapeHtml(notification?.message || notification?.body || '');
   const safeName = escapeHtml(userName || '');
@@ -131,7 +139,7 @@ export async function sendNotificationEmail({ to, userName, notification }) {
             <div style="font-size:15px; font-weight:700; color:white; line-height:1.55;">${message}</div>
           </div>
           <p style="margin:16px 0 0 0; line-height:1.6; font-size:12px; opacity:0.7;">
-            Cet email est envoyé automatiquement suite à une action ou un événement dans ClientFlow.
+            Cet email est envoye automatiquement suite a une action ou un evenement dans ClientFlow.
           </p>
         </div>
       </div>

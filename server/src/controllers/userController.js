@@ -1,36 +1,125 @@
 import bcrypt from 'bcrypt';
 import pool from '../config/database.js';
 import { sendAccountCreatedEmail } from '../services/mailer.js';
+import { getCreatableRoles, getOrganizationOwnerId, ROLES } from '../utils/access.js';
+
+async function getManagedUser(actor, targetUserId) {
+  const result = await pool.query(
+    `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.phone, u.created_at, u.created_by,
+            a.login AS agent_login
+     FROM users u
+     LEFT JOIN agents a ON a.id = u.agent_id
+     WHERE u.id = $1`,
+    [targetUserId],
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const target = result.rows[0];
+
+  if (actor.role === 'super_admin') {
+    return target;
+  }
+
+  if (actor.role === 'admin_local') {
+    const actorOrgId = await getOrganizationOwnerId(pool, actor.id);
+    const targetOrgId = await getOrganizationOwnerId(pool, target.id);
+    return actorOrgId === targetOrgId ? target : null;
+  }
+
+  if (actor.role === 'admin') {
+    return target.created_by === actor.id && target.role === 'commercial' ? target : null;
+  }
+
+  return null;
+}
+
+function canCreateRole(actorRole, targetRole) {
+  return getCreatableRoles(actorRole).includes(targetRole);
+}
+
+function canAssignRole(actorRole, targetRole) {
+  if (actorRole === 'admin_local' && ['admin', 'admin_local', 'commercial'].includes(targetRole)) {
+    return true;
+  }
+  return getCreatableRoles(actorRole).includes(targetRole);
+}
 
 export const listUsers = async (req, res, next) => {
   try {
     const { role } = req.query;
 
-    let query = 'SELECT id, name, email, role, agent_id, phone, created_at FROM users';
-    const params = [];
-    const conditions = [];
-
-    if (role) {
-      conditions.push(`role = $${params.length + 1}`);
-      params.push(role);
+    if (role && !ROLES.includes(role)) {
+      return res.status(400).json({ message: 'Role invalide' });
     }
 
-    // Un admin local ne peut voir que les commerciaux qu'il a créés lui-même
+    let result;
+
+    if (req.user.role === 'super_admin') {
+      const params = [];
+      let query = `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.phone, u.created_at, u.created_by,
+                          a.login AS agent_login
+                   FROM users u
+                   LEFT JOIN agents a ON a.id = u.agent_id`;
+
+      if (role) {
+        params.push(role);
+        query += ` WHERE u.role = $${params.length}`;
+      }
+
+      query += ' ORDER BY u.created_at DESC';
+      result = await pool.query(query, params);
+      return res.json(result.rows);
+    }
+
+    if (req.user.role === 'admin_local') {
+      const params = [req.user.id];
+      let query = `WITH RECURSIVE descendants AS (
+                     SELECT id, name, email, role, agent_id, phone, created_at, created_by
+                     FROM users
+                     WHERE id = $1
+                     UNION ALL
+                     SELECT u.id, u.name, u.email, u.role, u.agent_id, u.phone, u.created_at, u.created_by
+                     FROM users u
+                     JOIN descendants d ON u.created_by = d.id
+                   )
+                   SELECT d.id, d.name, d.email, d.role, d.agent_id, d.phone, d.created_at, d.created_by,
+                          a.login AS agent_login
+                   FROM descendants d
+                   LEFT JOIN agents a ON a.id = d.agent_id
+                   WHERE d.id <> $1`;
+
+      if (role) {
+        params.push(role);
+        query += ` AND d.role = $${params.length}`;
+      }
+
+      query += ' ORDER BY d.created_at DESC';
+      result = await pool.query(query, params);
+      return res.json(result.rows);
+    }
+
     if (req.user.role === 'admin') {
-      conditions.push(`role = $${params.length + 1}`);
-      params.push('commercial');
-      conditions.push(`created_by = $${params.length + 1}`);
-      params.push(req.user.id);
+      const params = [req.user.id, 'commercial'];
+      let query = `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.phone, u.created_at, u.created_by,
+                          a.login AS agent_login
+                   FROM users u
+                   LEFT JOIN agents a ON a.id = u.agent_id
+                   WHERE u.created_by = $1 AND u.role = $2`;
+
+      if (role) {
+        params.push(role);
+        query += ` AND u.role = $${params.length}`;
+      }
+
+      query += ' ORDER BY u.created_at DESC';
+      result = await pool.query(query, params);
+      return res.json(result.rows);
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    return res.status(403).json({ message: 'Acces refuse' });
   } catch (error) {
     next(error);
   }
@@ -41,36 +130,27 @@ export const createUser = async (req, res, next) => {
     const { name, email, password, role = 'commercial', agent_login } = req.body;
 
     if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ message: 'Nom, email et mot de passe sont requis' });
+      return res.status(400).json({ message: 'Nom, email et mot de passe sont requis' });
     }
 
-    if (!['super_admin', 'admin', 'commercial'].includes(role)) {
-      return res.status(400).json({ message: 'Rôle invalide' });
+    if (!ROLES.includes(role)) {
+      return res.status(400).json({ message: 'Role invalide' });
     }
 
-    if (req.user.role === 'admin' && role !== 'commercial') {
-      return res.status(403).json({ message: 'Un admin ne peut créer que des comptes commerciaux' });
+    if (!canCreateRole(req.user.role, role)) {
+      return res.status(403).json({ message: 'Vous ne pouvez pas creer ce type de compte' });
     }
 
-    const existing = await pool.query(
-      'SELECT id FROM users WHERE email = $1',
-      [email],
-    );
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
-      return res.status(400).json({ message: 'Cet email est déjà utilisé' });
+      return res.status(400).json({ message: 'Cet email est deja utilise' });
     }
 
     let agentId = null;
     if (agent_login) {
-      const agentResult = await pool.query(
-        'SELECT id FROM agents WHERE login = $1 LIMIT 1',
-        [agent_login],
-      );
+      const agentResult = await pool.query('SELECT id FROM agents WHERE login = $1 LIMIT 1', [agent_login]);
 
       if (agentResult.rows.length === 0) {
-        // Si aucun agent n'existe encore pour ce login, on le crée automatiquement
         const newAgent = await pool.query(
           `INSERT INTO agents (login, first_name, last_name, active)
            VALUES ($1, $2, '', true)
@@ -84,15 +164,13 @@ export const createUser = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const result = await pool.query(
       `INSERT INTO users (name, email, password, role, agent_id, created_by)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, name, email, role, agent_id, created_at`,
+       RETURNING id, name, email, role, agent_id, created_at, created_by`,
       [name, email, hashedPassword, role, agentId, req.user.id],
     );
 
-    // Email des accès au nouvel utilisateur (si SMTP configuré)
     try {
       await sendAccountCreatedEmail({
         to: email,
@@ -105,13 +183,12 @@ export const createUser = async (req, res, next) => {
       console.warn('[MAIL] Failed to send account credentials email:', e?.message || e);
     }
 
-    // Notification
-    import('./notificationController.js').then(m => {
+    import('./notificationController.js').then((m) => {
       m.notifyAdmins({
         type: 'user_created',
-        title: 'Nouveau compte créé',
-        message: `L'utilisateur ${req.user.name} a créé le compte de ${name} (Rôle: ${role}) le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { userId: result.rows[0].id, page: '/admin/users' }
+        title: 'Nouveau compte cree',
+        message: `L'utilisateur ${req.user.name} a cree le compte de ${name} (Role: ${role}) le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { userId: result.rows[0].id, page: '/admin/users' },
       });
     });
 
@@ -126,56 +203,81 @@ export const updateUser = async (req, res, next) => {
     const { id } = req.params;
     const { name, email, password, role, agent_login, phone } = req.body;
 
-    const userToUpdateResult = await pool.query('SELECT role, name FROM users WHERE id = $1', [id]);
-    if (userToUpdateResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    const userToUpdate = await getManagedUser(req.user, id);
+    if (!userToUpdate) {
+      return res.status(404).json({ message: 'Utilisateur non trouve ou acces refuse' });
     }
 
-    const userToUpdate = userToUpdateResult.rows[0];
-
-    // Permissions
-    if (req.user.role === 'admin' && userToUpdate.role !== 'commercial') {
-      return res.status(403).json({ message: 'Un admin peut seulement modifier des comptes commerciaux' });
+    if (userToUpdate.role === 'super_admin') {
+      return res.status(403).json({ message: 'Impossible de modifier un super-admin' });
     }
 
-    let agentId = null;
-    if (agent_login) {
-      const agentResult = await pool.query(
-        'SELECT id FROM agents WHERE login = $1 LIMIT 1',
-        [agent_login]
-      );
-      if (agentResult.rows.length === 0) {
-        const newAgent = await pool.query(
-          `INSERT INTO agents (login, first_name, last_name, active) VALUES ($1, $2, '', true) RETURNING id`,
-          [agent_login, name]
-        );
-        agentId = newAgent.rows[0].id;
-      } else {
-        agentId = agentResult.rows[0].id;
+    if (email) {
+      const existing = await pool.query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, id]);
+      if (existing.rows.length > 0) {
+        return res.status(400).json({ message: 'Cet email est deja utilise' });
       }
     }
 
-    let query = 'UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), role = COALESCE($3, role), agent_id = COALESCE($4, agent_id), phone = COALESCE($5, phone)';
-    let values = [name, email, role, agentId, phone];
+    const nextRole = role || userToUpdate.role;
+    if (!ROLES.includes(nextRole)) {
+      return res.status(400).json({ message: 'Role invalide' });
+    }
+
+    if (nextRole !== userToUpdate.role && !canAssignRole(req.user.role, nextRole)) {
+      return res.status(403).json({ message: 'Vous ne pouvez pas attribuer ce role' });
+    }
+
+    if (req.user.role === 'admin' && nextRole !== 'commercial') {
+      return res.status(403).json({ message: 'Un admin simple ne peut gerer que des commerciaux' });
+    }
+
+    let agentId = userToUpdate.agent_id || null;
+    if (agent_login !== undefined) {
+      if (!agent_login) {
+        agentId = null;
+      } else {
+        const agentResult = await pool.query('SELECT id FROM agents WHERE login = $1 LIMIT 1', [agent_login]);
+        if (agentResult.rows.length === 0) {
+          const newAgent = await pool.query(
+            `INSERT INTO agents (login, first_name, last_name, active)
+             VALUES ($1, $2, '', true)
+             RETURNING id`,
+            [agent_login, name || userToUpdate.name],
+          );
+          agentId = newAgent.rows[0].id;
+        } else {
+          agentId = agentResult.rows[0].id;
+        }
+      }
+    }
+
+    let query = `UPDATE users
+                 SET name = COALESCE($1, name),
+                     email = COALESCE($2, email),
+                     role = COALESCE($3, role),
+                     agent_id = $4,
+                     phone = COALESCE($5, phone),
+                     updated_at = CURRENT_TIMESTAMP`;
+    const values = [name, email, role, agentId, phone];
 
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      query += ', password = $6 WHERE id = $7 RETURNING id, name, email, role, agent_id, phone, created_at';
+      query += ', password = $6 WHERE id = $7 RETURNING id, name, email, role, agent_id, phone, created_at, created_by';
       values.push(hashedPassword, id);
     } else {
-      query += ' WHERE id = $6 RETURNING id, name, email, role, agent_id, phone, created_at';
+      query += ' WHERE id = $6 RETURNING id, name, email, role, agent_id, phone, created_at, created_by';
       values.push(id);
     }
 
     const result = await pool.query(query, values);
 
-    // Notification
-    import('./notificationController.js').then(m => {
+    import('./notificationController.js').then((m) => {
       m.notifyAdmins({
         type: 'user_updated',
-        title: 'Compte utilisateur modifié',
-        message: `Le compte de ${userToUpdate.name} a été mis à jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { userId: id, page: '/admin/users' }
+        title: 'Compte utilisateur modifie',
+        message: `Le compte de ${userToUpdate.name} a ete mis a jour par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { userId: id, page: '/admin/users' },
       });
     });
 
@@ -189,46 +291,37 @@ export const deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const userToDeleteResult = await pool.query('SELECT name, role FROM users WHERE id = $1', [id]);
-    if (userToDeleteResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    const userToDelete = await getManagedUser(req.user, id);
+    if (!userToDelete) {
+      return res.status(404).json({ message: 'Utilisateur non trouve ou acces refuse' });
     }
-
-    const userToDelete = userToDeleteResult.rows[0];
 
     if (userToDelete.role === 'super_admin') {
       return res.status(403).json({ message: 'Impossible de supprimer un super-admin' });
     }
 
+    if (userToDelete.id === req.user.id) {
+      return res.status(403).json({ message: 'Vous ne pouvez pas supprimer votre propre compte' });
+    }
+
     if (req.user.role === 'admin' && userToDelete.role !== 'commercial') {
-      return res.status(403).json({ message: 'Un admin peut seulement supprimer des comptes commerciaux' });
+      return res.status(403).json({ message: 'Un admin simple peut seulement supprimer des comptes commerciaux' });
     }
 
-    if (userToDelete.role === 'admin' && req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Seul le super-admin peut supprimer un admin' });
-    }
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
 
-    console.log(`[DELETE] Attempting to delete user ${userToDelete.name} (${id})`);
-    try {
-      await pool.query('DELETE FROM users WHERE id = $1', [id]);
-      console.log(`[DELETE] User ${id} deleted successfully from DB`);
-    } catch (dbErr) {
-      console.error(`[DELETE] DB Error deleting user ${id}:`, dbErr);
-      throw dbErr;
-    }
-
-    // Notification
-    import('./notificationController.js').then(m => {
+    import('./notificationController.js').then((m) => {
       m.notifyAdmins({
         type: 'user_deleted',
-        title: 'Compte utilisateur supprimé',
-        message: `Le compte de ${userToDelete.name} (${userToDelete.role}) a été supprimé par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-        meta: { page: '/admin/users' }
+        title: 'Compte utilisateur supprime',
+        message: `Le compte de ${userToDelete.name} (${userToDelete.role}) a ete supprime par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { page: '/admin/users' },
       });
     });
 
-    res.json({ message: 'Utilisateur supprimé avec succès' });
+    res.json({ message: 'Utilisateur supprime avec succes' });
   } catch (error) {
     next(error);
   }
 };
+

@@ -17,8 +17,8 @@ router.use(authenticateToken);
 router.get('/', getAllServices);
 router.get('/:id', getServiceById);
 router.get('/:id/clients', getServiceClients);
-router.post('/', requireRole('admin', 'super_admin'), validateService, createService);
-router.put('/:id', requireRole('admin', 'super_admin'), validateService, updateService);
-router.delete('/:id', requireRole('admin', 'super_admin'), deleteService);
+router.post('/', requireRole('admin_local', 'admin', 'super_admin'), validateService, createService);
+router.put('/:id', requireRole('admin_local', 'admin', 'super_admin'), validateService, updateService);
+router.delete('/:id', requireRole('admin_local', 'admin', 'super_admin'), deleteService);
 
 export default router;

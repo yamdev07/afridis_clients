@@ -45,7 +45,7 @@ export const markNotificationRead = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Notification non trouvée' });
+      return res.status(404).json({ message: 'Notification non trouvee' });
     }
 
     res.json({ success: true });
@@ -64,7 +64,7 @@ export const deleteNotification = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Notification non trouvée' });
+      return res.status(404).json({ message: 'Notification non trouvee' });
     }
 
     res.json({ success: true });
@@ -90,18 +90,17 @@ export const markAllNotificationsRead = async (req, res, next) => {
 
 export const createNotification = async ({ userId, type, title, message, meta }) => {
   try {
-
     if (!message) {
-      throw new Error("Notification message is required");
+      throw new Error('Notification message is required');
     }
+
     const insertResult = await pool.query(
       `INSERT INTO notifications (user_id, type, title, message, body, meta)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, user_id, type, title, message, body, meta, is_read, created_at`,
-      [userId, type, title, message, message, meta ? JSON.stringify(meta) : null]
+      [userId, type, title, message, message, meta ? JSON.stringify(meta) : null],
     );
 
-    // Email automatique de la notification (si SMTP configuré). Ne doit jamais casser l'API.
     try {
       const userResult = await pool.query('SELECT name, email FROM users WHERE id = $1', [userId]);
       const user = userResult.rows[0];
@@ -125,11 +124,9 @@ export const createNotification = async ({ userId, type, title, message, meta })
 
 export const notifyAdmins = async ({ type, title, message, meta }) => {
   try {
+    console.log('NOTIFY ADMINS:', { type, title, message });
 
-    console.log("NOTIFY ADMINS:", { type, title, message });
-
-    // Notify all admins and super_admins
-    const admins = await pool.query("SELECT id FROM users WHERE role IN ('super_admin', 'admin')");
+    const admins = await pool.query("SELECT id FROM users WHERE role IN ('super_admin', 'admin_local', 'admin')");
     for (const admin of admins.rows) {
       await createNotification({ userId: admin.id, type, title, message, meta });
     }
