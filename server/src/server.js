@@ -4,34 +4,72 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import indexRoutes from './routes/index.js'; // Changed 'routes' to 'indexRoutes'
+import indexRoutes from './routes/index.js';
 import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import pool from './config/database.js';
 import dns from 'dns';
 
 dotenv.config();
 
-// Forcer la résolution DNS en IPv4 en priorité (évite les connexions SMTP en IPv6)
 try {
   dns.setDefaultResultOrder('ipv4first');
 } catch (e) {
   console.warn('[DNS] Unable to set default result order:', e?.message || e);
 }
 
-// Run the ALTER TABLE queries to add created_by at the start.
-pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL').catch(err => console.error(err));
-pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL').catch(err => console.error(err));
+async function runStartupMigrations() {
+  try {
+    await pool.query('CREATE TABLE IF NOT EXISTS app_migrations (name VARCHAR(255) PRIMARY KEY, executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL');
+    await pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL');
+    await pool.query('ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT');
+
+    const migrationName = 'roles_admin_local_split_v1';
+    const alreadyRan = await pool.query('SELECT 1 FROM app_migrations WHERE name = $1 LIMIT 1', [migrationName]);
+
+    await pool.query('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check');
+    await pool.query("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('super_admin', 'admin_local', 'admin', 'commercial'))");
+
+    if (alreadyRan.rows.length === 0) {
+      await pool.query("UPDATE users SET role = 'admin_local' WHERE role = 'admin'");
+      await pool.query(
+        `WITH RECURSIVE ancestry AS (
+           SELECT u.id AS user_id, u.id AS ancestor_id, u.created_by, u.role
+           FROM users u
+           UNION ALL
+           SELECT ancestry.user_id, parent.id AS ancestor_id, parent.created_by, parent.role
+           FROM ancestry
+           JOIN users parent ON ancestry.created_by = parent.id
+         ),
+         org_owner AS (
+           SELECT DISTINCT ON (user_id) user_id, ancestor_id AS admin_local_id
+           FROM ancestry
+           WHERE role = 'admin_local'
+           ORDER BY user_id
+         )
+         UPDATE clients c
+         SET created_by = org_owner.admin_local_id
+         FROM org_owner
+         WHERE c.created_by = org_owner.user_id
+           AND c.created_by IS DISTINCT FROM org_owner.admin_local_id`,
+      );
+      await pool.query('INSERT INTO app_migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [migrationName]);
+    }
+  } catch (error) {
+    console.error('[MIGRATIONS] Startup migration failed:', error);
+  }
+}
+
+runStartupMigrations();
 
 const app = express();
 const PORT = process.env.PORT;
 
 app.set('trust proxy', 1);
 
-// Middlewares de sécurité
 app.use(helmet());
 app.use(cookieParser());
 
-// CORS configuration
 const allowedOrigins = [
   process.env.CORS_ORIGIN || 'http://localhost:5173',
   'http://localhost:5174',
@@ -50,39 +88,29 @@ app.use(
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-  })
+  }),
 );
 
-// Rate limiting - assoupli pour développement (éviter les 429 côté frontend)
 const limiter = rateLimit({
-  windowMs: 35 * 60 * 1000, // 15 minutes
-  max: 1000, // limite chaque IP à 1000 requêtes par fenêtre
-  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
+  windowMs: 35 * 60 * 1000,
+  max: 1000,
+  message: 'Trop de requetes depuis cette IP, veuillez reessayer plus tard.',
 });
 
 app.use('/api/', limiter);
-
-// Body parser
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
-
-// Routes
 app.use('/api', indexRoutes);
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// 404 handler
 app.use(notFound);
-
-// Error handler
 app.use(errorHandler);
 
-// Démarrage du serveur
 app.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-  console.log(`📡 API disponible sur http://localhost:${PORT}/api`);
-  console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+  console.log(`Serveur demarre sur le port ${PORT}`);
+  console.log(`API disponible sur http://localhost:${PORT}/api`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
 });
