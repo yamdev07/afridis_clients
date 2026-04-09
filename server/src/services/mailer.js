@@ -1,7 +1,9 @@
 import nodemailer from 'nodemailer';
 import dns from 'dns';
 
-let cachedTransporter = null;
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 function getBoolEnv(name, fallback = false) {
   const v = process.env[name];
@@ -16,18 +18,19 @@ function getNumberEnv(name, fallback) {
 
 function isRetriableMailError(error) {
   const message = String(error?.message || '').toLowerCase();
-  return [
-    'etimedout',
-    'enetunreach',
-    'econnrefused',
-    'connection timeout',
-    'greeting never received',
-  ].some((token) => message.includes(token));
+  const code = String(error?.code || '').toLowerCase();
+  return [code, message].some((value) =>
+    ['etimedout', 'enetunreach', 'econnrefused', 'eai_again', 'connection timeout', 'greeting never received'].some((token) => value.includes(token)),
+  );
 }
 
 function ipv4Lookup(hostname, options, callback) {
   const dnsOptions = typeof options === 'object' ? options : {};
   dns.lookup(hostname, { ...dnsOptions, family: 4, all: false }, callback);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function isMailerConfigured() {
@@ -49,28 +52,29 @@ function buildTransporter() {
     host,
     port,
     secure,
-    requireTLS: getBoolEnv('SMTP_REQUIRE_TLS', false),
-    connectionTimeout: getNumberEnv('SMTP_CONNECTION_TIMEOUT', 10000),
-    greetingTimeout: getNumberEnv('SMTP_GREETING_TIMEOUT', 10000),
-    socketTimeout: getNumberEnv('SMTP_SOCKET_TIMEOUT', 15000),
+    requireTLS: getBoolEnv('SMTP_REQUIRE_TLS', !secure && port === 587),
+    connectionTimeout: getNumberEnv('SMTP_CONNECTION_TIMEOUT', 8000),
+    greetingTimeout: getNumberEnv('SMTP_GREETING_TIMEOUT', 8000),
+    socketTimeout: getNumberEnv('SMTP_SOCKET_TIMEOUT', 12000),
     auth: { user, pass },
     tls: {
       servername: host,
       family: 4,
+      rejectUnauthorized: true,
     },
     lookup: ipv4Lookup,
+    pool: false,
   });
 }
 
-export async function getTransporter(forceRefresh = false) {
-  if (!forceRefresh && cachedTransporter) return cachedTransporter;
-  cachedTransporter = buildTransporter();
-  return cachedTransporter;
-}
-
-async function sendWithTransporter(transporter, payload) {
-  const info = await transporter.sendMail(payload);
-  return { messageId: info.messageId };
+async function sendWithFreshTransporter(payload) {
+  const transporter = buildTransporter();
+  try {
+    const info = await transporter.sendMail(payload);
+    return { messageId: info.messageId };
+  } finally {
+    transporter.close();
+  }
 }
 
 export async function sendMail({ to, subject, text, html }) {
@@ -86,18 +90,24 @@ export async function sendMail({ to, subject, text, html }) {
     html,
   };
 
-  try {
-    const transporter = await getTransporter();
-    return await sendWithTransporter(transporter, payload);
-  } catch (error) {
-    if (!isRetriableMailError(error)) {
-      throw error;
-    }
+  const maxAttempts = getNumberEnv('SMTP_MAX_RETRIES', 3);
 
-    console.warn('[MAIL] Retrying email after transport failure:', error?.message || error);
-    const freshTransporter = await getTransporter(true);
-    return sendWithTransporter(freshTransporter, payload);
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await sendWithFreshTransporter(payload);
+    } catch (error) {
+      lastError = error;
+      if (!isRetriableMailError(error) || attempt === maxAttempts) {
+        throw error;
+      }
+
+      console.warn(`[MAIL] Attempt ${attempt}/${maxAttempts} failed, retrying:`, error?.message || error);
+      await wait(700 * attempt);
+    }
   }
+
+  throw lastError;
 }
 
 function escapeHtml(str) {
@@ -185,3 +195,4 @@ export async function sendNotificationEmail({ to, userName, notification }) {
 
   return sendMail({ to, subject, text, html });
 }
+

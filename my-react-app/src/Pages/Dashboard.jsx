@@ -30,6 +30,9 @@ import NotificationBell from "../components/NotificationBell";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 
+const DATA_UPDATED_EVENT = "clientflow:data-updated";
+const DATA_UPDATED_STORAGE_KEY = "clientflow:data-updated-at";
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
@@ -45,6 +48,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     let intervalId;
+
     const fetchSummary = async () => {
       try {
         const data = await api.getDashboardSummary();
@@ -58,9 +62,34 @@ export default function Dashboard() {
       }
     };
 
+    const handleDataUpdated = () => {
+      fetchSummary();
+    };
+
+    const handleStorage = (event) => {
+      if (event.key === DATA_UPDATED_STORAGE_KEY) {
+        fetchSummary();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchSummary();
+      }
+    };
+
     fetchSummary();
     intervalId = setInterval(fetchSummary, 30000);
-    return () => clearInterval(intervalId);
+    window.addEventListener(DATA_UPDATED_EVENT, handleDataUpdated);
+    window.addEventListener("storage", handleStorage);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener(DATA_UPDATED_EVENT, handleDataUpdated);
+      window.removeEventListener("storage", handleStorage);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   // Filtrer les données du graphe selon la période choisie
@@ -403,3 +432,4 @@ function StatCard({ title, value, icon: Icon, color }) {
     </GlassCard>
   );
 }
+

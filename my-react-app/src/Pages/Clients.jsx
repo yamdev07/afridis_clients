@@ -80,6 +80,9 @@ const deserializeClient = (row) => {
   };
 };
 
+const DATA_UPDATED_EVENT = "clientflow:data-updated";
+const DATA_UPDATED_STORAGE_KEY = "clientflow:data-updated-at";
+
 const buildPayload = (form) => ({
   full_name: form.full_name,
   phone: form.phone,
@@ -100,6 +103,13 @@ const buildPayload = (form) => ({
     tarif: form.tarif,
   }),
 });
+
+const notifyDataUpdated = () => {
+  if (typeof window === "undefined") return;
+  const timestamp = String(Date.now());
+  localStorage.setItem(DATA_UPDATED_STORAGE_KEY, timestamp);
+  window.dispatchEvent(new CustomEvent(DATA_UPDATED_EVENT, { detail: { timestamp } }));
+};
 
 function Clients() {
   const [clients, setClients] = useState([]);
@@ -184,6 +194,7 @@ function Clients() {
       await api.deleteClient(id);
       const updated = allClients.filter((c) => c.id !== id);
       setAllClients(updated);
+      notifyDataUpdated();
       if (selectedClient?.id === id) setSelectedClient(null);
     } catch (err) {
       alert(err?.response?.data?.message || "Erreur de suppression");
@@ -214,6 +225,7 @@ function Clients() {
         ? allClients.map((c) => (c.id === uiClient.id ? uiClient : c))
         : [uiClient, ...allClients];
       setAllClients(updated);
+      notifyDataUpdated();
       setShowModal(false);
       setSelectedClient(uiClient);
     } catch (err) {
@@ -736,3 +748,4 @@ function Select({ label, value, options, onChange }) {
 }
 
 export default Clients;
+
