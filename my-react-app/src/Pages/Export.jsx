@@ -53,18 +53,29 @@ export default function Export() {
         return copy.sort((a, b) => new Date(b.subscription_date || b.created_at) - new Date(a.subscription_date || a.created_at));
     }
   }, [rows, sortBy]);
-
   const handleFetch = async () => {
     setError("");
     setLoading(true);
+
     try {
-      const params = {
-        limit: 1000,
-        agent_login: filters.agent_login.trim() || undefined,
-        from_date: filters.from_date || undefined,
-        to_date: filters.to_date || undefined,
-        status_code: filters.status_code || undefined,
-      };
+      const params = { limit: 1000 };
+
+      if (filters.agent_login.trim()) {
+        params.agent_login = filters.agent_login.trim();
+      }
+
+      if (filters.from_date) {
+        params.from_date = filters.from_date;
+      }
+
+      if (filters.to_date) {
+        params.to_date = filters.to_date;
+      }
+
+      if (filters.status_code) {
+        params.status_code = filters.status_code;
+      }
+
       const response = await api.listSubscriptions(params);
       setRows(response?.data || []);
     } catch (err) {
@@ -217,8 +228,6 @@ export default function Export() {
                 <select className="bg-transparent text-[11px] font-black text-slate-900 outline-none cursor-pointer uppercase tracking-widest" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                   <option value="subscription_date_desc">CHRONOLOGIE DESC</option>
                   <option value="subscription_date_asc">CHRONOLOGIE ASC</option>
-                  <option value="amount_desc">MONTANT MAX</option>
-                  <option value="amount_asc">MONTANT MIN</option>
                 </select>
               </div>
               <div className="flex items-center gap-3">
