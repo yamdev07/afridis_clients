@@ -66,7 +66,10 @@ export const getDashboardSummary = async (req, res, next) => {
            SELECT COUNT(*)
            FROM subscriptions s3
            JOIN clients c3 ON s3.client_id = c3.id
-           WHERE DATE(s3.installation_date) = d.day${scopeOwnerId ? ' AND c3.created_by = $1' : ''}
+           JOIN statuses st ON s3.status_id = st.id
+           WHERE st.code = 'installed'
+           AND DATE(COALESCE(s3.installation_date, s3.updated_at)) = d.day
+           ${scopeOwnerId ? ' AND c3.created_by = $1' : ''}
          ) as installed
        FROM days d
        ORDER BY d.day`,

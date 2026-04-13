@@ -295,11 +295,28 @@ export const createSubscription = async (req, res, next) => {
       }
     }
 
+    // 🔥 Auto-détection du statut installé
+    let finalInstallationDate = installation_date;
+
+    if (status_id) {
+      const statusRes = await pool.query(
+        `SELECT code FROM statuses WHERE id = $1`,
+        [status_id]
+      );
+
+      const statusCode = statusRes.rows[0]?.code;
+
+      // Si on passe en "installed" et aucune date fournie
+      if (statusCode === 'installed' && !installation_date) {
+        finalInstallationDate = new Date().toISOString().split('T')[0];
+      }
+    }
+
     const result = await pool.query(
       `INSERT INTO subscriptions (
         client_id, service_id, status_id, agent_id,
         line_number, subscription_date, planned_installation_date,
-        installation_date, contract_cost, notes
+        finalInstallationDate, contract_cost, notes
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
