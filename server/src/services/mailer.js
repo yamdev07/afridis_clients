@@ -59,10 +59,8 @@ function buildTransporter() {
     auth: { user, pass },
     tls: {
       servername: host,
-      family: 4,
       rejectUnauthorized: true,
     },
-    lookup: ipv4Lookup,
     pool: false,
   });
 }
