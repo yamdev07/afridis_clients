@@ -57,6 +57,19 @@ async function runStartupMigrations() {
       await pool.query('INSERT INTO app_migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [migrationName]);
     }
 
+    const migrationInstalledStatus = 'fix_historical_installed_status_v1';
+    const alreadyRanInstalled = await pool.query('SELECT 1 FROM app_migrations WHERE name = $1 LIMIT 1', [migrationInstalledStatus]);
+    if (alreadyRanInstalled.rows.length === 0) {
+      await pool.query(`
+        UPDATE subscriptions 
+        SET status_id = (SELECT id FROM statuses WHERE code = 'installed')
+        WHERE installation_date IS NOT NULL 
+          AND installation_date <= CURRENT_DATE 
+          AND status_id != (SELECT id FROM statuses WHERE code = 'installed')
+      `);
+      await pool.query('INSERT INTO app_migrations (name) VALUES ($1)', [migrationInstalledStatus]);
+    }
+
     await pool.query(
       `UPDATE clients c
        SET commercial_login = COALESCE(
