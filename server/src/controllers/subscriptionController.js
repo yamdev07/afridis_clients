@@ -361,9 +361,18 @@ export const updateSubscription = async (req, res, next) => {
       subscription_date,
       planned_installation_date,
       installation_date,
-      contract_cost,
+        contract_cost,
       notes,
     } = req.body;
+
+    if (installation_date !== undefined && !status_id) {
+      const today = new Date().toISOString().split('T')[0];
+      const statusCode = (installation_date && installation_date <= today) ? 'installed' : 'pending';
+      const statusRes = await pool.query('SELECT id FROM statuses WHERE code = $1', [statusCode]);
+      if (statusRes.rows.length > 0) {
+        status_id = statusRes.rows[0].id;
+      }
+    }
 
     const scopeOwnerId = await getScopeOwnerId(req.user);
     const existingSub = await pool.query(
