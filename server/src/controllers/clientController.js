@@ -394,6 +394,12 @@ export const updateClient = async (req, res, next) => {
         if (installDate !== undefined) {
           updateParts.push(`installation_date = $${idx++}`);
           updateValues.push(installDate || null);
+
+          // Update status based on installation date
+          const today = new Date().toISOString().split('T')[0];
+          const newStatus = (installDate && installDate <= today) ? 'installed' : 'pending';
+          updateParts.push(`status_id = (SELECT id FROM statuses WHERE code = $${idx++})`);
+          updateValues.push(newStatus);
         }
         if (lineNumber !== undefined) {
           if (lineNumber !== undefined && !['super_admin', 'admin_local', 'admin'].includes(req.user?.role)) {
