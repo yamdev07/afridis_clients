@@ -70,6 +70,18 @@ export const api = {
     }
   },
 
+  checkSessionActivity: async () => {
+    const response = await instance.post("/auth/check-session");
+    const { token, user } = response.data || {};
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    }
+    return response.data;
+  },
+
   me: () => instance.get("/auth/me").then((r) => r.data),
 
   updateProfile: (payload) =>

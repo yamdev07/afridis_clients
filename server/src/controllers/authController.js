@@ -310,6 +310,46 @@ export const changeOwnPassword = async (req, res, next) => {
   }
 };
 
+export const checkSessionActivity = async (req, res, next) => {
+  try {
+    // Vérifier si l'utilisateur existe toujours
+    const userResult = await pool.query(
+      'SELECT id, name, email, role FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Générer un nouveau access token pour rafraîchir la session
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user.id);
+
+    // Mettre à jour le refresh token dans le cookie
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      message: 'Session rafraîchie',
+      token: accessToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email, newPassword } = req.body;
