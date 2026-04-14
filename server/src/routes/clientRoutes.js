@@ -8,7 +8,7 @@ import {
   deleteClient,
 } from '../controllers/clientController.js';
 import { authenticateToken } from '../middlewares/auth.js';
-import { validateClient } from '../middlewares/validation.js';
+import { validateClient, validateClientUpdate } from '../middlewares/validation.js';
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.get('/', getAllClients);
 router.get('/line/:line_number', getClientByLineNumber);
 router.get('/:id', getClientById);
 router.post('/', validateClient, createClient);
-router.put('/:id', validateClient, updateClient);
+router.put('/:id', validateClientUpdate, updateClient);
 router.delete('/:id', deleteClient);
 
 export default router;

@@ -36,6 +36,14 @@ export const validateClient = validate([
   body('address').optional({ checkFalsy: true }).isString(),
 ]);
 
+// Validation pour les mises à jour de clients (champs optionnels)
+export const validateClientUpdate = validate([
+  body('full_name').optional({ checkFalsy: true }).trim(),
+  body('email').optional({ checkFalsy: true }).isEmail().withMessage('Email invalide'),
+  body('phone').optional({ checkFalsy: true }).isString(),
+  body('address').optional({ checkFalsy: true }).isString(),
+]);
+
 // Validations pour les services
 export const validateService = validate([
   body('code').trim().notEmpty().withMessage('Le code est requis'),
