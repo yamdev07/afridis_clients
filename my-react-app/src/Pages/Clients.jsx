@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import {
   Plus,
@@ -30,6 +30,7 @@ import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
 import NotificationBell from "../components/NotificationBell";
 import { Users } from "lucide-react";
+import { useDataPolling, notifyDataSync } from "../hooks/useDataPolling";
 
 const emptyForm = {
   id: null,
@@ -155,6 +156,18 @@ function Clients() {
     fetchServices();
   }, []);
 
+  // Hook de synchronisation automatique avec polling
+  useDataPolling('clients', useCallback(async () => {
+    try {
+      const res = await api.listClients({ page: 1, limit: 2000 });
+      const data = Array.isArray(res?.data) ? res.data : [];
+      const normalized = data.map(deserializeClient);
+      setAllClients(normalized);
+    } catch (err) {
+      console.error('Erreur lors du rafraîchissement des clients:', err);
+    }
+  }, []), 15000);
+
   const [searchLogin, setSearchLogin] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -194,7 +207,7 @@ function Clients() {
       await api.deleteClient(id);
       const updated = allClients.filter((c) => c.id !== id);
       setAllClients(updated);
-      notifyDataUpdated();
+      notifyDataSync('clients', { action: 'deleted', clientId: id });
       if (selectedClient?.id === id) setSelectedClient(null);
     } catch (err) {
       alert(err?.response?.data?.message || "Erreur de suppression");
@@ -225,7 +238,7 @@ function Clients() {
         ? allClients.map((c) => (c.id === uiClient.id ? uiClient : c))
         : [uiClient, ...allClients];
       setAllClients(updated);
-      notifyDataUpdated();
+      notifyDataSync('clients', { action: editing ? 'updated' : 'created', clientId: uiClient.id });
       setShowModal(false);
       setSelectedClient(uiClient);
     } catch (err) {
