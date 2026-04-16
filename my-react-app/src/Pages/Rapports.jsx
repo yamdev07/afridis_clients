@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import { api } from "../api/clientflow";
 import {
@@ -28,6 +28,7 @@ import {
 import { motion } from "framer-motion";
 import GlassCard from "../components/ui/GlassCard";
 import NotificationBell from "../components/NotificationBell";
+import { useDataPolling } from "../hooks/useDataPolling";
 
 function Rapports() {
   const [period, setPeriod] = useState("Mensuel");
@@ -51,6 +52,16 @@ function Rapports() {
     };
     fetchData();
   }, []);
+
+  // Hook de synchronisation automatique avec polling
+  useDataPolling('reports', useCallback(async () => {
+    try {
+      const data = await api.getReportsData();
+      setReportsData(data);
+    } catch (err) {
+      console.error('Erreur lors du rafraîchissement des rapports:', err);
+    }
+  }, []), 30000);
 
   const stats = useMemo(() => {
     const totalRev = reportsData.chartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);

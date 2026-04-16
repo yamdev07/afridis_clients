@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import {
   Plus,
@@ -31,6 +31,7 @@ import { api } from "../api/clientflow";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
 import NotificationBell from "../components/NotificationBell";
+import { useDataPolling, notifyDataSync } from "../hooks/useDataPolling";
 
 function Services() {
   const [services, setServices] = useState([]);
@@ -86,6 +87,16 @@ function Services() {
     fetchServices();
     fetchStatuses();
   }, []);
+
+  // Hook de synchronisation automatique avec polling
+  useDataPolling('services', useCallback(async () => {
+    try {
+      const data = await api.listServices();
+      setServices(data?.data || []);
+    } catch (err) {
+      console.error('Erreur lors du rafraîchissement des services:', err);
+    }
+  }, []), 15000);
 
   const handleShowClients = async (service) => {
     setSelectedService(service);
