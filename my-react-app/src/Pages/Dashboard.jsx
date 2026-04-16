@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import { api } from "../api/clientflow";
 import { motion } from "framer-motion";
@@ -29,9 +29,7 @@ import GlassCard from "../components/ui/GlassCard";
 import NotificationBell from "../components/NotificationBell";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
-
-const DATA_UPDATED_EVENT = "clientflow:data-updated";
-const DATA_UPDATED_STORAGE_KEY = "clientflow:data-updated-at";
+import { useDataPolling } from "../hooks/useDataPolling";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -46,51 +44,19 @@ export default function Dashboard() {
       : null;
   }, []);
 
-  useEffect(() => {
-    let intervalId;
-
-    const fetchSummary = async () => {
-      try {
-        const data = await api.getDashboardSummary();
-        setSummary(data);
-        setError(null);
-      } catch (err) {
-        console.error("Erreur dashboard:", err);
-        setError(err.message || "Erreur de chargement");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const handleDataUpdated = () => {
-      fetchSummary();
-    };
-
-    const handleStorage = (event) => {
-      if (event.key === DATA_UPDATED_STORAGE_KEY) {
-        fetchSummary();
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchSummary();
-      }
-    };
-
-    fetchSummary();
-    intervalId = setInterval(fetchSummary, 30000);
-    window.addEventListener(DATA_UPDATED_EVENT, handleDataUpdated);
-    window.addEventListener("storage", handleStorage);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      clearInterval(intervalId);
-      window.removeEventListener(DATA_UPDATED_EVENT, handleDataUpdated);
-      window.removeEventListener("storage", handleStorage);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
+  // Hook de synchronisation automatique avec polling
+  useDataPolling('dashboard', useCallback(async () => {
+    try {
+      const data = await api.getDashboardSummary();
+      setSummary(data);
+      setError(null);
+    } catch (err) {
+      console.error('Erreur lors du rafraîchissement du dashboard:', err);
+      setError(err.message || "Erreur de chargement");
+    } finally {
+      setLoading(false);
+    }
+  }, []), 30000);
 
   // Filtrer les données du graphe selon la période choisie
   const chartData = useMemo(() => {
