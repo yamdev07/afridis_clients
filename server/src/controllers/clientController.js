@@ -443,41 +443,85 @@ export const updateClient = async (req, res, next) => {
           );
         }
 
-        if (requestedServiceCodes.length > 0) {
-          const servicesRes = await pool.query(
-            'SELECT id, monthly_price FROM services WHERE code = ANY($1::text[])',
-            [requestedServiceCodes],
+        const shouldSyncServices =
+          Array.isArray(meta?.service_codes)
+          || Object.prototype.hasOwnProperty.call(meta || {}, 'offer');
+
+        if (shouldSyncServices) {
+          const requestedCodes = [...new Set(requestedServiceCodes)];
+          const servicesRes = requestedCodes.length > 0
+            ? await pool.query(
+              'SELECT id, code, monthly_price FROM services WHERE code = ANY($1::text[])',
+              [requestedCodes],
+            )
+            : { rows: [] };
+          const requestedById = new Map(servicesRes.rows.map((row) => [row.id, row]));
+
+          const existingSubsRes = await pool.query(
+            'SELECT id, service_id FROM subscriptions WHERE client_id = $1',
+            [id],
           );
-          const existingSubsRes = await pool.query('SELECT service_id FROM subscriptions WHERE client_id = $1', [id]);
-          const existingServiceIds = new Set(existingSubsRes.rows.map((row) => row.service_id));
+          const existingByServiceId = new Map(existingSubsRes.rows.map((row) => [row.service_id, row]));
+
           const today = new Date().toISOString().split('T')[0];
           const statusCode = installDate && installDate <= today ? 'installed' : 'pending';
           const statusRes = await pool.query('SELECT id FROM statuses WHERE code = $1', [statusCode]);
           const statusId = statusRes.rows[0]?.id;
 
+          const resolvedAgentId = commercialLogin
+            ? await resolveAgentIdByLogin(commercialLogin, full_name || result.rows[0].full_name)
+            : (await pool.query('SELECT agent_id FROM users WHERE id = $1', [req.user.id])).rows[0]?.agent_id || null;
+
+          for (const [serviceId] of existingByServiceId) {
+            if (!requestedById.has(serviceId)) {
+              await pool.query('DELETE FROM subscriptions WHERE id = $1', [existingByServiceId.get(serviceId).id]);
+            }
+          }
+
           if (statusId) {
-            for (const service of servicesRes.rows) {
-              if (existingServiceIds.has(service.id)) continue;
-              await pool.query(
-                `INSERT INTO subscriptions (
-                  client_id, service_id, status_id, agent_id, line_number, subscription_date, installation_date, contract_cost, notes
-                ) VALUES (
-                  $1, $2, $3,
-                  (SELECT agent_id FROM users WHERE id = $4),
-                  $5, $6, $7, $8, $9
-                )`,
-                [
-                  id,
-                  service.id,
-                  statusId,
-                  req.user.id,
-                  lineNumber || null,
-                  meta?.subscription_date || today,
-                  installDate || null,
-                  meta?.tarif || service.monthly_price,
-                  meta?.notes || null,
-                ],
-              );
+            for (const [serviceId, service] of requestedById) {
+              const existing = existingByServiceId.get(serviceId);
+              if (existing) {
+                await pool.query(
+                  `UPDATE subscriptions
+                   SET status_id = $1,
+                       agent_id = COALESCE($2, agent_id),
+                       line_number = COALESCE($3, line_number),
+                       subscription_date = COALESCE($4, subscription_date),
+                       installation_date = $5,
+                       contract_cost = COALESCE($6, contract_cost),
+                       notes = COALESCE($7, notes),
+                       updated_at = CURRENT_TIMESTAMP
+                   WHERE id = $8`,
+                  [
+                    statusId,
+                    resolvedAgentId,
+                    lineNumber || null,
+                    meta?.subscription_date || null,
+                    installDate || null,
+                    meta?.tarif || service.monthly_price,
+                    meta?.notes || null,
+                    existing.id,
+                  ],
+                );
+              } else {
+                await pool.query(
+                  `INSERT INTO subscriptions (
+                    client_id, service_id, status_id, agent_id, line_number, subscription_date, installation_date, contract_cost, notes
+                  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                  [
+                    id,
+                    serviceId,
+                    statusId,
+                    resolvedAgentId,
+                    lineNumber || null,
+                    meta?.subscription_date || today,
+                    installDate || null,
+                    meta?.tarif || service.monthly_price,
+                    meta?.notes || null,
+                  ],
+                );
+              }
             }
           }
         }
