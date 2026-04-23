@@ -113,6 +113,8 @@ export const api = {
 
   createService: (payload) =>
     instance.post("/services", payload).then((r) => r.data),
+  updateService: (id, payload) =>
+    instance.put(`/services/${id}`, payload).then((r) => r.data),
 
   getServiceClients: (serviceId) =>
     instance.get(`/services/${serviceId}/clients`).then((r) => r.data),
@@ -139,6 +141,8 @@ export const api = {
   createUser: (payload) => instance.post("/users", payload).then((r) => r.data),
   updateUser: (id, payload) =>
     instance.put(`/users/${id}`, payload).then((r) => r.data),
+  setUserSuspension: (id, suspended, reason = "") =>
+    instance.patch(`/users/${id}/suspension`, { suspended, reason }).then((r) => r.data),
   deleteUser: (id) => instance.delete(`/users/${id}`).then((r) => r.data),
   changeUserPassword: (id, newPassword) =>
     instance
