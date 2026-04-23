@@ -130,7 +130,13 @@ export const createService = async (req, res, next) => {
 export const updateService = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { code, label, description, monthly_price, is_active } = req.body;
+    const { code, label, description, monthly_price, is_active, apply_price_to_existing = true } = req.body;
+
+    const existingServiceResult = await pool.query('SELECT id, monthly_price, label FROM services WHERE id = $1', [id]);
+    if (existingServiceResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Service non trouvé' });
+    }
+    const existingService = existingServiceResult.rows[0];
 
     const result = await pool.query(
       `UPDATE services
@@ -145,11 +151,21 @@ export const updateService = async (req, res, next) => {
       [code, label, description, monthly_price, is_active, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Service non trouvé' });
-    }
-
     const updatedService = result.rows[0];
+
+    if (
+      monthly_price !== undefined &&
+      Number(monthly_price) !== Number(existingService.monthly_price) &&
+      apply_price_to_existing !== false
+    ) {
+      await pool.query(
+        `UPDATE subscriptions
+         SET contract_cost = $1,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE service_id = $2`,
+        [monthly_price, id],
+      );
+    }
 
     // Notification
     import('./notificationController.js').then(m => {
