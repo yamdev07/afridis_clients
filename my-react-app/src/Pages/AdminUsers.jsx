@@ -60,6 +60,10 @@ export default function AdminUsers() {
     password: "",
     role: "commercial",
     agent_login: "",
+    company_name: "",
+    company_description: "",
+    company_rccm: "",
+    company_ifu: "",
   });
   const [creating, setCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -103,7 +107,17 @@ export default function AdminUsers() {
   const openCreateModal = () => {
     const defaultRole = allowedRoleOptions[0]?.value || "commercial";
     setEditingUser(null);
-    setForm({ name: "", email: "", password: "", role: defaultRole, agent_login: "" });
+    setForm({
+      name: "",
+      email: "",
+      password: "",
+      role: defaultRole,
+      agent_login: "",
+      company_name: "",
+      company_description: "",
+      company_rccm: "",
+      company_ifu: "",
+    });
     setShowCreateModal(true);
   };
 
@@ -115,6 +129,10 @@ export default function AdminUsers() {
       password: "",
       role: user.role,
       agent_login: user.agent_login || "",
+      company_name: user.company_name || "",
+      company_description: user.company_description || "",
+      company_rccm: user.company_rccm || "",
+      company_ifu: user.company_ifu || "",
     });
     setShowCreateModal(true);
   };
@@ -122,7 +140,17 @@ export default function AdminUsers() {
   const closeModal = () => {
     setShowCreateModal(false);
     setEditingUser(null);
-    setForm({ name: "", email: "", password: "", role: allowedRoleOptions[0]?.value || "commercial", agent_login: "" });
+    setForm({
+      name: "",
+      email: "",
+      password: "",
+      role: allowedRoleOptions[0]?.value || "commercial",
+      agent_login: "",
+      company_name: "",
+      company_description: "",
+      company_rccm: "",
+      company_ifu: "",
+    });
   };
 
   const handleChange = (e) => {
@@ -136,6 +164,11 @@ export default function AdminUsers() {
     setError("");
     setSuccess("");
     try {
+      if (form.role === "admin_local" && (!form.company_name || !form.company_rccm || !form.company_ifu)) {
+        setError("Pour un admin local, le nom entreprise, RCCM et IFU sont obligatoires.");
+        setCreating(false);
+        return;
+      }
       if (editingUser) {
         const updated = await api.updateUser(editingUser.id, form);
         setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
@@ -408,6 +441,49 @@ export default function AdminUsers() {
                     </div>
 
                     <InputGroup label="Matricule (Optionnel)" name="agent_login" icon={Hash} value={form.agent_login} onChange={handleChange} placeholder="Ex: AX-1029" />
+                    {form.role === "admin_local" && (
+                      <>
+                        <InputGroup
+                          label="Nom Entreprise"
+                          name="company_name"
+                          icon={UserCircle}
+                          value={form.company_name}
+                          onChange={handleChange}
+                          placeholder="Ex: AFRIDIS BENIN SARL"
+                          required
+                        />
+                        <InputGroup
+                          label="RCCM"
+                          name="company_rccm"
+                          icon={Hash}
+                          value={form.company_rccm}
+                          onChange={handleChange}
+                          placeholder="Ex: RB/COT/22 A 12345"
+                          required
+                        />
+                        <InputGroup
+                          label="IFU"
+                          name="company_ifu"
+                          icon={Hash}
+                          value={form.company_ifu}
+                          onChange={handleChange}
+                          placeholder="Ex: 3201200000000"
+                          required
+                        />
+                        <div className="md:col-span-2 space-y-3 group">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1 group-focus-within:text-primary transition-colors">
+                            Description Entreprise
+                          </label>
+                          <textarea
+                            name="company_description"
+                            value={form.company_description}
+                            onChange={handleChange}
+                            placeholder="Activites et informations complementaires de l'entreprise..."
+                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[20px] outline-none focus:ring-8 ring-primary/5 focus:bg-white transition-all text-xs font-black text-slate-900 placeholder:text-slate-300 shadow-sm min-h-28"
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="pt-8 border-t border-border-light flex flex-col sm:flex-row justify-end gap-6 font-black uppercase tracking-widest text-[10px]">
