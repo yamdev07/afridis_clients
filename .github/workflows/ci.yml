@@ -2,7 +2,7 @@ name: AFRIDIS CI Pipeline
 
 on:
   push:
-    branches: [backend]
+    branches: [backend, main]
   pull_request:
     branches: [backend]
 
@@ -76,3 +76,31 @@ jobs:
       - run: |
           cd my-react-app
           npm audit --audit-level=high || true
+
+  # Synchronise le dépôt miroir uniquement après merge sur main (source de vérité).
+  # Nécessite le secret MIRROR_PUSH_TOKEN (PAT avec droit repo sur afridis_clients_2).
+  mirror:
+    name: Mirror push to afridis_clients_2
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push main to mirror
+        env:
+          MIRROR_PUSH_TOKEN: ${{ secrets.MIRROR_PUSH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MIRROR_PUSH_TOKEN:-}" ]; then
+            echo "::error::Secret MIRROR_PUSH_TOKEN manquant. Ajoute un PAT (repo) sur afridis_clients_2 dans Settings > Secrets."
+            exit 1
+          fi
+          git remote add mirror "https://x-access-token:${MIRROR_PUSH_TOKEN}@github.com/SamuelSgn25/afridis_clients_2.git"
+          # Le miroir doit refléter exactement ce main-ci (évite les rejets non-fast-forward).
+          git push mirror "HEAD:refs/heads/main" --force
