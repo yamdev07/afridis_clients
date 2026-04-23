@@ -307,6 +307,7 @@ export default function AdminUsers() {
                 <tr className="bg-bg-light border-b border-border-light">
                   <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Utilisateur</th>
                   <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Role</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Entreprise (RCCM / IFU)</th>
                   <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Agent</th>
                   <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em]">Creation</th>
                   <th className="px-10 py-6 text-[10px] font-black text-text-muted-light uppercase tracking-[0.2em] text-right">Actions</th>
@@ -315,14 +316,14 @@ export default function AdminUsers() {
               <tbody className="divide-y divide-border-light">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-32 text-center">
+                    <td colSpan={6} className="py-32 text-center">
                       <RefreshCw className="w-12 h-12 text-primary animate-spin mx-auto mb-6 opacity-40" strokeWidth={3} />
                       <p className="text-[10px] font-black text-text-muted-light uppercase tracking-[0.3em]">Chargement...</p>
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-32 text-center text-text-muted-light font-black uppercase tracking-widest text-[10px] opacity-40">
+                    <td colSpan={6} className="py-32 text-center text-text-muted-light font-black uppercase tracking-widest text-[10px] opacity-40">
                       Aucun utilisateur pour ce filtre.
                     </td>
                   </tr>
@@ -342,6 +343,18 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-10 py-6 border-none">
                         <RoleBadge role={u.role} />
+                      </td>
+                      <td className="px-10 py-6 border-none">
+                        {u.company_name ? (
+                          <div className="space-y-1">
+                            <p className="text-sm font-black text-text-main-light leading-none">{u.company_name}</p>
+                            <p className="text-[10px] text-text-muted-light font-bold uppercase tracking-widest">
+                              RCCM: {u.company_rccm || "---"} / IFU: {u.company_ifu || "---"}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-text-muted-light/30 font-black uppercase tracking-widest text-[10px]">Aucune entreprise</span>
+                        )}
                       </td>
                       <td className="px-10 py-6 text-sm font-black text-text-muted-light border-none">
                         {u.agent_login ? (
