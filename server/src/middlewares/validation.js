@@ -52,10 +52,20 @@ export const validateService = validate([
 ]);
 
 // Validations pour les abonnements
-export const validateSubscription = validate([
+export const validateSubscriptionCreate = validate([
   body('client_id').isUUID().withMessage('ID client invalide'),
   body('service_id').isUUID().withMessage('ID service invalide'),
   body('status_id').isUUID().withMessage('ID statut invalide'),
+  body('agent_id').optional({ checkFalsy: true, nullable: true }).isUUID().withMessage('ID agent invalide'),
+  body('line_number').optional({ checkFalsy: true }).isString(),
+  body('subscription_date').optional({ checkFalsy: true }).isISO8601().withMessage('Date invalide'),
+  body('installation_date').optional({ checkFalsy: true }).isISO8601().withMessage('Date invalide'),
+]);
+
+export const validateSubscriptionUpdate = validate([
+  body('client_id').optional({ checkFalsy: true }).isUUID().withMessage('ID client invalide'),
+  body('service_id').optional({ checkFalsy: true }).isUUID().withMessage('ID service invalide'),
+  body('status_id').optional({ checkFalsy: true }).isUUID().withMessage('ID statut invalide'),
   body('agent_id').optional({ checkFalsy: true, nullable: true }).isUUID().withMessage('ID agent invalide'),
   body('line_number').optional({ checkFalsy: true }).isString(),
   body('subscription_date').optional({ checkFalsy: true }).isISO8601().withMessage('Date invalide'),

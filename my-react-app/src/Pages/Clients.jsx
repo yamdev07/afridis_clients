@@ -50,6 +50,7 @@ const emptyForm = {
   client_type: "B2C",
   service_description: "", // pour les services digitaux
   tarif: "",               // tarif pour services digitaux
+  service_codes: [],
 };
 
 const deserializeClient = (row) => {
@@ -69,6 +70,9 @@ const deserializeClient = (row) => {
     commercial_login: row.commercial_login || meta.commercial_login || "",
     location: meta.location || "",
     offer: row.offer || meta.offer || "",
+    service_codes: Array.isArray(row.service_codes)
+      ? row.service_codes
+      : (Array.isArray(meta.service_codes) ? meta.service_codes : (meta.offer ? [meta.offer] : [])),
     payer_number: meta.payer_number || "",
     subscription_date: row.subscription_date ? row.subscription_date.split('T')[0] : (meta.subscription_date || ""),
     installation_date: row.installation_date ? row.installation_date.split('T')[0] : (meta.installation_date || ""),
@@ -102,6 +106,7 @@ const buildPayload = (form) => ({
     client_type: form.client_type,
     service_description: form.service_description,
     tarif: form.tarif,
+    service_codes: Array.isArray(form.service_codes) ? form.service_codes : [],
   }),
 });
 
@@ -654,6 +659,29 @@ function Clients() {
                             ]}
                             onChange={(v) => setFormData({ ...formData, offer: v })}
                           />
+                          <div className="md:col-span-2">
+                            <label className="text-[10px] font-black text-text-muted-light uppercase tracking-widest ml-1">Services associés (multi)</label>
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-44 overflow-y-auto border border-border-light rounded-radius-button p-3 bg-bg-light/20">
+                              {services.map((s) => {
+                                const checked = (formData.service_codes || []).includes(s.code);
+                                return (
+                                  <label key={s.id} className="flex items-center gap-2 text-xs font-bold text-text-main-light">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(e) => {
+                                        const current = new Set(formData.service_codes || []);
+                                        if (e.target.checked) current.add(s.code);
+                                        else current.delete(s.code);
+                                        setFormData({ ...formData, service_codes: Array.from(current) });
+                                      }}
+                                    />
+                                    <span>{s.label}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

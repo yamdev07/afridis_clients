@@ -24,7 +24,8 @@ import {
   Box,
   LayoutGrid,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/clientflow";
@@ -55,6 +56,7 @@ function Services() {
   // Modal création de service
   const [showNewServiceModal, setShowNewServiceModal] = useState(false);
   const [serviceForm, setServiceForm] = useState({ code: "", label: "", description: "", monthly_price: "", is_active: true });
+  const [editingServiceId, setEditingServiceId] = useState(null);
   const [savingService, setSavingService] = useState(false);
   const [serviceError, setServiceError] = useState("");
 
@@ -198,17 +200,35 @@ function Services() {
         is_active: serviceForm.is_active,
       };
 
-      await api.createService(payload);
+      if (editingServiceId) {
+        await api.updateService(editingServiceId, payload);
+      } else {
+        await api.createService(payload);
+      }
 
       // Rafraîchir la liste
       await fetchServices();
       setServiceForm({ code: "", label: "", description: "", monthly_price: "", is_active: true });
+      setEditingServiceId(null);
       setShowNewServiceModal(false);
     } catch (err) {
       setServiceError(err?.response?.data?.message || err.message || 'Erreur lors de la création du service');
     } finally {
       setSavingService(false);
     }
+  };
+
+  const openEditServiceModal = (service) => {
+    setEditingServiceId(service.id);
+    setServiceForm({
+      code: service.code || "",
+      label: service.label || "",
+      description: service.description || "",
+      monthly_price: service.monthly_price ?? "",
+      is_active: service.is_active ?? true,
+    });
+    setServiceError("");
+    setShowNewServiceModal(true);
   };
 
   const filteredServices = useMemo(
@@ -245,7 +265,11 @@ function Services() {
                 <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
               </button>
               <button
-                onClick={() => setShowNewServiceModal(true)}
+                onClick={() => {
+                  setEditingServiceId(null);
+                  setServiceForm({ code: "", label: "", description: "", monthly_price: "", is_active: true });
+                  setShowNewServiceModal(true);
+                }}
                 className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold text-xs uppercase tracking-widest shadow-sm hover:bg-primary-hover active:scale-95 transition-all flex items-center gap-2"
               >
                 <Plus size={16} strokeWidth={3} />
@@ -351,6 +375,15 @@ function Services() {
                         </p>
                       </div>
                       <div className="flex gap-2">
+                        {canModifyCatalog && (
+                          <button
+                            onClick={() => openEditServiceModal(service)}
+                            className="h-10 w-10 bg-white text-slate-400 hover:text-primary rounded-lg flex items-center justify-center border border-slate-100 transition-all shadow-sm active:scale-95"
+                            title="Modifier le service"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                        )}
                         {canModifyCatalog && (
                           <button
                             onClick={() => handleDeleteService(service.id, service.label)}
@@ -540,6 +573,7 @@ function Services() {
                     </div>
                     <div>
                       <h2 className="text-xl font-black text-text-main-light tracking-tight">Nouveau Service</h2>
+                      {editingServiceId && <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-0.5">Mode modification</p>}
                       <p className="text-[10px] font-black text-text-muted-light uppercase tracking-widest mt-0.5">Ajouter au catalogue</p>
                     </div>
                   </div>
@@ -609,13 +643,13 @@ function Services() {
                   <div className="flex gap-4 pt-2">
                     <button
                       type="button"
-                      onClick={() => { setShowNewServiceModal(false); setServiceError(""); }}
+                      onClick={() => { setShowNewServiceModal(false); setServiceError(""); setEditingServiceId(null); }}
                       className="flex-1 py-4 text-[10px] font-black text-text-muted-light lineCount:800 uppercase tracking-widest hover:text-primary transition-colors border border-border-light rounded-radius-button"
                     >
                       Annuler
                     </button>
                     <Button type="submit" variant="primary" loading={savingService} icon={Plus} className="flex-1 !py-4 shadow-primary/30">
-                      Créer le Service
+                      {editingServiceId ? "Mettre à jour" : "Créer le Service"}
                     </Button>
                   </div>
                 </form>
