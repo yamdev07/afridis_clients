@@ -16,6 +16,10 @@ import {
   Hash,
   Calendar,
   Users,
+  Pencil,
+  Trash2,
+  Ban,
+  RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/clientflow";
@@ -157,6 +161,19 @@ export default function AdminUsers() {
       setSuccess("Utilisateur supprime avec succes.");
     } catch (err) {
       setError(err?.response?.data?.message || err.message || "Erreur de suppression");
+    }
+  };
+
+  const handleToggleSuspension = async (user) => {
+    const nextSuspended = !user.is_suspended;
+    const actionLabel = nextSuspended ? "suspendre" : "réactiver";
+    if (!window.confirm(`Voulez-vous ${actionLabel} le compte ${user.name} ?`)) return;
+    try {
+      const updated = await api.setUserSuspension(user.id, nextSuspended);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+      setSuccess(nextSuspended ? "Compte suspendu avec succes." : "Compte reactive avec succes.");
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Erreur de suspension");
     }
   };
 
@@ -310,12 +327,25 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-10 py-6 text-right border-none">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => openEditModal(u)} className="p-3 text-text-muted-light hover:text-primary hover:bg-primary/10 rounded-radius-button transition-all active:scale-90">
-                            Modifier
-                          </button>
-                          <button onClick={() => handleDelete(u)} className="p-3 text-text-muted-light hover:text-accent-red hover:bg-accent-red/10 rounded-radius-button transition-all active:scale-90">
-                            Supprimer
-                          </button>
+                          {u.role !== "super_admin" && (
+                            <button onClick={() => openEditModal(u)} className="p-3 text-text-muted-light hover:text-primary hover:bg-primary/10 rounded-radius-button transition-all active:scale-90" title="Modifier">
+                              <Pencil size={16} />
+                            </button>
+                          )}
+                          {currentUser?.role === "super_admin" && u.role === "admin_local" && (
+                            <button
+                              onClick={() => handleToggleSuspension(u)}
+                              className={`p-3 rounded-radius-button transition-all active:scale-90 ${u.is_suspended ? "text-emerald-600 hover:bg-emerald-100" : "text-amber-600 hover:bg-amber-100"}`}
+                              title={u.is_suspended ? "Réactiver le compte entreprise" : "Suspendre le compte entreprise"}
+                            >
+                              {u.is_suspended ? <RotateCcw size={16} /> : <Ban size={16} />}
+                            </button>
+                          )}
+                          {u.role !== "super_admin" && (
+                            <button onClick={() => handleDelete(u)} className="p-3 text-text-muted-light hover:text-accent-red hover:bg-accent-red/10 rounded-radius-button transition-all active:scale-90" title="Supprimer">
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
