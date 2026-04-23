@@ -48,7 +48,9 @@ export const getAllClients = async (req, res, next) => {
              MIN(s.line_number) as main_line_number,
              MAX(s.installation_date) as installation_date,
              MAX(s.subscription_date) as subscription_date,
-             MAX(sv.label) as offer
+             MAX(sv.label) as offer,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT sv.code), NULL) as service_codes,
+             ARRAY_REMOVE(ARRAY_AGG(DISTINCT sv.label), NULL) as service_labels
       FROM clients c
       LEFT JOIN subscriptions s ON s.client_id = c.id
       LEFT JOIN services sv ON s.service_id = sv.id
@@ -285,13 +287,21 @@ export const createClient = async (req, res, next) => {
 
     if (address) {
       try {
+        const requestedServiceCodes = Array.isArray(meta?.service_codes)
+          ? meta.service_codes.filter(Boolean).map((code) => String(code).trim())
+          : [];
         const offerCode = meta?.offer;
+        if (offerCode && !requestedServiceCodes.includes(offerCode)) {
+          requestedServiceCodes.push(offerCode);
+        }
 
-        if (offerCode) {
-          const serviceRes = await pool.query('SELECT id, monthly_price FROM services WHERE code = $1', [offerCode.trim()]);
+        if (requestedServiceCodes.length > 0) {
+          const serviceRes = await pool.query(
+            'SELECT id, code, monthly_price FROM services WHERE code = ANY($1::text[])',
+            [requestedServiceCodes],
+          );
 
           if (serviceRes.rows.length > 0) {
-            const service = serviceRes.rows[0];
             const installDate = meta.installation_date;
             const today = new Date().toISOString().split('T')[0];
             const statusCode = installDate && installDate <= today ? 'installed' : 'pending';
@@ -303,30 +313,32 @@ export const createClient = async (req, res, next) => {
                 ? await resolveAgentIdByLogin(commercialLogin, full_name)
                 : (await pool.query('SELECT agent_id FROM users WHERE id = $1', [req.user.id])).rows[0]?.agent_id || null;
 
-              await pool.query(
-                `INSERT INTO subscriptions (
-                  client_id, agent_id, service_id, status_id,
-                  line_number, subscription_date, installation_date, contract_cost, notes
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [
-                  client.id,
-                  agentId || null,
-                  service.id,
-                  statusId,
-                  meta.line_number || null,
-                  meta.subscription_date || today,
-                  installDate || null,
-                  meta.tarif || service.monthly_price,
-                  meta.notes || null,
-                ],
-              );
+              for (const service of serviceRes.rows) {
+                await pool.query(
+                  `INSERT INTO subscriptions (
+                    client_id, agent_id, service_id, status_id,
+                    line_number, subscription_date, installation_date, contract_cost, notes
+                  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                  [
+                    client.id,
+                    agentId || null,
+                    service.id,
+                    statusId,
+                    meta.line_number || null,
+                    meta.subscription_date || today,
+                    installDate || null,
+                    meta.tarif || service.monthly_price,
+                    meta.notes || null,
+                  ],
+                );
+              }
 
               import('./notificationController.js').then((m) => {
                 m.notifyAdmins({
                   type: 'client_subscribed',
-                  title: 'Nouveau service souscrit',
-                  message: `Le client ${client.full_name} a ete automatiquement inscrit au service "${offerCode}" par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
-                  meta: { clientId: client.id, serviceCode: offerCode, page: '/clients' },
+                  title: 'Nouveaux services souscrits',
+                  message: `Le client ${client.full_name} a ete inscrit a ${serviceRes.rows.length} service(s) par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+                  meta: { clientId: client.id, serviceCodes: requestedServiceCodes, page: '/clients' },
                 });
               });
             }
@@ -387,6 +399,12 @@ export const updateClient = async (req, res, next) => {
       try {
         const installDate = meta?.installation_date || null;
         const lineNumber = meta?.line_number || null;
+        const requestedServiceCodes = Array.isArray(meta?.service_codes)
+          ? meta.service_codes.filter(Boolean).map((code) => String(code).trim())
+          : [];
+        if (meta?.offer && !requestedServiceCodes.includes(meta.offer)) {
+          requestedServiceCodes.push(meta.offer);
+        }
         const updateParts = [];
         const updateValues = [];
         let idx = 1;
@@ -423,6 +441,45 @@ export const updateClient = async (req, res, next) => {
             `UPDATE subscriptions SET ${updateParts.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE client_id = $${idx}`,
             updateValues,
           );
+        }
+
+        if (requestedServiceCodes.length > 0) {
+          const servicesRes = await pool.query(
+            'SELECT id, monthly_price FROM services WHERE code = ANY($1::text[])',
+            [requestedServiceCodes],
+          );
+          const existingSubsRes = await pool.query('SELECT service_id FROM subscriptions WHERE client_id = $1', [id]);
+          const existingServiceIds = new Set(existingSubsRes.rows.map((row) => row.service_id));
+          const today = new Date().toISOString().split('T')[0];
+          const statusCode = installDate && installDate <= today ? 'installed' : 'pending';
+          const statusRes = await pool.query('SELECT id FROM statuses WHERE code = $1', [statusCode]);
+          const statusId = statusRes.rows[0]?.id;
+
+          if (statusId) {
+            for (const service of servicesRes.rows) {
+              if (existingServiceIds.has(service.id)) continue;
+              await pool.query(
+                `INSERT INTO subscriptions (
+                  client_id, service_id, status_id, agent_id, line_number, subscription_date, installation_date, contract_cost, notes
+                ) VALUES (
+                  $1, $2, $3,
+                  (SELECT agent_id FROM users WHERE id = $4),
+                  $5, $6, $7, $8, $9
+                )`,
+                [
+                  id,
+                  service.id,
+                  statusId,
+                  req.user.id,
+                  lineNumber || null,
+                  meta?.subscription_date || today,
+                  installDate || null,
+                  meta?.tarif || service.monthly_price,
+                  meta?.notes || null,
+                ],
+              );
+            }
+          }
         }
       } catch (parseErr) {
         console.warn('Sync subscription: impossible de parser address JSON:', parseErr.message);
