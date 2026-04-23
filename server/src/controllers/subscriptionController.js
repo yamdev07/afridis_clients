@@ -105,7 +105,7 @@ export const getAllSubscriptions = async (req, res, next) => {
       limit = 20,
       client_id,
       service_id,
-      status_id,
+      status_id: inputStatusId,
       status_code,
       agent_login,
       from_date,
@@ -298,10 +298,10 @@ export const createSubscription = async (req, res, next) => {
     // 🔥 Auto-détection du statut installé
     let finalInstallationDate = installation_date;
 
-    if (status_id) {
+    if (inputStatusId) {
       const statusRes = await pool.query(
         `SELECT code FROM statuses WHERE id = $1`,
-        [status_id]
+        [inputStatusId]
       );
 
       const statusCode = statusRes.rows[0]?.code;
@@ -316,19 +316,19 @@ export const createSubscription = async (req, res, next) => {
       `INSERT INTO subscriptions (
         client_id, service_id, status_id, agent_id,
         line_number, subscription_date, planned_installation_date,
-        finalInstallationDate, contract_cost, notes
+        installation_date, contract_cost, notes
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
       [
         client_id,
         service_id,
-        status_id,
+        inputStatusId,
         agent_id || null,
         line_number || null,
         subscription_date || null,
         planned_installation_date || null,
-        installation_date || null,
+        finalInstallationDate || null,
         contract_cost || null,
         notes || null,
       ],
@@ -355,7 +355,7 @@ export const updateSubscription = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-      status_id,
+      status_id: inputStatusId,
       agent_id,
       line_number,
       subscription_date,
@@ -365,12 +365,13 @@ export const updateSubscription = async (req, res, next) => {
       notes,
     } = req.body;
 
-    if (installation_date !== undefined && !status_id) {
+    let resolvedStatusId = inputStatusId;
+    if (installation_date !== undefined && !resolvedStatusId) {
       const today = new Date().toISOString().split('T')[0];
       const statusCode = (installation_date && installation_date <= today) ? 'installed' : 'pending';
       const statusRes = await pool.query('SELECT id FROM statuses WHERE code = $1', [statusCode]);
       if (statusRes.rows.length > 0) {
-        status_id = statusRes.rows[0].id;
+        resolvedStatusId = statusRes.rows[0].id;
       }
     }
 
@@ -406,7 +407,7 @@ export const updateSubscription = async (req, res, next) => {
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $9
        RETURNING *`,
-      [status_id, agent_id, finalLineNumber, subscription_date, planned_installation_date, installation_date, contract_cost, notes, id],
+      [resolvedStatusId, agent_id, finalLineNumber, subscription_date, planned_installation_date, installation_date, contract_cost, notes, id],
     );
 
     const updated = result.rows[0];
