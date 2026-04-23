@@ -138,3 +138,17 @@ ClientFlow est conçu pour évoluer vers :
 - Notifications (SMS / email)
 - Version mobile (React Native)
 - Multi-entreprises
+
+🔁 Workflow Git (push multi-repo)
+
+Le projet utilise maintenant deux remotes :
+- `origin` : dépôt principal historique
+- `mirror` : `git@github.com:SamuelSgn25/afridis_clients_2.git`
+
+Workflow recommandé après chaque commit local :
+- `git push origin <branche>`
+- `git push mirror <branche>`
+
+Optionnel (pousser les tags aussi) :
+- `git push origin --tags`
+- `git push mirror --tags`
