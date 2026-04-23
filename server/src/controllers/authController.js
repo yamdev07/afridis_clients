@@ -77,7 +77,9 @@ export const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u.password, u.role, u.agent_id, u.phone, COALESCE(u.is_suspended, false) AS is_suspended, a.login as agent_login 
+      `SELECT u.id, u.name, u.email, u.password, u.role, u.agent_id, u.phone,
+              u.company_name, u.company_description, u.company_rccm, u.company_ifu,
+              COALESCE(u.is_suspended, false) AS is_suspended, a.login as agent_login 
        FROM users u 
        LEFT JOIN agents a ON u.agent_id = a.id 
        WHERE u.email = $1`,
@@ -119,7 +121,11 @@ export const login = async (req, res, next) => {
         role: user.role,
         agent_id: user.agent_id,
         phone: user.phone,
-        agent_login: user.agent_login
+        agent_login: user.agent_login,
+        company_name: user.company_name,
+        company_description: user.company_description,
+        company_rccm: user.company_rccm,
+        company_ifu: user.company_ifu,
       },
       token: accessToken,
     });
@@ -222,7 +228,9 @@ export const logout = async (req, res, next) => {
 export const me = async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.created_at, COALESCE(u.is_suspended, false) AS is_suspended,
+      `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.created_at,
+              u.company_name, u.company_description, u.company_rccm, u.company_ifu,
+              COALESCE(u.is_suspended, false) AS is_suspended,
               a.login as agent_login, a.first_name as agent_first_name, a.last_name as agent_last_name
        FROM users u
        LEFT JOIN agents a ON u.agent_id = a.id
