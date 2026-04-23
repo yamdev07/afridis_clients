@@ -25,6 +25,10 @@ async function runStartupMigrations() {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMP');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_by UUID REFERENCES users(id) ON DELETE SET NULL');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_reason TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS company_description TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS company_rccm VARCHAR(255)');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS company_ifu VARCHAR(255)');
     await pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL');
     await pool.query('ALTER TABLE clients ADD COLUMN IF NOT EXISTS commercial_login VARCHAR(255)');
     await pool.query('ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT');
