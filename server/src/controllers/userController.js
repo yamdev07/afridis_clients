@@ -6,6 +6,9 @@ import { getCreatableRoles, getOrganizationOwnerId, ROLES } from '../utils/acces
 async function getManagedUser(actor, targetUserId) {
   const result = await pool.query(
     `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.phone, u.created_at, u.created_by,
+            COALESCE(u.is_suspended, false) AS is_suspended,
+            u.suspended_at,
+            u.suspended_by,
             a.login AS agent_login
      FROM users u
      LEFT JOIN agents a ON a.id = u.agent_id
@@ -60,6 +63,9 @@ export const listUsers = async (req, res, next) => {
     if (req.user.role === 'super_admin') {
       const params = [];
       let query = `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.phone, u.created_at, u.created_by,
+                          COALESCE(u.is_suspended, false) AS is_suspended,
+                          u.suspended_at,
+                          u.suspended_by,
                           a.login AS agent_login
                    FROM users u
                    LEFT JOIN agents a ON a.id = u.agent_id`;
@@ -85,9 +91,13 @@ export const listUsers = async (req, res, next) => {
                      FROM users u
                      JOIN descendants d ON u.created_by = d.id
                    )
-                   SELECT d.id, d.name, d.email, d.role, d.agent_id, d.phone, d.created_at, d.created_by,
+                  SELECT d.id, d.name, d.email, d.role, d.agent_id, d.phone, d.created_at, d.created_by,
+                         COALESCE(u.is_suspended, false) AS is_suspended,
+                         u.suspended_at,
+                         u.suspended_by,
                           a.login AS agent_login
                    FROM descendants d
+                  JOIN users u ON u.id = d.id
                    LEFT JOIN agents a ON a.id = d.agent_id
                    WHERE d.id <> $1`;
 
@@ -104,6 +114,9 @@ export const listUsers = async (req, res, next) => {
     if (req.user.role === 'admin') {
       const params = [req.user.id, 'commercial'];
       let query = `SELECT u.id, u.name, u.email, u.role, u.agent_id, u.phone, u.created_at, u.created_by,
+                          COALESCE(u.is_suspended, false) AS is_suspended,
+                          u.suspended_at,
+                          u.suspended_by,
                           a.login AS agent_login
                    FROM users u
                    LEFT JOIN agents a ON a.id = u.agent_id
@@ -320,6 +333,59 @@ export const deleteUser = async (req, res, next) => {
     });
 
     res.json({ message: 'Utilisateur supprime avec succes' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const setUserSuspension = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { suspended, reason } = req.body;
+
+    if (typeof suspended !== 'boolean') {
+      return res.status(400).json({ message: 'Le champ "suspended" doit etre un booleen' });
+    }
+
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Seul le super-admin peut suspendre des comptes entreprise' });
+    }
+
+    const userToManage = await getManagedUser(req.user, id);
+    if (!userToManage) {
+      return res.status(404).json({ message: 'Utilisateur non trouve' });
+    }
+
+    if (userToManage.role !== 'admin_local') {
+      return res.status(400).json({ message: 'La suspension est reservee aux comptes admin_local' });
+    }
+
+    if (userToManage.role === 'super_admin') {
+      return res.status(403).json({ message: 'Impossible de suspendre un super-admin' });
+    }
+
+    const result = await pool.query(
+      `UPDATE users
+       SET is_suspended = $1,
+           suspended_at = CASE WHEN $1 THEN CURRENT_TIMESTAMP ELSE NULL END,
+           suspended_by = CASE WHEN $1 THEN $2 ELSE NULL END,
+           suspended_reason = CASE WHEN $1 THEN $3 ELSE NULL END,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING id, name, email, role, agent_id, phone, created_at, created_by, COALESCE(is_suspended, false) AS is_suspended`,
+      [suspended, req.user.id, reason || null, id],
+    );
+
+    import('./notificationController.js').then((m) => {
+      m.notifyAdmins({
+        type: suspended ? 'user_suspended' : 'user_unsuspended',
+        title: suspended ? 'Compte entreprise suspendu' : 'Compte entreprise reactive',
+        message: `Le compte ${userToManage.name} a ete ${suspended ? 'suspendu' : 'reactive'} par ${req.user.name} le ${new Date().toLocaleString('fr-FR')}.`,
+        meta: { userId: id, page: '/admin/users', reason: reason || null },
+      });
+    });
+
+    return res.json(result.rows[0]);
   } catch (error) {
     next(error);
   }
