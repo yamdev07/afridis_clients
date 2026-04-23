@@ -139,16 +139,23 @@ ClientFlow est conçu pour évoluer vers :
 - Version mobile (React Native)
 - Multi-entreprises
 
-🔁 Workflow Git (push multi-repo)
+🔁 Workflow Git & miroir ([afridis_clients_2](https://github.com/SamuelSgn25/afridis_clients_2))
 
-Le projet utilise maintenant deux remotes :
-- `origin` : dépôt principal historique
-- `mirror` : `git@github.com:SamuelSgn25/afridis_clients_2.git`
+**Flux recommandé (comme tu le fais déjà)**  
+1. Développer et pousser sur `backend` : `git push origin backend`  
+2. Ouvrir / fusionner vers `main` sur le dépôt principal (`origin`).  
+3. Après chaque **push sur `main`**, le workflow GitHub Actions (`.github/workflows/ci.yml`) exécute les jobs backend + frontend puis **pousse automatiquement** `main` vers le dépôt miroir.
 
-Workflow recommandé après chaque commit local :
-- `git push origin <branche>`
-- `git push mirror <branche>`
+**Secret obligatoire sur le dépôt principal (`origin`)**  
+- Nom : `MIRROR_PUSH_TOKEN`  
+- Valeur : un **Personal Access Token** (classic ou fine-grained) avec au minimum le droit d’écriture sur le repo `SamuelSgn25/afridis_clients_2`.  
+- Emplacement : GitHub → dépôt principal → **Settings** → **Secrets and variables** → **Actions** → *New repository secret*.
 
-Optionnel (pousser les tags aussi) :
-- `git push origin --tags`
-- `git push mirror --tags`
+Sans ce secret, le job « Mirror push » échoue volontairement avec un message explicite.
+
+**Pourquoi `git push mirror main` peut être rejeté en local**  
+Le message *fetch first* signifie que `main` sur le miroir contient des commits que tu n’as pas dans ton clone (historiques divergents). Le CI contourne ce cas en poussant depuis une copie fraîche et en alignant le miroir sur le `main` du dépôt principal (**push avec `--force` sur la branche `main` du miroir uniquement**).
+
+**Optionnel : remote SSH local**  
+Tu peux garder un remote `mirror` pour des poussées manuelles ; en cas de divergence, aligner une fois le miroir sur ton `main` local (à utiliser seulement si le miroir doit redevenir identique à ton `main`) :  
+`git push mirror main:main --force-with-lease`
