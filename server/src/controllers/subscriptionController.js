@@ -145,9 +145,9 @@ export const getAllSubscriptions = async (req, res, next) => {
       conditions.push(`s.service_id = $${params.length + 1}`);
       params.push(service_id);
     }
-    if (status_id) {
+    if (inputStatusId) {
       conditions.push(`s.status_id = $${params.length + 1}`);
-      params.push(status_id);
+      params.push(inputStatusId);
     }
     if (status_code) {
       conditions.push(`st.code = $${params.length + 1}`);
@@ -197,9 +197,9 @@ export const getAllSubscriptions = async (req, res, next) => {
       countConditions.push(`s.service_id = $${countParams.length + 1}`);
       countParams.push(service_id);
     }
-    if (status_id) {
+    if (inputStatusId) {
       countConditions.push(`s.status_id = $${countParams.length + 1}`);
-      countParams.push(status_id);
+      countParams.push(inputStatusId);
     }
     if (status_code) {
       countConditions.push(`st.code = $${countParams.length + 1}`);
@@ -277,7 +277,7 @@ export const createSubscription = async (req, res, next) => {
     const {
       client_id,
       service_id,
-      status_id,
+      status_id: inputStatusId,
       agent_id,
       line_number,
       subscription_date,
