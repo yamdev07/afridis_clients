@@ -78,8 +78,8 @@ jobs:
           npm audit --audit-level=high || true
 
   # Synchronise le dépôt miroir uniquement après merge sur main (source de vérité).
-  # PAT : secrets MIRROR_PUSH_TOKEN ou mirror_repo_token (même valeur, deux noms acceptés).
-  # défini dans Settings > Secrets du DÉPÔT OÙ CE WORKFLOW S’EXÉCUTE (souvent le repo du mainteneur).
+  # Secret Actions : MIRROR_PUSH_TOKEN (PAT avec écriture sur SamuelSgn25/afridis_clients_2).
+  # À définir dans Settings > Secrets du dépôt où ce workflow s’exécute.
   # Le GITHUB_TOKEN du repo courant ne peut pas pousser vers un autre repo → 403 si PAT absent / invalide.
   mirror:
     name: Mirror push to afridis_clients_2
@@ -97,15 +97,12 @@ jobs:
       - name: Push main to mirror
         env:
           MIRROR_PUSH_TOKEN: ${{ secrets.MIRROR_PUSH_TOKEN }}
-          MIRROR_REPO_TOKEN: ${{ secrets.mirror_repo_token }}
         run: |
           set -euo pipefail
-          TOKEN="${MIRROR_PUSH_TOKEN:-}"
-          if [ -z "$TOKEN" ]; then TOKEN="${MIRROR_REPO_TOKEN:-}"; fi
-          if [ -z "$TOKEN" ]; then
-            echo "::error::PAT manquant: définis le secret Actions MIRROR_PUSH_TOKEN ou mirror_repo_token (droits d'écriture sur afridis_clients_2)."
+          if [ -z "${MIRROR_PUSH_TOKEN:-}" ]; then
+            echo "::error::Secret MIRROR_PUSH_TOKEN manquant (PAT avec droits d'écriture sur afridis_clients_2)."
             exit 1
           fi
-          git remote add mirror "https://x-access-token:${TOKEN}@github.com/SamuelSgn25/afridis_clients_2.git"
+          git remote add mirror "https://x-access-token:${MIRROR_PUSH_TOKEN}@github.com/SamuelSgn25/afridis_clients_2.git"
           # Le miroir doit refléter exactement ce main-ci (évite les rejets non-fast-forward).
           git push mirror "HEAD:refs/heads/main" --force
