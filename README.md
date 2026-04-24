@@ -149,7 +149,7 @@ ClientFlow est conçu pour évoluer vers :
 **Secret obligatoire : où le mettre, et avec quel compte**
 
 Le job « Mirror push » s’exécute sur **le dépôt GitHub qui contient ce workflow** (celui sur lequel tu pousses `main` / `backend`), pas sur ton compte personnel en soi.  
-- Si tu contribues sur un dépôt **d’un autre propriétaire** (ex. organisation ou compte tiers) : **seul un administrateur de ce dépôt** peut aller dans **Settings → Secrets and variables → Actions** et créer le secret du PAT sous l’un des noms **`MIRROR_PUSH_TOKEN`** ou **`mirror_repo_token`** (le workflow accepte les deux).  
+- Si tu contribues sur un dépôt **d’un autre propriétaire** (ex. organisation ou compte tiers) : **seul un administrateur de ce dépôt** peut aller dans **Settings → Secrets and variables → Actions** et créer le secret **`MIRROR_PUSH_TOKEN`** (valeur = PAT avec écriture sur le miroir).  
 - La **valeur** du secret doit être un **PAT** créé sur le compte qui a le **droit d’écriture** sur [`SamuelSgn25/afridis_clients_2`](https://github.com/SamuelSgn25/afridis_clients_2) (en pratique : ton compte **SamuelSgn25**, avec un token capable de pousser sur ce repo).
 
 **Contenu du PAT (pour éviter le 403)**  
@@ -158,7 +158,7 @@ Le job « Mirror push » s’exécute sur **le dépôt GitHub qui contient ce wo
 - Si ton compte ou l’organisation impose **SSO SAML** : après création du PAT, clique sur **Configure SSO** / **Authorize** à côté du token sur la page des tokens GitHub.
 
 **Erreur `403` / `Permission ... denied`**  
-Cela veut dire que GitHub refuse le push avec le jeton utilisé : secret vide ou mauvais, token expiré, droits insuffisants, mauvais dépôt sélectionné (fine-grained), ou SSO non autorisé. Ce n’est **pas** le `GITHUB_TOKEN` du dépôt d’origine qui peut pousser vers un autre dépôt : il faut impérativement un PAT dans **`MIRROR_PUSH_TOKEN`** ou **`mirror_repo_token`** (même usage) dans les secrets du dépôt **où tourne l’action**.
+Cela veut dire que GitHub refuse le push avec le jeton utilisé : secret vide ou mauvais, token expiré, droits insuffisants, mauvais dépôt sélectionné (fine-grained), ou SSO non autorisé. Ce n’est **pas** le `GITHUB_TOKEN` du dépôt d’origine qui peut pousser vers un autre dépôt : il faut impérativement un PAT dans le secret **`MIRROR_PUSH_TOKEN`** sur le dépôt **où tourne l’action**.
 
 Sans secret valide, le job « Mirror push » échoue (message explicite si le secret est absent).
 
