@@ -124,7 +124,7 @@ export const api = {
 
   deleteClient: (id) => instance.delete(`/clients/${id}`).then((r) => r.data),
   
-  getInvoiceHtml: (id) => instance.get(`/clients/${id}/invoice`).then((r) => r.data),
+  sendInvoiceEmail: (id) => instance.post(`/clients/${id}/send-invoice`).then((r) => r.data),
 
   deleteService: (id) => instance.delete(`/services/${id}`).then((r) => r.data),
 
