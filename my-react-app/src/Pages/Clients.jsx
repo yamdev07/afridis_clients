@@ -251,6 +251,18 @@ function Clients() {
     }
   };
 
+  const printInvoice = async (clientId) => {
+    try {
+      const html = await api.getInvoiceHtml(clientId);
+      const newWin = window.open('', '_blank');
+      newWin.document.open();
+      newWin.document.write(html);
+      newWin.document.close();
+    } catch (err) {
+      alert("Erreur lors de la génération de la facture: " + (err?.response?.data?.message || err.message));
+    }
+  };
+
   const isCommercial = user?.role === "commercial";
 
   return (
@@ -528,6 +540,16 @@ function Clients() {
                   >
                     Éditer le dossier
                   </Button>
+                  {selectedClient.installation_date && (
+                    <Button
+                      variant="secondary"
+                      className="!py-5 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50"
+                      onClick={() => printInvoice(selectedClient.id)}
+                    >
+                      <FileText size={18} className="mr-2" />
+                      Générer Facture
+                    </Button>
+                  )}
                   <button
                     onClick={() => deleteClient(selectedClient.id)}
                     className="flex items-center justify-center p-5 bg-accent-red hover:bg-accent-red/90 text-white rounded-radius-button transition-all shadow-lg shadow-accent-red/20 active:scale-95"
