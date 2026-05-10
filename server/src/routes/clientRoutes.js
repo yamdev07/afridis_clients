@@ -6,7 +6,7 @@ import {
   createClient,
   updateClient,
   deleteClient,
-  generateInvoice,
+  sendInvoice,
 } from '../controllers/clientController.js';
 import { authenticateToken } from '../middlewares/auth.js';
 import { validateClient, validateClientUpdate } from '../middlewares/validation.js';
@@ -21,6 +21,6 @@ router.get('/:id', getClientById);
 router.post('/', validateClient, createClient);
 router.put('/:id', validateClientUpdate, updateClient);
 router.delete('/:id', deleteClient);
-router.get('/:id/invoice', generateInvoice);
+router.post('/:id/send-invoice', sendInvoice);
 
 export default router;
