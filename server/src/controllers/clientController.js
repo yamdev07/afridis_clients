@@ -1,6 +1,7 @@
 import pool from '../config/database.js';
 import { notifyAdmins } from './notificationController.js';
 import { getOrganizationOwnerId } from '../utils/access.js';
+import { sendMail } from '../services/mailer.js';
 
 async function getScopeOwnerId(user) {
   if (!user || user.role === 'super_admin') return null;
@@ -576,6 +577,136 @@ export const deleteClient = async (req, res, next) => {
     }).catch((err) => console.error('Error in notifyAdmins during client deletion:', err));
 
     return res.status(200).json({ success: true, message: 'Client supprime avec succes' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendInvoice = async (req, res, next) => {
+  try {
+    if (!['super_admin', 'admin', 'admin_local'].includes(req.user?.role)) {
+      return res.status(403).json({ message: 'Seul un administrateur peut envoyer la facture' });
+    }
+
+    const { id } = req.params;
+    
+    // Fetch client
+    const result = await pool.query(
+      `SELECT c.*,
+              json_agg(
+                json_build_object(
+                  'id', s.id,
+                  'service', json_build_object('id', sv.id, 'code', sv.code, 'label', sv.label),
+                  'status', json_build_object('id', st.id, 'code', st.code, 'label', st.label),
+                  'line_number', s.line_number,
+                  'subscription_date', s.subscription_date,
+                  'installation_date', s.installation_date,
+                  'contract_cost', s.contract_cost,
+                  'notes', s.notes,
+                  'agent_login', COALESCE(c.commercial_login, a.login)
+                )
+              ) FILTER (WHERE s.id IS NOT NULL) as subscriptions
+       FROM clients c
+       LEFT JOIN subscriptions s ON s.client_id = c.id
+       LEFT JOIN services sv ON s.service_id = sv.id
+       LEFT JOIN statuses st ON s.status_id = st.id
+       LEFT JOIN agents a ON s.agent_id = a.id
+       WHERE c.id = $1
+       GROUP BY c.id`,
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Client non trouve' });
+    }
+
+    const client = result.rows[0];
+    
+    if (!client.commercial_login) {
+      return res.status(400).json({ message: 'Aucun commercial assigne a ce client' });
+    }
+
+    // Find commercial email
+    const commercialRes = await pool.query(`
+      SELECT u.email, u.name
+      FROM users u
+      LEFT JOIN agents a ON u.agent_id = a.id
+      WHERE a.login = $1 OR u.name = $1 OR u.email = $1
+      LIMIT 1
+    `, [client.commercial_login]);
+
+    if (commercialRes.rows.length === 0 || !commercialRes.rows[0].email) {
+      return res.status(404).json({ message: 'Adresse email du commercial introuvable' });
+    }
+
+    const commercial = commercialRes.rows[0];
+    
+    const subscriptions = client.subscriptions || [];
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${client.id.toString().padStart(4, '0')}`;
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    
+    let total = 0;
+    const itemsHtml = subscriptions.map((sub, i) => {
+      const cost = parseFloat(sub.contract_cost) || 0;
+      total += cost;
+      return `
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${i + 1}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${sub.service.label}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${sub.line_number || 'N/A'}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${sub.installation_date ? new Date(sub.installation_date).toLocaleDateString('fr-FR') : 'En attente'}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${cost.toLocaleString('fr-FR')} FCFA</td>
+        </tr>
+      `;
+    }).join('');
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;">
+        <h2 style="color: #0052cc;">AFRIDIS - Facture Commission / Service</h2>
+        <p>Bonjour ${commercial.name},</p>
+        <p>Voici la facture pour le client <strong>${client.full_name}</strong> qui vient d'etre installe.</p>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <p><strong>Facture N°:</strong> ${invoiceNumber}</p>
+          <p><strong>Date:</strong> ${dateStr}</p>
+          <p><strong>Client:</strong> ${client.full_name} (${client.phone || 'Sans numero'})</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background: #0052cc; color: white;">
+              <th style="padding: 10px; text-align: left;">#</th>
+              <th style="padding: 10px; text-align: left;">Service</th>
+              <th style="padding: 10px; text-align: left;">Ligne</th>
+              <th style="padding: 10px; text-align: left;">Installation</th>
+              <th style="padding: 10px; text-align: right;">Cout</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            <tr>
+              <td colspan="4" style="padding: 15px 10px; text-align: right; font-weight: bold; border-top: 2px solid #333;">Total Commission / Cout</td>
+              <td style="padding: 15px 10px; text-align: right; font-weight: bold; border-top: 2px solid #333;">${total.toLocaleString('fr-FR')} FCFA</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <p style="font-size: 12px; color: #777;">Cet email a ete genere automatiquement par ClientFlow.</p>
+      </div>
+    `;
+
+    const mailResult = await sendMail({
+      to: commercial.email,
+      subject: `Facture ClientFlow - ${client.full_name}`,
+      text: `Facture pour ${client.full_name}. Total: ${total} FCFA`,
+      html,
+    });
+
+    if (mailResult?.skipped) {
+        return res.status(500).json({ message: 'Serveur email non configure (SMTP manquant)' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Facture envoyee avec succes au commercial' });
   } catch (error) {
     next(error);
   }
