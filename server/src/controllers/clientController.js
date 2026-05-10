@@ -580,3 +580,158 @@ export const deleteClient = async (req, res, next) => {
     next(error);
   }
 };
+
+export const generateInvoice = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const scopeOwnerId = await getScopeOwnerId(req.user);
+    const params = [id];
+    let scopeClause = '';
+
+    if (scopeOwnerId) {
+      params.push(scopeOwnerId);
+      scopeClause = ` AND c.created_by = $${params.length}`;
+    }
+
+    const result = await pool.query(
+      `SELECT c.*,
+              json_agg(
+                json_build_object(
+                  'id', s.id,
+                  'service', json_build_object('id', sv.id, 'code', sv.code, 'label', sv.label),
+                  'status', json_build_object('id', st.id, 'code', st.code, 'label', st.label),
+                  'line_number', s.line_number,
+                  'subscription_date', s.subscription_date,
+                  'installation_date', s.installation_date,
+                  'contract_cost', s.contract_cost,
+                  'notes', s.notes,
+                  'agent_login', COALESCE(c.commercial_login, a.login)
+                )
+              ) FILTER (WHERE s.id IS NOT NULL) as subscriptions
+       FROM clients c
+       LEFT JOIN subscriptions s ON s.client_id = c.id
+       LEFT JOIN services sv ON s.service_id = sv.id
+       LEFT JOIN statuses st ON s.status_id = st.id
+       LEFT JOIN agents a ON s.agent_id = a.id
+       WHERE c.id = $1${scopeClause}
+       GROUP BY c.id`,
+      params,
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Client non trouve ou acces refuse' });
+    }
+
+    const client = result.rows[0];
+    const subscriptions = client.subscriptions || [];
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${client.id.toString().padStart(4, '0')}`;
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    
+    // Calculate totals
+    let total = 0;
+    const itemsHtml = subscriptions.map((sub, i) => {
+      const cost = parseFloat(sub.contract_cost) || 0;
+      total += cost;
+      return `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${sub.service.label}</td>
+          <td>${sub.line_number || 'N/A'}</td>
+          <td>${sub.installation_date ? new Date(sub.installation_date).toLocaleDateString('fr-FR') : 'En attente'}</td>
+          <td class="text-right">${cost.toLocaleString('fr-FR')} FCFA</td>
+        </tr>
+      `;
+    }).join('');
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head>
+        <meta charset="UTF-8">
+        <title>Facture ${invoiceNumber}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; color: #333; margin: 0; padding: 40px; background: #fff; }
+          .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, .15); font-size: 16px; line-height: 24px; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 2px solid #0052cc; padding-bottom: 20px; }
+          .header h1 { margin: 0; color: #0052cc; font-size: 32px; }
+          .details { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          .details > div { width: 48%; }
+          .client-info h3, .company-info h3 { margin-top: 0; color: #0052cc; }
+          table { width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; }
+          table th, table td { padding: 12px; border-bottom: 1px solid #eee; }
+          table th { background: #f8f9fa; color: #333; font-weight: bold; }
+          table td.text-right, table th.text-right { text-align: right; }
+          .total-row td { border-bottom: none; font-weight: bold; font-size: 18px; border-top: 2px solid #333; }
+          .footer { margin-top: 50px; text-align: center; color: #777; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px; }
+          @media print {
+            body { padding: 0; }
+            .invoice-box { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-box">
+          <div class="header">
+            <div>
+              <h1>AFRIDIS</h1>
+              <p>Facture Commission / Service</p>
+            </div>
+            <div style="text-align: right;">
+              <h2>FACTURE ${invoiceNumber}</h2>
+              <p>Date: ${dateStr}</p>
+              <button onclick="window.print()" style="padding: 10px 20px; background: #0052cc; color: white; border: none; border-radius: 4px; cursor: pointer;">Imprimer</button>
+            </div>
+          </div>
+          
+          <div class="details">
+            <div class="client-info">
+              <h3>Client</h3>
+              <strong>${client.full_name}</strong><br>
+              ${client.phone ? `Tél: ${client.phone}<br>` : ''}
+              ${client.email ? `Email: ${client.email}<br>` : ''}
+              ${client.address ? `Adresse: ${client.address}<br>` : ''}
+            </div>
+            <div class="company-info" style="text-align: right;">
+              <h3>Commercial</h3>
+              <strong>${client.commercial_login || 'Non assigné'}</strong><br>
+              AFRIDIS Telecom
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Service</th>
+                <th>Numéro de Ligne</th>
+                <th>Date d'installation</th>
+                <th class="text-right">Coût</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr class="total-row">
+                <td colspan="4" class="text-right">Total</td>
+                <td class="text-right">${total.toLocaleString('fr-FR')} FCFA</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="footer">
+            Merci pour votre confiance. AFRIDIS. Document généré automatiquement le ${dateStr}.
+          </div>
+        </div>
+        <script>
+          // window.onload = () => window.print();
+        </script>
+      </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
