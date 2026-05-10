@@ -251,19 +251,17 @@ function Clients() {
     }
   };
 
-  const printInvoice = async (clientId) => {
+  const sendInvoice = async (clientId) => {
     try {
-      const html = await api.getInvoiceHtml(clientId);
-      const newWin = window.open('', '_blank');
-      newWin.document.open();
-      newWin.document.write(html);
-      newWin.document.close();
+      const res = await api.sendInvoiceEmail(clientId);
+      alert(res.message || "Facture envoyée avec succès.");
     } catch (err) {
-      alert("Erreur lors de la génération de la facture: " + (err?.response?.data?.message || err.message));
+      alert("Erreur lors de l'envoi: " + (err?.response?.data?.message || err.message));
     }
   };
 
   const isCommercial = user?.role === "commercial";
+  const isAdmin = ["super_admin", "admin", "admin_local"].includes(user?.role);
 
   return (
     <div className="flex min-h-screen bg-bg-light font-inter transition-colors duration-500">
@@ -540,14 +538,14 @@ function Clients() {
                   >
                     Éditer le dossier
                   </Button>
-                  {selectedClient.installation_date && (
+                  {selectedClient.installation_date && isAdmin && (
                     <Button
                       variant="secondary"
                       className="!py-5 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50"
-                      onClick={() => printInvoice(selectedClient.id)}
+                      onClick={() => sendInvoice(selectedClient.id)}
                     >
-                      <FileText size={18} className="mr-2" />
-                      Générer Facture
+                      <Mail size={18} className="mr-2" />
+                      Envoyer Facture (Email)
                     </Button>
                   )}
                   <button
